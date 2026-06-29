@@ -1,0 +1,56 @@
+import express from 'express';
+import cors from 'cors';
+import { env } from './config/env.js';
+import healthRoutes from './routes/health.routes.js';
+import aiRoutes from './routes/ai.routes.js';
+import syncRoutes from './routes/sync.routes.js';
+
+const app = express();
+
+app.use(cors({
+  origin: env.FRONTEND_URL,
+  credentials: true
+}));
+
+app.use(express.json({ limit: '2mb' }));
+
+// Custom in-memory lightweight rate-limiting middleware for API security
+const rateLimits = new Map<string, { count: number; resetAt: number }>();
+const rateLimitMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const ip = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+  const now = Date.now();
+  const limit = 45; // Max 45 API calls per minute
+  const windowMs = 60000;
+
+  const client = rateLimits.get(ip);
+  if (!client || now > client.resetAt) {
+    rateLimits.set(ip, { count: 1, resetAt: now + windowMs });
+    return next();
+  }
+
+  client.count++;
+  if (client.count > limit) {
+    return res.status(429).json({ error: 'Rate limit exceeded. Please retry in a minute.' });
+  }
+  next();
+};
+
+// Routes
+app.use('/api', healthRoutes);
+app.use('/api', rateLimitMiddleware, aiRoutes); // Mount rate-limiting on AI mentor routes
+app.use('/api', syncRoutes);
+
+// General 404 handler
+app.use((req, res, next) => {
+  res.status(404).json({ error: 'Endpoint Not Found' });
+});
+
+// Global 500 exception handler (prevents trace leakage in production env)
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("Unhandled Server Exception:", err.message || err);
+  res.status(err.status || 500).json({
+    error: env.NODE_ENV === 'production' ? 'Internal server error occurred' : err.message || 'Internal server error'
+  });
+});
+
+export default app;

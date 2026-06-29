@@ -1,0 +1,50 @@
+.app-shell {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 32%),
+    var(--bg-base);
+}
+
+.shell-sidebar {
+  width: 18rem;
+  flex: 0 0 auto;
+}
+
+.shell-sidebar--collapsed {
+  width: 5.5rem;
+}
+
+.shell-main {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.shell-topbar {
+  flex: 0 0 auto;
+}
+
+.workspace-area {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.workspace-page {
+  width: min(100%, 1600px);
+  margin: 0 auto;
+}
+
+@media (max-width: 767px) {
+  .workspace-area {
+    padding: 1rem;
+    padding-bottom: 5.75rem;
+  }
+}
