@@ -37,7 +37,7 @@ export const ReadinessPanel: React.FC = () => {
             <Target className="h-3.5 w-3.5 text-accentBlue" />
             <span>Placement readiness</span>
           </div>
-          <p className="mt-1 max-w-[170px] text-[11px] leading-5 text-textSecondary">Weighted readiness based on DSA, SQL, aptitude, projects, and resume progress.</p>
+          <p className="mt-1 max-w-[170px] text-[11px] leading-5 text-textSecondary">Weighted readiness from DSA, SkillRack, aptitude, SQL, CS Core, projects, resume, and consistency.</p>
         </div>
 
         <div className="flex flex-col items-center text-center">

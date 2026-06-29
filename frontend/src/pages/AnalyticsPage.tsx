@@ -3,8 +3,10 @@ import { SectionHeader } from '../components/ui/SectionHeader';
 import { Card } from '../components/ui/Card';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { useCareerStore } from '../app/store/useCareerStore';
+import { useShaylaAgentStore } from '../app/store/useShaylaAgentStore';
 import {
   calcPlacementScore,
+  calcPlacementBreakdown,
   calcConsistencyScore,
   calcResumeScore,
   calcGermanyReadinessScore,
@@ -15,9 +17,11 @@ import { Badge } from '../components/ui/Badge';
 
 export const AnalyticsPage: React.FC = () => {
   const careerState = useCareerStore((s) => s);
+  const agentState = useShaylaAgentStore((s) => s);
   const { dailyLogs } = careerState;
 
   const placementScore = calcPlacementScore(careerState);
+  const placementBreakdown = calcPlacementBreakdown(careerState);
   const consistencyScore = calcConsistencyScore(careerState);
   const resumeScore = calcResumeScore(careerState);
   const germanyScore = calcGermanyReadinessScore(careerState);
@@ -70,25 +74,17 @@ export const AnalyticsPage: React.FC = () => {
   });
 
   // SkillRack total solved
-  const skillRackSolved = careerState.skillRackStats?.totalSolved || 0;
+  const skillRackSolved = Object.values(careerState.dailyLogs || {}).reduce((sum: number, log: any) => sum + (log.counts?.skillrack || 0), 0);
 
   // DSA Patterns Mastered
   const dsaPatternsMastered = Object.values(careerState.dsaPatternMastery || {}).filter(x => x.mastery === 'Interview Ready').length;
 
-  const dsaPercent = Math.min(Math.round((lcSolved / 360) * 100), 100);
-  const skillrackPercent = Math.min(Math.round((skillRackSolved / 150) * 100), 100);
-  const aptitudeSolved = Object.values(careerState.aptitudeProgress || {}).reduce((sum: number, c: any) => sum + (c.questionsSolved || 0), 0);
-  const aptitudePercent = Math.min(Math.round((aptitudeSolved / 900) * 100), 100);
-  const sqlPercent = Math.min(Math.round((sqlCompleted / 20) * 100), 100);
-  const totalCsCompleted = Object.values(careerState.csCoreProgress || {}).reduce((sum: number, sub: any) => sum + Object.values(sub).filter((x: any) => x.completed).length, 0);
-  const csCorePercent = Math.min(Math.round((totalCsCompleted / 50) * 100), 100);
-  
-  const projProgresses = Object.values(careerState.projects || {}).map(p => {
-    const valSum = Object.values(p.progress || {}).reduce((a,b)=>a+b, 0);
-    return valSum / 6;
-  });
-  const avgProjProgress = projProgresses.length > 0 ? (projProgresses.reduce((a,b)=>a+b,0)/projProgresses.length) : 0;
-  const projectPercent = Math.round(avgProjProgress);
+  const dsaPercent = placementBreakdown.dsaScore;
+  const skillrackPercent = placementBreakdown.skillrackScore;
+  const aptitudePercent = placementBreakdown.aptitudeScore;
+  const sqlPercent = placementBreakdown.sqlScore;
+  const csCorePercent = placementBreakdown.csCoreScore;
+  const projectPercent = placementBreakdown.projectScore;
 
   return (
     <div className="flex flex-col gap-6 fade-in pb-10 select-none">
@@ -105,7 +101,7 @@ export const AnalyticsPage: React.FC = () => {
           <div className="flex flex-col gap-4 text-xs text-textSecondary">
             <div>
               <div className="flex justify-between items-center text-[10px] text-textMuted font-bold mb-1 pl-0.5">
-                <span>DSA Roadmap (30%)</span>
+                <span>DSA Roadmap ({placementBreakdown.weights.dsa}%)</span>
                 <span>{dsaPercent}%</span>
               </div>
               <ProgressBar value={dsaPercent} color="var(--accent-blue)" />
@@ -113,7 +109,7 @@ export const AnalyticsPage: React.FC = () => {
 
             <div>
               <div className="flex justify-between items-center text-[10px] text-textMuted font-bold mb-1 pl-0.5">
-                <span>SkillRack target (15%)</span>
+                <span>SkillRack target ({placementBreakdown.weights.skillrack}%)</span>
                 <span>{skillrackPercent}%</span>
               </div>
               <ProgressBar value={skillrackPercent} color="var(--accent-emerald)" />
@@ -121,7 +117,7 @@ export const AnalyticsPage: React.FC = () => {
 
             <div>
               <div className="flex justify-between items-center text-[10px] text-textMuted font-bold mb-1 pl-0.5">
-                <span>Aptitude Solved (15%)</span>
+                <span>Aptitude Solved ({placementBreakdown.weights.aptitude}%)</span>
                 <span>{aptitudePercent}%</span>
               </div>
               <ProgressBar value={aptitudePercent} color="var(--accent-purple)" />
@@ -129,7 +125,7 @@ export const AnalyticsPage: React.FC = () => {
 
             <div>
               <div className="flex justify-between items-center text-[10px] text-textMuted font-bold mb-1 pl-0.5">
-                <span>SQL Practice (10%)</span>
+                <span>SQL Practice ({placementBreakdown.weights.sql}%)</span>
                 <span>{sqlPercent}%</span>
               </div>
               <ProgressBar value={sqlPercent} color="var(--accent-cyan)" />
@@ -137,7 +133,7 @@ export const AnalyticsPage: React.FC = () => {
 
             <div>
               <div className="flex justify-between items-center text-[10px] text-textMuted font-bold mb-1 pl-0.5">
-                <span>CS Core Subjects (15%)</span>
+                <span>CS Core Subjects ({placementBreakdown.weights.csCore}%)</span>
                 <span>{csCorePercent}%</span>
               </div>
               <ProgressBar value={csCorePercent} color="var(--accent-red)" />
@@ -145,7 +141,7 @@ export const AnalyticsPage: React.FC = () => {
 
             <div>
               <div className="flex justify-between items-center text-[10px] text-textMuted font-bold mb-1 pl-0.5">
-                <span>Project Progress (10%)</span>
+                <span>Project Progress ({placementBreakdown.weights.projects}%)</span>
                 <span>{projectPercent}%</span>
               </div>
               <ProgressBar value={projectPercent} color="var(--accent-yellow)" />
@@ -153,7 +149,7 @@ export const AnalyticsPage: React.FC = () => {
 
             <div>
               <div className="flex justify-between items-center text-[10px] text-textMuted font-bold mb-1 pl-0.5">
-                <span>ATS Resume score (3%)</span>
+                <span>ATS Resume score ({placementBreakdown.weights.resume}%)</span>
                 <span>{resumeScore}%</span>
               </div>
               <ProgressBar value={resumeScore} color="#EC4899" />
@@ -161,7 +157,7 @@ export const AnalyticsPage: React.FC = () => {
 
             <div>
               <div className="flex justify-between items-center text-[10px] text-textMuted font-bold mb-1 pl-0.5">
-                <span>Consistency Index (2%)</span>
+                <span>Consistency Index ({placementBreakdown.weights.consistency}%)</span>
                 <span>{consistencyScore}%</span>
               </div>
               <ProgressBar value={consistencyScore} color="var(--accent-orange)" />
@@ -240,6 +236,24 @@ export const AnalyticsPage: React.FC = () => {
             <div className="p-3 bg-bgSurface/30 border border-border-subtle rounded-xl flex justify-between items-center font-mono">
               <span>Patterns Mastered (Interview Ready)</span>
               <span className="font-bold text-accentEmerald">{dsaPatternsMastered} / 23</span>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="flex flex-col gap-4">
+          <span className="text-xs font-bold text-textSecondary uppercase tracking-wider block border-b border-border-subtle/50 pb-2 pl-0.5">Shayla Agent Activity</span>
+          <div className="flex flex-col gap-3 text-xs text-textSecondary">
+            <div className="p-3 bg-bgSurface/30 border border-border-subtle rounded-xl flex justify-between items-center font-mono">
+              <span>Morning briefs</span>
+              <span className="font-bold text-accentEmerald">{agentState.briefingHistory.filter((item) => item.kind === 'morning').length}</span>
+            </div>
+            <div className="p-3 bg-bgSurface/30 border border-border-subtle rounded-xl flex justify-between items-center font-mono">
+              <span>Evening reviews</span>
+              <span className="font-bold text-accentPurple">{agentState.eveningReviewHistory.length}</span>
+            </div>
+            <div className="p-3 bg-bgSurface/30 border border-border-subtle rounded-xl flex justify-between items-center font-mono">
+              <span>Notifications issued</span>
+              <span className="font-bold text-accentBlue">{agentState.smartNotificationLog.length}</span>
             </div>
           </div>
         </Card>

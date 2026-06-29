@@ -1,12 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { DailyLog, ProblemLog, Project, ResumeProfile, CareerApplication } from '../../types';
+import { runMigrationForStore } from './migrations';
+import { DailyLog, ProblemLog, Project, ResumeProfile, CareerApplication, CompanyTarget, WeeklyReview, SavedChatSession } from '../../types';
 import { GermanDailyLog, GermanLessonProgress, GermanQuizHistoryItem, GermanVocabularyProgress, GermanLevel } from '../../types/german';
 import { runAchievementEngine } from '../../utils/achievementEngine';
 import { useUIStore } from './useUIStore';
-import { getTodayDay } from '../../utils/dateUtils';
+import { getTodayDay, getDateForDay } from '../../utils/dateUtils';
+import { evaluateCompletion } from '../../utils/dailyCompletionUtils';
+import { TARGET_COMPANIES_DATA } from '../../data/companies';
+import { SKILL_TREE_DATA } from '../../data/skillTree';
 
-interface CareerState {
+export interface CareerState {
   userProfile: {
     name: string;
     startDate: string;
@@ -37,6 +41,12 @@ interface CareerState {
   dailyGermanLogs: Record<string, GermanDailyLog>;
   currentLessonId: string;
   german7DayStreakRewarded: boolean;
+  germanSpeakingSessions: number;
+  germanListeningSessions: number;
+  germanSpeakingStreak: number;
+  germanSpeakingMinutes: number;
+  germanListeningMinutes: number;
+  germanVocabularyReviewedToday: number;
   
   updateDailyLog: (day: number, log: Partial<DailyLog>) => void;
   updateProblemLog: (key: string, log: Partial<ProblemLog>) => void;
@@ -61,6 +71,23 @@ interface CareerState {
   submitWordReview: (wordId: string, correct: boolean) => void;
   repairStreak: () => void;
   resetGermanProgress: () => void;
+  logGermanSpeakingSession: (minutes?: number) => void;
+  logGermanListeningSession: (minutes?: number) => void;
+  logGermanVocabularyReview: (count?: number) => void;
+
+  // Placement Pro v1.3 & v1.4 additions
+  companyTargets: CompanyTarget[];
+  skillTree: Record<string, 'locked' | 'unlocked' | 'learning' | 'completed' | 'interview-ready'>;
+  weeklyReviews: Record<string, WeeklyReview>;
+  weeklyFreezeUsage: Record<string, boolean>;
+  chatHistory: SavedChatSession[];
+
+  updateCompanyTarget: (id: string, updates: Partial<CompanyTarget>) => void;
+  updateSkillNode: (id: string, status: 'locked' | 'unlocked' | 'learning' | 'completed' | 'interview-ready') => void;
+  saveWeeklyReview: (weekKey: string, review: WeeklyReview) => void;
+  useStreakFreeze: (day: number, reason?: string) => void;
+  saveChatSession: (session: SavedChatSession) => void;
+  deleteChatSession: (id: string) => void;
 }
 
 function deriveGermanLevel(completedCount: number): GermanLevel {
@@ -105,6 +132,15 @@ function calculateStreakState(logs: Record<string, GermanDailyLog>, todayDay: nu
   return { current, longest };
 }
 
+function getWeekKey(date: Date): string {
+  const temp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = temp.getUTCDay() || 7;
+  temp.setUTCDate(temp.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((temp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${temp.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
 function getGermanTodayKey(state: CareerState): string {
   return String(getTodayDay(state.userProfile.startDate));
 }
@@ -132,7 +168,13 @@ export const defaultGermanState = {
   quizHistory: [] as GermanQuizHistoryItem[],
   dailyGermanLogs: {} as Record<string, GermanDailyLog>,
   currentLessonId: 'german-1',
-  german7DayStreakRewarded: false
+  german7DayStreakRewarded: false,
+  germanSpeakingSessions: 0,
+  germanListeningSessions: 0,
+  germanSpeakingStreak: 0,
+  germanSpeakingMinutes: 0,
+  germanListeningMinutes: 0,
+  germanVocabularyReviewedToday: 0
 };
 
 export function normalizeLessonProgress(progress: any): GermanLessonProgress {
@@ -166,7 +208,13 @@ export function normalizeGermanState(state: any) {
     quizHistory: Array.isArray(state?.quizHistory) ? state.quizHistory : [],
     dailyGermanLogs: state?.dailyGermanLogs && typeof state.dailyGermanLogs === 'object' ? state.dailyGermanLogs : {},
     currentLessonId: typeof state?.currentLessonId === 'string' ? state.currentLessonId : 'german-1',
-    german7DayStreakRewarded: typeof state?.german7DayStreakRewarded === 'boolean' ? state.german7DayStreakRewarded : false
+    german7DayStreakRewarded: typeof state?.german7DayStreakRewarded === 'boolean' ? state.german7DayStreakRewarded : false,
+    germanSpeakingSessions: typeof state?.germanSpeakingSessions === 'number' ? state.germanSpeakingSessions : 0,
+    germanListeningSessions: typeof state?.germanListeningSessions === 'number' ? state.germanListeningSessions : 0,
+    germanSpeakingStreak: typeof state?.germanSpeakingStreak === 'number' ? state.germanSpeakingStreak : 0,
+    germanSpeakingMinutes: typeof state?.germanSpeakingMinutes === 'number' ? state.germanSpeakingMinutes : 0,
+    germanListeningMinutes: typeof state?.germanListeningMinutes === 'number' ? state.germanListeningMinutes : 0,
+    germanVocabularyReviewedToday: typeof state?.germanVocabularyReviewedToday === 'number' ? state.germanVocabularyReviewedToday : 0
   };
 }
 
@@ -180,6 +228,11 @@ export function normalizeAIMessage(msg: any) {
   };
 }
 
+const initialSkillTree = Object.keys(SKILL_TREE_DATA).reduce((acc, key) => {
+  acc[key] = key === 'java-basics' ? 'unlocked' : 'locked';
+  return acc;
+}, {} as Record<string, 'locked' | 'unlocked' | 'learning' | 'completed' | 'interview-ready'>);
+
 export const useCareerStore = create<CareerState>()(
   persist(
     (set) => ({
@@ -188,6 +241,11 @@ export const useCareerStore = create<CareerState>()(
         startDate: '2026-07-01',
         totalDays: 180
       },
+      companyTargets: TARGET_COMPANIES_DATA,
+      skillTree: initialSkillTree,
+      weeklyReviews: {},
+      weeklyFreezeUsage: {},
+      chatHistory: [],
       dailyLogs: {},
       problemLogs: {},
       projects: {
@@ -216,6 +274,19 @@ export const useCareerStore = create<CareerState>()(
             'Published and presented methodology at the ICGTETA 26 conference.'
           ],
           description: 'XGBoost + SHAP visual educational forecasting helper and analytics portal.'
+        },
+        career_os: {
+          name: 'Sanju Career OS',
+          status: 'building',
+          stack: ['React', 'TypeScript', 'Tailwind', 'Zustand', 'Prisma'],
+          github: 'https://github.com/sanju/career-os',
+          demo: 'https://career-os.sanzzdream.com',
+          progress: { backend: 80, frontend: 90, ai: 85, testing: 60, docs: 70, deploy: 50 },
+          bullets: [
+            'Designed a premium AI placement prep operating system with real-time analytics.',
+            'Implemented Zustand state persist slices and custom schemas with automatic migrations.'
+          ],
+          description: 'AI placement preparation operating system tracking DSA, German, SQL, and CS Core.'
         }
       },
       resume: {
@@ -246,11 +317,32 @@ export const useCareerStore = create<CareerState>()(
       dailyGermanLogs: {},
       currentLessonId: 'german-1',
       german7DayStreakRewarded: false,
+      germanSpeakingSessions: 0,
+      germanListeningSessions: 0,
+      germanSpeakingStreak: 0,
+      germanSpeakingMinutes: 0,
+      germanListeningMinutes: 0,
+      germanVocabularyReviewedToday: 0,
       
       updateDailyLog: (day, log) => set((state) => {
+        const existingLog = state.dailyLogs[day] || {
+          counts: { leetcode: 0, skillrack: 0, aptitude: 0, sql: 0, cscore: 0, german: 0, project: 0, resume: 0 },
+          lcStatus: [],
+          note: '',
+          mood: 3,
+          energy: 3,
+          distractions: 0,
+          focusMinutes: 0,
+          status: 'not_started',
+          savedAt: '',
+          xpEarned: 0
+        };
+        const mergedLog = { ...existingLog, ...log } as DailyLog;
+        mergedLog.completionType = evaluateCompletion(mergedLog);
+
         const nextLogs = {
           ...state.dailyLogs,
-          [day]: { ...state.dailyLogs[day], ...log } as DailyLog
+          [day]: mergedLog
         };
         const nextState = { ...state, dailyLogs: nextLogs };
         runAchievementEngine(nextState, set, (badge) => useUIStore.getState().setActiveBadge(badge));
@@ -638,10 +730,120 @@ export const useCareerStore = create<CareerState>()(
           currentLessonId: 'german-1',
           german7DayStreakRewarded: false
         };
+      }),
+      logGermanSpeakingSession: (minutes = 10) => set((state) => {
+        const nextSessions = (state.germanSpeakingSessions || 0) + 1;
+        const nextMinutes = (state.germanSpeakingMinutes || 0) + Math.max(minutes, 0);
+        const nextStreak = (state.germanSpeakingStreak || 0) + 1;
+        const nextXP = (state.germanXP || 0) + 15;
+        const nextMainXP = (state.xp || 0) + 10;
+        const nextState = {
+          ...state,
+          germanSpeakingSessions: nextSessions,
+          germanSpeakingMinutes: nextMinutes,
+          germanSpeakingStreak: nextStreak,
+          germanXP: nextXP,
+          xp: nextMainXP
+        };
+        runAchievementEngine(nextState, set, (badge) => useUIStore.getState().setActiveBadge(badge));
+        return {
+          germanSpeakingSessions: nextSessions,
+          germanSpeakingMinutes: nextMinutes,
+          germanSpeakingStreak: nextStreak,
+          germanXP: nextXP,
+          xp: nextMainXP
+        };
+      }),
+      logGermanListeningSession: (minutes = 10) => set((state) => {
+        const nextSessions = (state.germanListeningSessions || 0) + 1;
+        const nextMinutes = (state.germanListeningMinutes || 0) + Math.max(minutes, 0);
+        const nextXP = (state.germanXP || 0) + 10;
+        const nextMainXP = (state.xp || 0) + 5;
+        const nextState = {
+          ...state,
+          germanListeningSessions: nextSessions,
+          germanListeningMinutes: nextMinutes,
+          germanXP: nextXP,
+          xp: nextMainXP
+        };
+        runAchievementEngine(nextState, set, (badge) => useUIStore.getState().setActiveBadge(badge));
+        return {
+          germanListeningSessions: nextSessions,
+          germanListeningMinutes: nextMinutes,
+          germanXP: nextXP,
+          xp: nextMainXP
+        };
+      }),
+      logGermanVocabularyReview: (count = 5) => set((state) => {
+        const nextCount = (state.germanVocabularyReviewedToday || 0) + Math.max(count, 0);
+        const nextXP = (state.germanXP || 0) + Math.max(count, 0) * 2;
+        const nextState = {
+          ...state,
+          germanVocabularyReviewedToday: nextCount,
+          germanXP: nextXP
+        };
+        runAchievementEngine(nextState, set, (badge) => useUIStore.getState().setActiveBadge(badge));
+        return {
+          germanVocabularyReviewedToday: nextCount,
+          germanXP: nextXP
+        };
+      }),
+      updateCompanyTarget: (id, updates) => set((state) => {
+        const nextCompanies = (state.companyTargets || TARGET_COMPANIES_DATA).map((c) =>
+          c.id === id ? { ...c, ...updates } : c
+        );
+        return { companyTargets: nextCompanies };
+      }),
+      updateSkillNode: (id, status) => set((state) => {
+        const nextTree = { ...(state.skillTree || initialSkillTree), [id]: status };
+        return { skillTree: nextTree };
+      }),
+      saveWeeklyReview: (weekKey, review) => set((state) => {
+        const nextReviews = { ...(state.weeklyReviews || {}), [weekKey]: review };
+        return { weeklyReviews: nextReviews };
+      }),
+      useStreakFreeze: (day, reason = '') => set((state) => {
+        const dateObj = getDateForDay(day, state.userProfile.startDate);
+        const weekKey = getWeekKey(dateObj);
+        const nextWeeklyFreeze = { ...(state.weeklyFreezeUsage || {}), [weekKey]: true };
+        const log = state.dailyLogs[day] || {
+          counts: { leetcode: 0, skillrack: 0, aptitude: 0, sql: 0, cscore: 0, german: 0, project: 0, resume: 0 },
+          lcStatus: [],
+          note: '',
+          mood: 3,
+          energy: 3,
+          distractions: 0,
+          focusMinutes: 0,
+          status: 'not_started',
+          savedAt: '',
+          xpEarned: 0
+        };
+        const updatedLog: DailyLog = {
+          ...log,
+          freezeUsed: true,
+          freezeReason: reason,
+          completionType: 'freeze',
+          status: 'completed'
+        };
+        const nextLogs = { ...state.dailyLogs, [day]: updatedLog };
+        return {
+          dailyLogs: nextLogs,
+          weeklyFreezeUsage: nextWeeklyFreeze
+        };
+      }),
+      saveChatSession: (session) => set((state) => {
+        const nextHistory = [session, ...(state.chatHistory || [])].slice(0, 50);
+        return { chatHistory: nextHistory };
+      }),
+      deleteChatSession: (id) => set((state) => {
+        const nextHistory = (state.chatHistory || []).filter((s) => s.id !== id);
+        return { chatHistory: nextHistory };
       })
     }),
     {
       name: 'sanju-career-os-persist',
+      version: 141,
+      migrate: (persistedState, version) => runMigrationForStore('sanju-career-os-persist', persistedState, version),
       merge: (persisted, current) => {
         const saved = persisted as any;
         const normalizedGerman = normalizeGermanState(saved);

@@ -15,7 +15,6 @@ export const SCHEDULE: readonly ScheduleItem[] = [
   {id:'sql', label:'SQL Practice', emoji:'🗄️', time:'Evening', unit:'queries', target:5, color:'#06B6D4'},
   {id:'cscore', label:'CS Core', emoji:'🧠', time:'Evening', unit:'topics', target:1, color:'#10B981'},
   {id:'german', label:'German (Duolingo + Book)', emoji:'🇩🇪', time:'Bus time', unit:'minutes', target:20, color:'#10B981'},
-  {id:'ml', label:'Basic ML Knowledge', emoji:'🤖', time:'Bus time', unit:'minutes', target:15, color:'#EC4899'},
   {id:'project', label:'Project Work', emoji:'🚀', time:'Flexible', unit:'minutes', target:30, color:'#EAB308'},
   {id:'resume', label:'Resume / Career', emoji:'📄', time:'Flexible', unit:'minutes', target:15, color:'#F43F5E'},
 ];

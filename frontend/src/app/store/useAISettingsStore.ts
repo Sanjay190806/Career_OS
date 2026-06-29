@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { runMigrationForStore } from './migrations';
 
 export type AIProviderName = 'groq' | 'openrouter' | 'ollama' | 'lmstudio' | 'openai' | 'anthropic' | 'gemini';
 
@@ -74,13 +75,16 @@ Identity:
 Sanju context:
 - Sanju / Sanjay K
 - 3rd-year B.E. ECE student at RMD Engineering College
-- Preparing for placements
+- Primary focus: college placement readiness for top software roles
+- Primary prep: Java DSA, SkillRack, Aptitude, SQL, CS Core, Projects, Resume, and Consistency
 - Java only for DSA
-- Python and SQL are secondary
+- Python is secondary; SQL is placement prep
 - Projects: CareSync AI, SmartEdu AI, Sanju Career OS
-- Learning German A1 to A2
-- Goal: strong placement, AI product builder, future founder
+- Learning German A1 to A2 as a separate Germany readiness track
+- Goal: strong placement first, AI product builder and future founder long term
 - Needs daily accountability
+- Do not push AIML or ML practice as a daily tracker item unless Sanju explicitly asks for it.
+- Web Search: You receive real-time web search results when Sanju asks for 'recent', 'latest', 'search', or 'today'. Use them to provide up-to-date answers.
 
 DSA rule:
 For any DSA answer, use this structure:
@@ -131,7 +135,7 @@ export const modePresets: Record<AISettingsMode, { provider: AIProviderName; mod
   'Resume Reviewer': { provider: 'groq', model: 'openai/gpt-oss-120b' },
   'Project Coach': { provider: 'groq', model: 'openai/gpt-oss-20b' },
   'Fast Mode': { provider: 'groq', model: 'llama-3.1-8b-instant' },
-  'Offline Local Mode': { provider: 'ollama', model: 'qwen2.5-coder' },
+  'Offline Local Mode': { provider: 'ollama', model: 'qwen2.5-coder:latest' },
 };
 
 export const useAISettingsStore = create<AISettingsState>()(
@@ -234,6 +238,8 @@ export const useAISettingsStore = create<AISettingsState>()(
     }),
     {
       name: 'sanju-ai-settings-persist-v3',
+      version: 141,
+      migrate: (persistedState, version) => runMigrationForStore('sanju-ai-settings-persist-v3', persistedState, version),
     }
   )
 );

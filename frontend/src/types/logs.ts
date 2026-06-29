@@ -5,9 +5,13 @@ export interface ActivityCounts {
   sql: number;
   cscore: number;
   german: number;
-  ml: number;
+  ml?: number;
   project: number;
   resume: number;
+  mockTechnical?: number;
+  mockHR?: number;
+  mockCoding?: number;
+  mockProject?: number;
 }
 
 export interface DailyLog {
@@ -21,6 +25,9 @@ export interface DailyLog {
   status: 'not_started' | 'in_progress' | 'partial' | 'completed' | 'missed' | 'recovery';
   savedAt: string;
   xpEarned: number;
+  freezeUsed?: boolean;
+  freezeReason?: string;
+  completionType?: 'missed' | 'partial' | 'minimum' | 'perfect' | 'freeze';
 }
 
 export interface ProblemLog {

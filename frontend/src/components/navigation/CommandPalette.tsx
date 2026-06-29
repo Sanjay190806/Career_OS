@@ -23,8 +23,13 @@ const pages = [
   { label: 'Today Mission', detail: 'Open the daily execution page', section: 'today' },
   { label: 'Roadmap', detail: 'Browse the 180-day DSA roadmap', section: 'roadmap' },
   { label: 'Shayla AI Mentor', detail: 'Open the AI mentor and German companion', section: 'ai' },
+  { label: 'Portfolio Mode', detail: 'Open the recruiter-safe showcase', section: 'portfolio' },
   { label: 'German', detail: 'Open the Duolingo-style German module', section: 'german' },
+  { label: 'Coding Mentor', detail: 'Open the Java-first coding mentor', section: 'coding_mentor' },
+  { label: 'Career Intelligence', detail: 'Open the placement intelligence dashboard', section: 'career_intelligence' },
+  { label: 'Admin Dashboard', detail: 'Open the local dev admin placeholder', section: 'admin' },
   { label: 'Projects', detail: 'Open your project workspace', section: 'projects' },
+  { label: 'Interview Coach', detail: 'Open the AI interview practice coach', section: 'interview_coach' },
   { label: 'Reports', detail: 'View progress reports', section: 'reports' },
   { label: 'Settings', detail: 'AI, sync, and backup controls', section: 'settings' },
 ];
@@ -89,6 +94,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
     if (result.type === 'roadmap') {
       setSearchQuery(result.query);
       setActiveSection('roadmap');
+    } else if (result.section === 'portfolio') {
+      window.location.pathname = '/portfolio';
+      setQuery('');
+      onClose();
+      return;
     } else {
       setActiveSection(result.section);
       if (result.section === 'roadmap') setSearchQuery('');
@@ -98,8 +108,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/60 px-4 pt-24 backdrop-blur-sm">
-      <Card className="w-full max-w-2xl border-border-accent/20 bg-bgSurface/95 p-4">
+    <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/60 px-2 pt-16 backdrop-blur-sm sm:px-4 sm:pt-24">
+      <Card className="w-full max-w-2xl border-border-accent/20 bg-bgSurface/95 p-3 sm:p-4">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-textPrimary">
             <Search className="h-4 w-4 text-accentBlue" />

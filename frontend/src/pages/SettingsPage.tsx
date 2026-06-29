@@ -11,6 +11,12 @@ import { aiService } from '../services/aiService';
 import { ApiError } from '../services/apiClient';
 import { exportJSON, restore, clear } from '../utils/storageUtils';
 import { useAISettingsStore } from '../app/store/useAISettingsStore';
+import { useShaylaAgentStore } from '../app/store/useShaylaAgentStore';
+import { runMigrationForStore } from '../app/store/migrations';
+import { getMigrationLogs, resetIndividualStore, clearAllLocalData, MigrationRecord } from '../utils/stateMigrationUtils';
+import { FounderWorkspacePanel } from '../components/settings/FounderWorkspacePanel';
+import { FeatureFlagsPanel } from '../components/settings/FeatureFlagsPanel';
+import { FeedbackPanel } from '../components/settings/FeedbackPanel';
 
 type HealthStatus = {
   backendOnline: boolean;
@@ -68,6 +74,58 @@ export const SettingsPage: React.FC = () => {
   const [lastAiStatus, setLastAiStatus] = useState<string>('No test run yet');
   const [lastAiTestTime, setLastAiTestTime] = useState<string>('Never');
   const [aiBusy, setAiBusy] = useState(false);
+  const agentSettings = useShaylaAgentStore((s) => s);
+  
+  const [migrationLogs, setMigrationLogs] = useState<MigrationRecord[]>([]);
+
+  useEffect(() => {
+    setMigrationLogs(getMigrationLogs());
+  }, []);
+
+  const handleRepairState = () => {
+    try {
+      const keys = [
+        'sanju-career-os-persist',
+        'sanju-ai-settings-persist-v3',
+        'sanju-shayla-agent-persist-v1',
+        'sanju-career-os-ui-state'
+      ];
+      keys.forEach((key) => {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const state = parsed.state || parsed;
+          const repaired = runMigrationForStore(key, state, 141);
+          parsed.state = repaired;
+          localStorage.setItem(key, JSON.stringify(parsed));
+        }
+      });
+      setMigrationLogs(getMigrationLogs());
+      setNotice({ text: 'All local stores verified and schema properties repaired successfully! Reloading...', type: 'success' });
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (e: any) {
+      setNotice({ text: `Repair failed: ${e.message}`, type: 'error' });
+    }
+  };
+
+  const handleResetStore = (storeName: string) => {
+    if (window.confirm(`Are you sure you want to reset the store "${storeName}"? This will back up the old state in localStorage.`)) {
+      resetIndividualStore(storeName);
+      setNotice({ text: `Store "${storeName}" has been reset. Refreshing page...`, type: 'success' });
+      setTimeout(() => window.location.reload(), 1500);
+    }
+  };
+
+  const handleClearAllData = () => {
+    const confirmText = window.prompt("WARNING: This will clear ALL local stores. Type 'DESTROY ALL DATA' to confirm:");
+    if (confirmText === 'DESTROY ALL DATA') {
+      clearAllLocalData();
+      setNotice({ text: 'All data cleared. Reloading...', type: 'success' });
+      setTimeout(() => window.location.reload(), 1500);
+    } else if (confirmText !== null) {
+      setNotice({ text: 'Confirmation text incorrect. Reset aborted.', type: 'error' });
+    }
+  };
 
   const summaryCards = useMemo(() => ([
     {
@@ -202,6 +260,15 @@ export const SettingsPage: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const confirmMsg = `WARNING: Importing the file "${file.name}" will overwrite your current local tracker data.\n\n` +
+      `We highly recommend exporting a backup of your current state first.\n\n` +
+      `Are you sure you want to proceed and overwrite all local data?`;
+
+    if (!window.confirm(confirmMsg)) {
+      event.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (loadEvent) => {
       try {
@@ -232,6 +299,11 @@ export const SettingsPage: React.FC = () => {
       useAIStore.getState().clearChat();
       setNotice({ text: 'AI chat history cleared successfully.', type: 'success' });
     }
+  };
+
+  const handleNewChat = () => {
+    useAIStore.getState().clearChat();
+    setNotice({ text: 'New chat started successfully.', type: 'success' });
   };
 
   const handleClearBadges = () => {
@@ -375,6 +447,9 @@ export const SettingsPage: React.FC = () => {
             <Button type="button" onClick={handleClearChat} size="sm" variant="outline">
               Clear AI History
             </Button>
+            <Button type="button" onClick={handleNewChat} size="sm" variant="outline">
+              New Chat
+            </Button>
           </div>
 
           <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4 text-xs text-textSecondary">
@@ -431,9 +506,14 @@ export const SettingsPage: React.FC = () => {
                 <span className="font-bold text-textPrimary">Clear AI Mentor Chat History</span>
                 <p className="mt-0.5 text-[10px] text-textMuted">Clears all saved Shayla messages.</p>
               </div>
-              <Button onClick={handleClearChat} variant="outline" className="rounded-xl px-4 py-2 text-xs">
-                Clear Chat
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleNewChat} variant="outline" className="rounded-xl px-4 py-2 text-xs">
+                  New Chat
+                </Button>
+                <Button onClick={handleClearChat} variant="outline" className="rounded-xl px-4 py-2 text-xs">
+                  Clear Chat
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -462,6 +542,60 @@ export const SettingsPage: React.FC = () => {
           </div>
         </Card>
 
+        <div className="flex flex-col gap-6">
+          <FounderWorkspacePanel />
+          <FeatureFlagsPanel />
+        </div>
+
+        <Card className="flex flex-col gap-4">
+          <div className="border-b border-border-subtle/50 pb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Shayla Agent Mode</p>
+            <h3 className="mt-1 text-lg font-semibold text-textPrimary">Daily briefing and notification controls</h3>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {[
+              { label: 'Agent mode', checked: agentSettings.agentModeEnabled, setChecked: agentSettings.setAgentModeEnabled },
+              { label: 'Daily briefing', checked: agentSettings.dailyBriefingEnabled, setChecked: agentSettings.setDailyBriefingEnabled },
+              { label: 'Evening review', checked: agentSettings.eveningReviewEnabled, setChecked: agentSettings.setEveningReviewEnabled },
+              { label: 'Smart notifications', checked: agentSettings.smartNotificationsEnabled, setChecked: agentSettings.setSmartNotificationsEnabled },
+              { label: 'Auto briefing on launch', checked: agentSettings.autoGenerateBriefingOnLaunch, setChecked: agentSettings.setAutoGenerateBriefingOnLaunch },
+              { label: 'Recovery suggestions', checked: agentSettings.enableRecoverySuggestions, setChecked: (value: boolean) => agentSettings.setAgentSubFeature('enableRecoverySuggestions', value) },
+              { label: 'German nudges', checked: agentSettings.enableGermanNudges, setChecked: (value: boolean) => agentSettings.setAgentSubFeature('enableGermanNudges', value) },
+              { label: 'CS Core nudges', checked: agentSettings.enableCsCoreNudges, setChecked: (value: boolean) => agentSettings.setAgentSubFeature('enableCsCoreNudges', value) },
+              { label: 'Resume nudges', checked: agentSettings.enableResumeNudges, setChecked: (value: boolean) => agentSettings.setAgentSubFeature('enableResumeNudges', value) },
+            ].map((item) => (
+              <label key={item.label} className="flex items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-white/[0.04] px-4 py-3 text-xs text-textPrimary">
+                <span className="font-semibold">{item.label}</span>
+                <input
+                  type="checkbox"
+                  checked={item.checked}
+                  onChange={(e) => item.setChecked(e.target.checked)}
+                  className="h-4 w-4 accent-accentBlue"
+                />
+              </label>
+            ))}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            {(['low', 'medium', 'high'] as const).map((level) => (
+              <Button
+                key={level}
+                type="button"
+                variant={agentSettings.notificationSensitivity === level ? 'primary' : 'outline'}
+                onClick={() => agentSettings.setNotificationSensitivity(level)}
+                className="justify-center capitalize"
+              >
+                {level} sensitivity
+              </Button>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="xl:col-span-2">
+          <FeedbackPanel />
+        </Card>
+
         <Card className="xl:col-span-2">
           <div className="flex items-center gap-3 border-b border-border-subtle/50 pb-3">
             <ShieldCheck className="h-4 w-4 text-accentYellow" />
@@ -482,6 +616,87 @@ export const SettingsPage: React.FC = () => {
               </div>
             ))}
           </div>
+        </Card>
+
+        {/* System Health & State Versioning Maintenance Panel */}
+        <Card className="xl:col-span-2 flex flex-col gap-4">
+          <div className="border-b border-border-subtle/50 pb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">System Health & State Migrations</p>
+            <h3 className="mt-1 text-lg font-semibold text-textPrimary">Local Storage Schema & Database Health</h3>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4">
+              <span className="block text-[9px] font-bold text-textMuted uppercase tracking-wider">App Version</span>
+              <span className="block text-lg font-black text-textPrimary mt-1">v1.4.1</span>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4">
+              <span className="block text-[9px] font-bold text-textMuted uppercase tracking-wider">Schema State version</span>
+              <span className="block text-lg font-black text-accentBlue mt-1">141</span>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4">
+              <span className="block text-[9px] font-bold text-textMuted uppercase tracking-wider">Last Migration</span>
+              <span className="block text-xs font-semibold text-accentEmerald mt-2 truncate">
+                {migrationLogs.length > 0 ? new Date(migrationLogs[migrationLogs.length - 1].migratedAt).toLocaleString() : 'No migration run'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3 mt-2">
+            <Button 
+              type="button" 
+              onClick={handleRepairState}
+              className="rounded-xl text-xs bg-accentEmerald text-white hover:bg-accentEmerald/90"
+            >
+              Repair Local State
+            </Button>
+            <Button 
+              type="button" 
+              onClick={() => handleResetStore('sanju-career-os-persist')}
+              variant="outline" 
+              className="rounded-xl text-xs"
+            >
+              Reset Career Store
+            </Button>
+            <Button 
+              type="button" 
+              onClick={() => handleResetStore('sanju-ai-settings-persist-v3')}
+              variant="outline" 
+              className="rounded-xl text-xs"
+            >
+              Reset AI Settings Store
+            </Button>
+            <Button 
+              type="button" 
+              onClick={() => handleResetStore('sanju-shayla-agent-persist-v1')}
+              variant="outline" 
+              className="rounded-xl text-xs"
+            >
+              Reset Agent Store
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleClearAllData}
+              variant="danger" 
+              className="rounded-xl text-xs"
+            >
+              Destroy All Data
+            </Button>
+          </div>
+
+          {migrationLogs.length > 0 && (
+            <div className="mt-3 flex flex-col gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-textSecondary">Migration History Logs</span>
+              <div className="rounded-xl border border-border-subtle bg-black/40 p-3 max-h-[160px] overflow-y-auto font-mono text-[10px] text-textSecondary flex flex-col gap-1.5">
+                {migrationLogs.map((log, idx) => (
+                  <div key={idx} className="pb-1 border-b border-white/5 last:border-b-0 flex justify-between gap-4">
+                    <span>• {log.storeName} (v{log.version}): {log.notes}</span>
+                    <span className="text-textMuted shrink-0">{new Date(log.migratedAt).toLocaleTimeString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </div>

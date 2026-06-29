@@ -13,6 +13,61 @@ const trimForAI = (value: string, maxChars: number): string => {
   return `${value.slice(0, Math.max(0, maxChars - 12)).trimEnd()}...[trimmed]`;
 };
 
+export interface NormalizedAIResponse {
+  content: string;
+  providerUsed?: string;
+  modelUsed?: string;
+  fallbackUsed?: boolean;
+  latencyMs?: number;
+}
+
+export function normalizeAIResponse(raw: any): NormalizedAIResponse {
+  if (!raw) {
+    throw new Error('Shayla returned an empty response.');
+  }
+
+  let content = '';
+  if (typeof raw.reply === 'string') content = raw.reply;
+  else if (typeof raw.content === 'string') content = raw.content;
+  else if (raw.message && typeof raw.message.content === 'string') content = raw.message.content;
+  else if (raw.data && typeof raw.data.reply === 'string') content = raw.data.reply;
+  else if (raw.data && raw.data.message && typeof raw.data.message.content === 'string') content = raw.data.message.content;
+
+  if (!content) {
+    throw new Error('Shayla returned an empty response.');
+  }
+
+  return {
+    content,
+    providerUsed: raw.metadata?.providerUsed || raw.provider || raw.providerUsed,
+    modelUsed: raw.metadata?.modelUsed || raw.model || raw.modelUsed,
+    fallbackUsed: raw.metadata?.fallbackUsed || raw.fallbackUsed,
+    latencyMs: raw.metadata?.latencyMs || raw.latencyMs
+  };
+}
+
+export function parseStreamChunk(line: string): string {
+  const trimmed = line.trim();
+  if (!trimmed) return '';
+  if (trimmed === 'data: [DONE]' || trimmed === '[DONE]') return '';
+
+  let dataStr = trimmed;
+  if (trimmed.startsWith('data: ')) {
+    dataStr = trimmed.slice(6);
+  }
+
+  try {
+    const parsed = JSON.parse(dataStr);
+    if (typeof parsed.content === 'string') return parsed.content;
+    if (typeof parsed.delta === 'string') return parsed.delta;
+    if (typeof parsed.token === 'string') return parsed.token;
+    if (typeof parsed.reply === 'string') return parsed.reply;
+  } catch {
+    // Ignore invalid JSON chunks
+  }
+  return '';
+}
+
 export function prepareAIMessagesForRequest(messages: AIMessage[]): AIMessage[] {
   return messages
     .filter((message) => message.role !== 'system' && message.status !== 'failed' && message.status !== 'streaming' && message.content.trim())
@@ -73,7 +128,7 @@ const getSettingsBody = (messages: AIMessage[], context: any) => {
   };
 };
 
-const sendAIRequest = async (messages: AIMessage[], context: any) => {
+const sendAIRequest = async (messages: AIMessage[], context: any): Promise<{ reply: string }> => {
   const body = getSettingsBody(messages, context);
   const started = Date.now();
   const response = await request<any>('/ai/chat', {
@@ -82,14 +137,16 @@ const sendAIRequest = async (messages: AIMessage[], context: any) => {
   });
 
   const latency = Date.now() - started;
-  if (response.metadata) {
-    const finalLatency = response.metadata.latencyMs || latency;
-    const usage = response.metadata.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
-    const cost = usage.estimatedCostUsd || 0;
-    useAISettingsStore.getState().recordUsage(usage.totalTokens, finalLatency, cost);
-  }
+  
+  // Normalize here
+  const normalized = normalizeAIResponse(response);
 
-  return response;
+  const finalLatency = response.metadata?.latencyMs || latency;
+  const usage = response.metadata?.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+  const cost = usage.estimatedCostUsd || 0;
+  useAISettingsStore.getState().recordUsage(usage.totalTokens, finalLatency, cost);
+
+  return { reply: normalized.content };
 };
 
 export const aiService: AIService = {
@@ -145,12 +202,12 @@ export const aiService: AIService = {
         if (!trimmed) continue;
         if (trimmed.startsWith('event: done')) continue;
 
+        // Process metadata/errors from custom headers
         if (trimmed.startsWith('data: ')) {
           try {
-            const parsed = JSON.parse(trimmed.slice(6));
-            if (parsed.token) {
-              onToken(parsed.token);
-            } else if (parsed.metadata) {
+            const dataStr = trimmed.slice(6);
+            const parsed = JSON.parse(dataStr);
+            if (parsed.metadata) {
               const latency = parsed.metadata.latencyMs || 0;
               const usage = parsed.metadata.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
               const cost = usage.estimatedCostUsd || 0;
@@ -162,8 +219,12 @@ export const aiService: AIService = {
             if (err instanceof ApiError) {
               throw err;
             }
-            // Ignore incomplete line chunks
           }
+        }
+
+        const token = parseStreamChunk(trimmed);
+        if (token) {
+          onToken(token);
         }
       }
     }

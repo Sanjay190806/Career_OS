@@ -10,7 +10,6 @@ export const XP_RULES = {
   sql_session: 20,
   cscore_session: 20,
   german_session: 10,
-  ml_session: 15,
   project_work: 40,
   resume_work: 30,
   full_day_bonus: 100,

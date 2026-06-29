@@ -17,7 +17,7 @@ export function buildAIContext(s: CareerState): any {
   const completedTasks = Object.entries(counts)
     .filter(([, value]) => Number(value) > 0)
     .map(([key, value]) => `${key}:${value}`);
-  const missedTasks = ['leetcode', 'aptitude', 'sql', 'german', 'project'].filter((key) => Number((counts as any)[key] || 0) === 0);
+  const missedTasks = ['leetcode', 'skillrack', 'aptitude', 'sql', 'cscore', 'project'].filter((key) => Number((counts as any)[key] || 0) === 0);
   const weakDSAPatterns = Object.entries(s.dsaPatternMastery || {})
     .filter(([, value]) => value.mastery === 'Learning' || value.mastery === 'Not Started')
     .slice(0, 5)
@@ -38,6 +38,9 @@ export function buildAIContext(s: CareerState): any {
     currentDay: today,
     selectedDay: today,
     roadmapDay: today,
+    primaryFocus: 'College placement readiness for top software roles',
+    primaryPrep: ['Java DSA', 'SkillRack', 'Aptitude', 'SQL', 'CS Core', 'Projects', 'Resume', 'Consistency'],
+    secondaryLongTerm: ['German A1/A2 for Germany readiness', 'AI product builder and future founder path'],
     currentTopic: todayProblems[0]?.topic || 'Revision',
     todayProblems: todayProblems.map((problem) => problem.title),
     todayLeetCodeProblems: todayProblems.slice(0, 2).map((problem) => ({ title: problem.title, topic: problem.topic, difficulty: problem.difficulty })),
@@ -46,8 +49,10 @@ export function buildAIContext(s: CareerState): any {
     revisionQueueCount,
     dailyTargets: {
       leetcode: todayProblems.slice(0, 2).map((problem) => problem.title),
+      skillrack: 10,
       aptitude: 30,
       sql: 5,
+      csCoreTopics: 1,
       germanMinutes: 20,
       projectMinutes: 30
     },

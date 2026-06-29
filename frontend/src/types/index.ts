@@ -9,6 +9,8 @@ export * from './achievements';
 export * from './ai';
 export * from './focus';
 export * from './german';
+export * from './interview';
+export * from './placement';
 
 import { DailyLog, ProblemLog } from './logs';
 import { Project } from './projects';
@@ -16,6 +18,9 @@ import { ResumeProfile } from './resume';
 import { CareerApplication } from './applications';
 import { UserProfile } from './settings';
 import { GermanDailyLog, GermanLessonProgress, GermanQuizHistoryItem, GermanVocabularyProgress, GermanLevel } from './german';
+import { CompanyTarget, WeeklyReview } from './placement';
+import { SavedChatSession } from './ai';
+
 
 export interface CareerState {
   userProfile: UserProfile;
@@ -44,4 +49,12 @@ export interface CareerState {
   dailyGermanLogs?: Record<string, GermanDailyLog>;
   currentLessonId?: string;
   german7DayStreakRewarded?: boolean;
+  
+  // Placement Pro v1.3 additions
+  companyTargets?: CompanyTarget[];
+  skillTree?: Record<string, 'locked' | 'unlocked' | 'learning' | 'completed' | 'interview-ready'>;
+  weeklyReviews?: Record<string, WeeklyReview>;
+  weeklyFreezeUsage?: Record<string, boolean>;
+  chatHistory?: SavedChatSession[];
 }
+

@@ -2,6 +2,19 @@
 
 Local-first career and placement tracker with a React + TypeScript frontend, Express backend, Prisma, PostgreSQL, Zustand persistence, and a secure Groq proxy.
 
+## v1.4.1 Changelog (Stabilization & UX Audit Release)
+
+- **Landing Page & Routing**: Rebuilt a custom state popstate router to synchronize pathname changes with UI store states. Public routes (`/`, `/landing`, `/portfolio`) load immediately without rendering the AppShell.
+- **Cinematic Landing Page**: Redesigned `LandingPage.tsx` with high-impact recruiter-ready sections (Hero, badge, problems, solutions, modules, tech stack, and portfolio CTA) without private details or sidebar.
+- **Premium Static Background**: Disabled childish mouse-aura canvas and particle grids. Implemented a static HSL dark gradient and subtle line-grid background inside `NeonAtmosphere.tsx`.
+- **Shayla AI Chat Stabilization**: Fixed height collapse bugs in chat viewport. Embedded model status details, dynamic token context usage indicators, and real-time response latency tracker under the Shayla topbar.
+- **XSS Sanitization & Security Hardening**: Implemented robust string and URL sanitizers inside `securityUtils.ts` to secure all Markdown rendering points.
+- **Global Toast Notification System**: Added global toast store and UI overlay for error/success notifications.
+- **State Versioning & Fallbacks**: Configured state version `141` on all local persisted stores with schema recovery fallbacks. Added a System Health Maintenance card to Settings.
+- **Lazy Loading**: Integrated React Suspense and dynamic imports for heavy subpages, decreasing bundle load footprint.
+- **Keyboard Navigation Shortcuts**: Built a global shortcut manager Hook (`useGlobalShortcuts.ts`) and modal dialog for quick keys (e.g. typing `g` then `d` to go to Dashboard).
+- **UX Refinements**: Collapsible Daily Briefing logs, optional German tracker hidden under expander card, compact mock interview counters, status legend on calendar, and categorized drawer tasks.
+
 ## v1.1 Changelog
 
 - Stabilized the German module with 30 lessons, a lesson drawer, XP, streaks, notes, quizzes, and Shayla lesson help.

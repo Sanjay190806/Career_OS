@@ -3,7 +3,14 @@ import cors from 'cors';
 import { env } from './config/env.js';
 import healthRoutes from './routes/health.routes.js';
 import aiRoutes from './routes/ai.routes.js';
+import agentRoutes from './routes/agent.routes.js';
+import germanRoutes from './routes/german.routes.js';
+import interviewRoutes from './routes/interview.routes.js';
+import resumeRoutes from './routes/resume.routes.js';
 import syncRoutes from './routes/sync.routes.js';
+import feedbackRoutes from './routes/feedback.routes.js';
+import integrationRoutes from './routes/integration.routes.js';
+import resumeUploadRoutes from './routes/resumeUpload.routes.js';
 
 const app = express();
 
@@ -12,7 +19,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '7mb' }));
 
 // Custom in-memory lightweight rate-limiting middleware for API security
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
@@ -38,6 +45,13 @@ const rateLimitMiddleware = (req: express.Request, res: express.Response, next: 
 // Routes
 app.use('/api', healthRoutes);
 app.use('/api', rateLimitMiddleware, aiRoutes); // Mount rate-limiting on AI mentor routes
+app.use('/api', rateLimitMiddleware, agentRoutes);
+app.use('/api', rateLimitMiddleware, germanRoutes);
+app.use('/api', rateLimitMiddleware, interviewRoutes);
+app.use('/api', rateLimitMiddleware, resumeRoutes);
+app.use('/api', rateLimitMiddleware, resumeUploadRoutes);
+app.use('/api', rateLimitMiddleware, integrationRoutes);
+app.use('/api', rateLimitMiddleware, feedbackRoutes);
 app.use('/api', syncRoutes);
 
 // General 404 handler

@@ -1,116 +1,246 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import { Drawer } from '../components/ui/Drawer';
 import { useCareerStore } from '../app/store/useCareerStore';
+import { SavedChatSession } from '../types';
+import { Search, Calendar, MessageSquare, Trash2, ArrowRight } from 'lucide-react';
 
 export const HistoryPage: React.FC = () => {
   const dailyLogs = useCareerStore((s) => s.dailyLogs);
+  const chatHistory = useCareerStore((s) => s.chatHistory || []);
+  const deleteChatSession = useCareerStore((s) => s.deleteChatSession);
 
+  const [activeTab, setActiveTab] = useState<'logs' | 'chats'>('logs');
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [moodFilter, setMoodFilter] = useState("all");
+  const [selectedSession, setSelectedSession] = useState<SavedChatSession | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const logsList = Object.keys(dailyLogs).map(day => ({
-    day: parseInt(day),
-    ...dailyLogs[day]
-  })).sort((a, b) => b.day - a.day);
+  // Study Logs list mapping
+  const logsList = useMemo(() => {
+    return Object.keys(dailyLogs).map(day => ({
+      day: parseInt(day),
+      ...dailyLogs[day]
+    })).sort((a, b) => b.day - a.day);
+  }, [dailyLogs]);
 
-  // Apply filters
-  const filteredLogs = logsList.filter(log => {
-    const matchesSearch = log.note?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
-    const matchesStatus = statusFilter === 'all' || log.status === statusFilter;
-    const matchesMood = moodFilter === 'all' || String(log.mood) === moodFilter;
-    return matchesSearch && matchesStatus && matchesMood;
-  });
+  // Apply filters to Study Logs
+  const filteredLogs = useMemo(() => {
+    return logsList.filter(log => {
+      const matchesSearch = log.note?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+      const matchesStatus = statusFilter === 'all' || log.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [logsList, searchTerm, statusFilter]);
 
-  const getStatusVariant = (status: string) => {
+  // Apply filters to Chat Sessions
+  const filteredChats = useMemo(() => {
+    return chatHistory.filter(session => {
+      const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        session.messages.some(m => m.content.toLowerCase().includes(searchTerm.toLowerCase()));
+      return matchesSearch;
+    });
+  }, [chatHistory, searchTerm]);
+
+  const getStatusVariant = (status: string): "success" | "warning" | "danger" | "neutral" => {
     if (status === 'completed') return 'success';
     if (status === 'partial') return 'warning';
     if (status === 'missed') return 'danger';
     return 'neutral';
   };
 
-  const statusOptions = [
-    { value: 'all', label: 'All status types' },
-    { value: 'completed', label: 'Completed logs' },
-    { value: 'partial', label: 'Partial logs' },
-    { value: 'missed', label: 'Missed logs' }
-  ];
+  const handleOpenSession = (session: SavedChatSession) => {
+    setSelectedSession(session);
+    setDrawerOpen(true);
+  };
 
-  const moodOptions = [
-    { value: 'all', label: 'All moods' },
-    { value: '5', label: '🔥 High Energy' },
-    { value: '3', label: '🙂 Normal Mood' },
-    { value: '1', label: '😴 Very Fatigued' }
-  ];
+  const handleDeleteSession = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this chat session?")) {
+      deleteChatSession(id);
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-6 fade-in pb-10 select-none">
+    <div className="flex flex-col gap-6 fade-in pb-10">
       <SectionHeader
-        title="Historical Study Logs"
-        subtitle="Search and filter your historical progress notes and mood parameters logs"
+        title="Reflection & Chat History"
+        subtitle="Review your historical study logs, reflection notes, and saved Shayla AI mentor chat sessions."
       />
 
-      {/* Filter panel */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Input
-          placeholder="Search notes content..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        
-        <Select
-          options={statusOptions}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        />
-
-        <Select
-          options={moodOptions}
-          value={moodFilter}
-          onChange={(e) => setMoodFilter(e.target.value)}
-        />
+      {/* Tabs */}
+      <div className="flex border-b border-border-subtle gap-2">
+        <button
+          onClick={() => { setActiveTab('logs'); setSearchTerm(''); }}
+          className={`px-4 py-2.5 text-xs font-bold transition border-b-2 -mb-[2px] ${
+            activeTab === 'logs' ? 'border-accentBlue text-accentBlue' : 'border-transparent text-textMuted hover:text-textPrimary'
+          }`}
+        >
+          Study Logs
+        </button>
+        <button
+          onClick={() => { setActiveTab('chats'); setSearchTerm(''); }}
+          className={`px-4 py-2.5 text-xs font-bold transition border-b-2 -mb-[2px] ${
+            activeTab === 'chats' ? 'border-accentBlue text-accentBlue' : 'border-transparent text-textMuted hover:text-textPrimary'
+          }`}
+        >
+          AI Chat History ({chatHistory.length})
+        </button>
       </div>
 
-      {/* Logs List */}
-      <div className="flex flex-col gap-4">
-        {filteredLogs.length === 0 ? (
-          <div className="glass-card p-12 text-center text-xs text-textSecondary">
-            No matching study logs found.
-          </div>
-        ) : (
-          filteredLogs.map((log) => (
-            <Card key={log.day} className="p-4 flex flex-col gap-3 bg-bgCard/40 border border-border-subtle">
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <span className="text-xs font-bold text-textPrimary">Day {log.day} Study Log</span>
-                  <span className="text-[10px] text-textMuted font-mono block mt-0.5">Saved: {new Date(log.savedAt || '').toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs">
-                    {['😴', '😐', '🙂', '😊', '🔥'][(log.mood || 3) - 1]}
-                  </span>
-                  <Badge variant={getStatusVariant(log.status)}>{log.status}</Badge>
-                </div>
-              </div>
+      {/* Filter panel */}
+      <div className="flex flex-wrap items-center gap-4 bg-bgSurface/40 p-4 rounded-2xl border border-border-subtle">
+        <div className="flex-1 min-w-[200px] relative">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-textMuted" />
+          <input
+            type="text"
+            placeholder={activeTab === 'logs' ? "Search notes..." : "Search chat content..."}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-9 pl-9 pr-4 rounded-xl border border-border-subtle bg-bgSurface/60 text-xs text-textPrimary placeholder:text-textMuted focus:outline-none focus:border-accentBlue"
+          />
+        </div>
 
-              {log.note && (
-                <p className="p-3 bg-bgSurface/40 border border-border-subtle rounded-xl text-[11px] leading-relaxed text-textSecondary whitespace-pre-wrap">
-                  {log.note}
-                </p>
-              )}
-
-              <div className="flex justify-between items-center text-[10px] text-textMuted font-mono border-t border-border-subtle/50 pt-2.5">
-                <span>Problems Solved: {log.lcStatus?.length || 0} LeetCode</span>
-                <span className="text-accentOrange">+{log.xpEarned || 0} XP gained</span>
-              </div>
-            </Card>
-          ))
+        {activeTab === 'logs' && (
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 px-3 rounded-xl border border-border-subtle bg-bgSurface/60 text-xs text-textPrimary focus:outline-none focus:border-accentBlue min-w-[150px]"
+          >
+            <option value="all">All statuses</option>
+            <option value="completed">Completed</option>
+            <option value="partial">Partial</option>
+            <option value="missed">Missed</option>
+            <option value="recovery">Frozen/Recovery</option>
+          </select>
         )}
       </div>
+
+      {/* Logs View */}
+      {activeTab === 'logs' && (
+        <div className="flex flex-col gap-4">
+          {filteredLogs.length === 0 ? (
+            <div className="glass-card p-12 text-center text-xs text-textSecondary">
+              No matching study logs found.
+            </div>
+          ) : (
+            filteredLogs.map((log) => (
+              <Card key={log.day} className="p-5 flex flex-col gap-3 border-white/5 bg-bgSurface/40">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="rounded-lg bg-white/5 p-2 text-textMuted">
+                      <Calendar className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-textPrimary text-sm">Day {log.day} Study Log</h4>
+                      <span className="text-[10px] text-textMuted font-medium mt-0.5 block">
+                        Saved: {log.savedAt ? new Date(log.savedAt).toLocaleDateString() : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">
+                      {['😴', '😐', '🙂', '😊', '🔥'][(log.mood || 3) - 1]}
+                    </span>
+                    <Badge variant={getStatusVariant(log.status)}>{log.status}</Badge>
+                  </div>
+                </div>
+
+                {log.note && (
+                  <p className="text-xs text-textSecondary bg-white/[0.02] border border-white/5 p-3 rounded-xl">
+                    {log.note}
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-3 mt-1 text-[10px] text-textMuted font-bold">
+                  <span>🎯 Solved: {log.counts?.leetcode || 0} LC, {log.counts?.skillrack || 0} SkillRack, {log.counts?.sql || 0} SQL</span>
+                  <span>⏱️ Focus: {log.focusMinutes || 0} mins</span>
+                  <span className="text-accentEmerald">⭐ XP: +{log.xpEarned || 0} XP</span>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Chats View */}
+      {activeTab === 'chats' && (
+        <div className="flex flex-col gap-4">
+          {filteredChats.length === 0 ? (
+            <div className="glass-card p-12 text-center text-xs text-textSecondary">
+              No saved chat sessions found.
+            </div>
+          ) : (
+            filteredChats.map((session) => (
+              <div
+                key={session.id}
+                onClick={() => handleOpenSession(session)}
+                className="p-5 rounded-2xl border border-white/5 bg-bgSurface/40 hover:border-accentBlue/30 hover:bg-bgSurface transition duration-150 cursor-pointer flex justify-between items-center group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-accentPurple/10 p-2 text-accentPurple group-hover:bg-accentPurple/25 transition">
+                    <MessageSquare className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-textPrimary text-sm group-hover:text-accentBlue transition line-clamp-1">{session.title}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] text-textMuted font-medium">
+                        {new Date(session.savedAt).toLocaleDateString()} at {new Date(session.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <span className="text-textMuted">•</span>
+                      <span className="text-[10px] text-accentPurple font-bold">{session.messages.length} messages</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => handleDeleteSession(session.id, e)}
+                    className="p-2 text-textMuted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
+                    title="Delete session"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <ArrowRight className="h-4.5 w-4.5 text-textMuted group-hover:translate-x-0.5 group-hover:text-accentBlue transition duration-150" />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Chat Session Drawer */}
+      <Drawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={selectedSession?.title || "Chat Detail"}
+      >
+        {selectedSession && (
+          <div className="flex flex-col gap-4 p-1">
+            <span className="text-[10px] text-textMuted font-medium block">
+              Saved on {new Date(selectedSession.savedAt).toLocaleString()}
+            </span>
+            <div className="flex flex-col gap-3 mt-2 overflow-y-auto max-h-[70vh] pr-1">
+              {selectedSession.messages.map((m, idx) => (
+                <div
+                  key={m.id || idx}
+                  className={`flex flex-col gap-1 max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
+                    m.role === 'user'
+                      ? 'bg-accentBlue text-white self-end rounded-br-none'
+                      : 'bg-white/[0.04] border border-white/5 text-textSecondary self-start rounded-bl-none'
+                  }`}
+                >
+                  <span className="text-[8px] font-bold opacity-60 block uppercase tracking-wider">
+                    {m.role === 'user' ? 'You' : 'Shayla AI'}
+                  </span>
+                  <div className="whitespace-pre-wrap mt-0.5 font-medium">{m.content}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </Drawer>
     </div>
   );
 };

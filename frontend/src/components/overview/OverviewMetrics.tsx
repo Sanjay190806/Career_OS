@@ -2,7 +2,7 @@ import React from 'react';
 import { StatCard } from '../ui/StatCard';
 import { useCareerStore } from '../../app/store/useCareerStore';
 import { getTotalLCSolved, getActivityTotal } from '../../utils/xpUtils';
-import { Code2, Sigma, Brain, Boxes, Trophy, CalendarDays, Languages, Flame } from 'lucide-react';
+import { Code2, Sigma, Brain, Boxes, Trophy, CalendarDays, Languages, Flame, Mic, Headphones } from 'lucide-react';
 
 export const OverviewMetrics: React.FC = () => {
   const userProfile = useCareerStore((s) => s.userProfile);
@@ -15,6 +15,8 @@ export const OverviewMetrics: React.FC = () => {
   const level = useCareerStore((s) => s.level);
   const germanXP = useCareerStore((s) => s.germanXP);
   const germanStreak = useCareerStore((s) => s.germanStreak);
+  const germanSpeakingStreak = useCareerStore((s) => s.germanSpeakingStreak);
+  const germanListeningMinutes = useCareerStore((s) => s.germanListeningMinutes);
   const germanLevel = useCareerStore((s) => s.germanLevel);
 
   const stateContext = { userProfile, dailyLogs, problemLogs, projects, resume, applications, level };
@@ -35,6 +37,8 @@ export const OverviewMetrics: React.FC = () => {
       <StatCard title="Days Completed" value={`${completedDays}/180`} icon={<CalendarDays className="h-4 w-4" />} accentColor="#10B981" />
       <StatCard title="German XP" value={germanXP} icon={<Languages className="h-4 w-4" />} accentColor="#EF4444" />
       <StatCard title="German Streak" value={`${germanStreak} days`} icon={<Flame className="h-4 w-4" />} accentColor="#EAB308" description={germanLevel || 'A1 Beginner'} />
+      <StatCard title="Speaking Streak" value={`${germanSpeakingStreak} days`} icon={<Mic className="h-4 w-4" />} accentColor="#8B5CF6" description="Voice practice" />
+      <StatCard title="Listening Minutes" value={germanListeningMinutes} icon={<Headphones className="h-4 w-4" />} accentColor="#06B6D4" description="Browser audio practice" />
     </div>
   );
 };

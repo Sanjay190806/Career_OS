@@ -2,6 +2,7 @@ import { CareerState, DailyLog, XPThreshold } from '../types';
 import { XP_RULES } from '../data/constants';
 import { ROADMAP } from '../data/roadmap';
 import { LEVELS } from '../data/achievements';
+import { calculateStreakWithFreezes } from './streakFreezeUtils';
 
 export function getLevel(xp: number): XPThreshold {
   let lvl = LEVELS[0];
@@ -13,22 +14,8 @@ export function getLevel(xp: number): XPThreshold {
 }
 
 export function getStreak(s: Partial<CareerState>): number {
-  let streak = 0;
-  const logs = s.dailyLogs || {};
-  
-  // Calculate relative day
-  const start = new Date(s.userProfile?.startDate || '2026-07-01');
-  const diff = Math.floor((new Date().getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  let d = Math.min(Math.max(diff + 1, 1), 180);
-
-  if (logs[d]?.status !== 'completed') {
-    d--;
-  }
-  while (d >= 1 && logs[d]?.status === 'completed') {
-    streak++;
-    d--;
-  }
-  return streak;
+  if (!s.dailyLogs || !s.userProfile?.startDate) return 0;
+  return calculateStreakWithFreezes(s.dailyLogs, s.userProfile.startDate).currentStreak;
 }
 
 export function getTotalLCSolved(s: Partial<CareerState>): number {
@@ -56,7 +43,7 @@ export function calcResumeScore(s: Partial<CareerState>): number {
 
 export function calcConsistencyScore(s: Partial<CareerState>): number {
   const logs = s.dailyLogs || {};
-  const completed = Object.values(logs).filter(l => l.status === 'completed').length;
+  const completed = Object.values(logs).filter(l => l.status === 'completed' || l.completionType === 'minimum' || l.completionType === 'perfect').length;
   
   const start = new Date(s.userProfile?.startDate || '2026-07-01');
   const diff = Math.floor((new Date().getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
@@ -68,6 +55,11 @@ export function calcConsistencyScore(s: Partial<CareerState>): number {
 }
 
 export function calcPlacementScore(s: Partial<CareerState>): number {
+  const breakdown = calcPlacementBreakdown(s);
+  return breakdown.score;
+}
+
+export function calcPlacementBreakdown(s: Partial<CareerState>) {
   const solved = getTotalLCSolved(s);
   const dsaScore = Math.min((solved / 360) * 100, 100);
   
@@ -92,7 +84,7 @@ export function calcPlacementScore(s: Partial<CareerState>): number {
   const resumeScore = calcResumeScore(s);
   const consistencyScore = calcConsistencyScore(s);
 
-  return Math.round(
+  const score = Math.round(
     dsaScore * 0.30 +
     skillrackScore * 0.15 +
     aptScore * 0.15 +
@@ -102,6 +94,28 @@ export function calcPlacementScore(s: Partial<CareerState>): number {
     resumeScore * 0.03 +
     consistencyScore * 0.02
   );
+
+  return {
+    score,
+    dsaScore: Math.round(dsaScore),
+    skillrackScore: Math.round(skillrackScore),
+    aptitudeScore: Math.round(aptScore),
+    sqlScore: Math.round(sqlScore),
+    csCoreScore: Math.round(csScore),
+    projectScore: Math.round(avgProjProgress),
+    resumeScore,
+    consistencyScore,
+    weights: {
+      dsa: 30,
+      skillrack: 15,
+      aptitude: 15,
+      sql: 10,
+      csCore: 15,
+      projects: 10,
+      resume: 3,
+      consistency: 2
+    }
+  };
 }
 
 export function calcGermanyReadinessScore(s: Partial<CareerState>): number {
@@ -137,6 +151,8 @@ export function calcGermanyReadinessScore(s: Partial<CareerState>): number {
 }
 
 export function awardXPForLog(day: number, log: DailyLog): number {
+  if (log.freezeUsed) return 0; // Streak freeze gives 0 XP
+
   let xp = 0;
   
   // LeetCode problems XP weighting
@@ -159,7 +175,20 @@ export function awardXPForLog(day: number, log: DailyLog): number {
   if ((c.project || 0) >= 20) xp += XP_RULES.project_work;
   if ((c.resume || 0) >= 10) xp += XP_RULES.resume_work;
 
-  if (log.status === 'completed') xp += XP_RULES.full_day_bonus;
+  // Mock interview counters XP
+  xp += (c.mockTechnical || 0) * 150;
+  xp += (c.mockHR || 0) * 100;
+  xp += (c.mockCoding || 0) * 150;
+  xp += (c.mockProject || 0) * 100;
+
+  // Completion bonuses
+  if (log.completionType === 'perfect') {
+    xp += 150; // Perfect day bonus XP
+  } else if (log.completionType === 'minimum') {
+    xp += 50; // Minimum day bonus XP
+  } else if (log.status === 'completed') {
+    xp += XP_RULES.full_day_bonus;
+  }
 
   return xp;
 }

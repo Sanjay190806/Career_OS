@@ -29,7 +29,7 @@ The current local JavaScript `state` object contains:
 - `app_version`: String (`'1.0.0'`)
 - `user_profile`: `{ name: string, groqKey: string, startDate: string, totalDays: number }`
 - `settings`: `{ sidebarCollapsed: boolean, theme: string }`
-- `daily_logs`: `{ [day: string]: { counts: { leetcode: number, skillrack: number, aptitude: number, sql: number, cscore: number, german: number, ml: number, project: number, resume: number }, lcStatus: number[], note: string, mood: number, energy: number, distractions: number, focusMinutes: number, status: string, savedAt: string, xpEarned: number } }`
+- `daily_logs`: `{ [day: string]: { counts: { leetcode: number, skillrack: number, aptitude: number, sql: number, cscore: number, german: number, project: number, resume: number }, lcStatus: number[], note: string, mood: number, energy: number, distractions: number, focusMinutes: number, status: string, savedAt: string, xpEarned: number } }`
 - `problem_logs`: `{ [problemKey: string]: { solved: boolean, confidence: number, solveTime: number, attempts: number, notes: string, mistakeLog: string, revisitFlag: boolean } }` (Problem keys match `d_[dayNumber]_[problemIndex]`)
 - `projects`: `{ [projKey: string]: { name: string, status: string, stack: string[], github: string, demo: string, progress: { backend: number, frontend: number, ai: number, testing: number, docs: number, deploy: number }, bullets: string[], description: string } }`
 - `resume`: `{ version: string, atsScore: number, lastUpdated: string | null, targetRole: string, sections: { contact: number, education: number, skills: number, projects: number, achievements: number, formatting: number } }`

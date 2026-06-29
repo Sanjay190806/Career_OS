@@ -39,7 +39,7 @@ const fallbackModelsByProvider: Record<string, string[]> = {
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1-mini'],
   anthropic: ['claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest', 'claude-3-opus-20240229'],
   gemini: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp'],
-  ollama: ['llama3', 'mistral', 'phi3', 'qwen2.5'],
+  ollama: ['qwen2.5-coder:latest', 'qwen2.5-coder:7b', 'gemma4:e4b', 'llama3', 'mistral', 'phi3'],
   lmstudio: ['qwen2.5-7b-instruct', 'llama-3-8b-instruct'],
 };
 

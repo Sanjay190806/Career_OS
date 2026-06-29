@@ -4,11 +4,16 @@ import { MonthlyCalendar } from '../components/calendar/MonthlyCalendar';
 import { FocusHistory } from '../components/calendar/FocusHistory';
 import { DayInspector } from '../components/calendar/DayInspector';
 import { useCareerStore } from '../app/store/useCareerStore';
+import { useShaylaAgentStore } from '../app/store/useShaylaAgentStore';
 import { getDateForDay, formatDate } from '../utils/dateUtils';
+import { buildAgentContext } from '../utils/agentContextUtils';
+import { buildSmartNotifications } from '../utils/smartNotificationUtils';
+import { SmartNotificationCenter } from '../components/shayla-agent/SmartNotificationCenter';
 
 export const CalendarFocusPage: React.FC = () => {
   const dailyLogs = useCareerStore((s) => s.dailyLogs);
   const userProfile = useCareerStore((s) => s.userProfile);
+  const agentStore = useShaylaAgentStore((s) => s);
 
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(1);
@@ -19,6 +24,8 @@ export const CalendarFocusPage: React.FC = () => {
   };
 
   const selectedLog = dailyLogs[selectedDay] || null;
+  const agentContext = buildAgentContext(useCareerStore.getState(), selectedDay);
+  const notifications = buildSmartNotifications(agentContext).filter((notification) => !agentStore.dismissedNotifications.includes(notification.id));
   
   const dateObj = getDateForDay(selectedDay, userProfile.startDate);
   const dateStr = formatDate(dateObj);
@@ -37,8 +44,13 @@ export const CalendarFocusPage: React.FC = () => {
         </div>
 
         {/* Right Focus modules */}
-        <div>
+        <div className="flex flex-col gap-6">
           <FocusHistory />
+          <SmartNotificationCenter
+            notifications={notifications}
+            onDismiss={(notification) => agentStore.dismissNotification(notification.id)}
+            title="Calendar nudges"
+          />
         </div>
       </div>
 

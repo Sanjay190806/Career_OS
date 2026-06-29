@@ -48,8 +48,8 @@ export class AIProviderRouter {
     return valid.includes(configured) ? configured as AIProviderName : undefined;
   }
 
-  private modelFor(provider: AIProvider, requestedModel?: string): string {
-    if (requestedModel) return requestedModel;
+  private modelFor(provider: AIProvider, requestedModel?: string, isPrimaryAttempt = false): string {
+    if (isPrimaryAttempt && requestedModel) return requestedModel;
     if (env.AI_MODEL?.trim()) return env.AI_MODEL.trim();
     return provider.defaultModel;
   }
@@ -61,7 +61,7 @@ export class AIProviderRouter {
     let lastError: unknown = null;
 
     for (const provider of ordered) {
-      const model = this.modelFor(provider, request.model);
+      const model = this.modelFor(provider, request.model, provider === ordered[0]);
       try {
         const response = await provider.chat({ ...request, model });
         attempts.push({ provider: provider.name, model, status: 'success' });
@@ -93,7 +93,7 @@ export class AIProviderRouter {
     let lastError: unknown = null;
 
     for (const provider of ordered) {
-      const model = this.modelFor(provider, request.model);
+      const model = this.modelFor(provider, request.model, provider === ordered[0]);
       try {
         const response = provider.streamingSupported
           ? await provider.stream({ ...request, model }, onToken)
@@ -170,6 +170,15 @@ export class AIProviderRouter {
     if (error instanceof AIProviderError) {
       if (error.code === 'provider_rate_limited') {
         return new AIProviderError(error.provider, 'All configured AI providers are rate-limited or unavailable. Try again shortly.', 429, 'ai_rate_limited', true);
+      }
+      if (error.code === 'missing_api_key' || attempts.some((attempt) => attempt.error?.toLowerCase().includes('api key is missing'))) {
+        return new AIProviderError(
+          error.provider,
+          'No configured AI provider is ready yet. Add a key in backend/.env or switch to a provider that is already configured.',
+          503,
+          'missing_api_key',
+          true
+        );
       }
       return error;
     }

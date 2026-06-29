@@ -3,15 +3,31 @@
   width: 100%;
   min-height: 100vh;
   position: relative;
+  overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 28%),
     radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 32%),
     var(--bg-base);
 }
 
+.app-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(59, 130, 246, 0.10), transparent 35%),
+    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.08), transparent 30%),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.02), transparent 24%, rgba(255, 255, 255, 0.03) 52%, transparent 76%, rgba(255, 255, 255, 0.02));
+  opacity: 0.95;
+  z-index: 0;
+}
+
 .shell-sidebar {
   width: 18rem;
   flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
 }
 
 .shell-sidebar--collapsed {
@@ -24,6 +40,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
+  z-index: 2;
 }
 
 .shell-topbar {
@@ -35,6 +53,8 @@
   min-width: 0;
   overflow-y: auto;
   padding: 1.25rem;
+  position: relative;
+  z-index: 2;
 }
 
 .workspace-page {

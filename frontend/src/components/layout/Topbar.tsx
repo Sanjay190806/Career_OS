@@ -3,6 +3,7 @@ import { useUIStore } from '../../app/store/useUIStore';
 import { useCareerStore } from '../../app/store/useCareerStore';
 import { getStreak } from '../../utils/xpUtils';
 import { syncService } from '../../services/syncService';
+import { navigateToPath } from '../../utils/navigation';
 import { Command, CircleCheckBig, CircleAlert, Flame, Search, Settings2 } from 'lucide-react';
 
 interface TopbarProps {
@@ -41,6 +42,10 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenCommandPalette }) => {
     roadmap: '180-Day DSA Roadmap',
     ai: 'Shayla AI Mentor',
     german: 'German Learning',
+    coding_mentor: 'Coding Mentor',
+    career_intelligence: 'Career Intelligence',
+    portfolio: 'Portfolio Mode',
+    admin: 'Admin Dashboard',
     analytics: 'Analytics',
     reports: 'Reports',
     dsa_tracker: 'DSA Problems Tracker',
@@ -50,6 +55,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenCommandPalette }) => {
     cscore: 'Computer Science Core',
     projects: 'Portfolio Projects',
     resume: 'ATS Resume Builder',
+    interview_coach: 'Interview Coach',
     applications: 'Job Applications',
     calendar: 'Focus Mode & Calendar',
     achievements: 'Quest & Badges',
@@ -95,7 +101,10 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenCommandPalette }) => {
 
         <button
           type="button"
-          onClick={() => setActiveSection('settings')}
+          onClick={() => {
+            navigateToPath('/settings');
+            setActiveSection('settings');
+          }}
           className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border-subtle bg-white/5 text-textSecondary transition hover:border-border-accent hover:bg-white/10 hover:text-textPrimary"
           aria-label="Settings Page"
         >

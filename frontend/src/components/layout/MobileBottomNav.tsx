@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useUIStore } from '../../app/store/useUIStore';
-import { LayoutDashboard, Target, Map, Settings2, MoreHorizontal, Bot, Languages, BarChart3, FileText, FolderKanban, UserRound, Briefcase } from 'lucide-react';
+import { navigateToPath, sectionToPath } from '../../utils/navigation';
+import { LayoutDashboard, Target, Map, Settings2, MoreHorizontal, Bot, Languages, BarChart3, FileText, FolderKanban, UserRound, Briefcase, Code2, TrendingUp, CalendarClock, Building2, GitFork } from 'lucide-react';
 
 export const MobileBottomNav: React.FC = () => {
   const { activeSection, setActiveSection } = useUIStore();
@@ -15,11 +16,17 @@ export const MobileBottomNav: React.FC = () => {
 
   const moreItems = [
     { id: 'german', label: 'German', icon: Languages },
+    { id: 'coding_mentor', label: 'Coding', icon: Code2 },
+    { id: 'career_intelligence', label: 'Career', icon: TrendingUp },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'projects', label: 'Projects', icon: FolderKanban },
     { id: 'resume', label: 'Resume', icon: UserRound },
+    { id: 'interview_coach', label: 'Interview', icon: Bot },
     { id: 'applications', label: 'Applications', icon: Briefcase },
+    { id: 'placement_calendar', label: 'Placement Calendar', icon: CalendarClock },
+    { id: 'companies', label: 'Target Companies', icon: Building2 },
+    { id: 'skill_tree', label: 'Skill Tree', icon: GitFork },
     { id: 'settings', label: 'Settings', icon: Settings2 }
   ];
 
@@ -32,7 +39,12 @@ export const MobileBottomNav: React.FC = () => {
               key={item.id}
               type="button"
               onClick={() => {
-                setActiveSection(item.id);
+                const path = sectionToPath[item.id];
+                if (path) {
+                  navigateToPath(path);
+                } else {
+                  setActiveSection(item.id);
+                }
                 setMoreOpen(false);
               }}
               className={`flex h-full flex-1 flex-col items-center justify-center gap-1 rounded-2xl text-xs transition ${
@@ -72,7 +84,12 @@ export const MobileBottomNav: React.FC = () => {
                   key={item.id}
                   type="button"
                   onClick={() => {
-                    setActiveSection(item.id);
+                    const path = sectionToPath[item.id];
+                    if (path) {
+                      navigateToPath(path);
+                    } else {
+                      setActiveSection(item.id);
+                    }
                     setMoreOpen(false);
                   }}
                   className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition ${

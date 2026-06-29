@@ -65,6 +65,27 @@ export async function handleAIModels(_req: Request, res: Response): Promise<void
   res.status(200).json({ models });
 }
 
+async function searchWeb(query: string): Promise<string> {
+  try {
+    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36'
+      }
+    });
+    if (!response.ok) return '';
+    const html = await response.text();
+    const matches = Array.from(html.matchAll(/<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g));
+    const snippets = matches.map(m => {
+      return m[1].replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#x27;/g, "'").trim();
+    });
+    return snippets.slice(0, 3).join('\n\n');
+  } catch (err) {
+    console.error('Web search failed:', err);
+    return '';
+  }
+}
+
 export async function handleAIChat(req: Request, res: Response): Promise<void> {
   try {
     const parsed = aiChatRequestSchema.safeParse(req.body);
@@ -97,7 +118,23 @@ export async function handleAIChat(req: Request, res: Response): Promise<void> {
       }
     }
 
-    const systemPrompt = clientSystemPrompt || getShaylaSystemPrompt(context || {});
+    // Web Search Trigger check
+    let searchContext = '';
+    const lastUserMessage = messages[messages.length - 1];
+    if (lastUserMessage && lastUserMessage.role === 'user') {
+      const content = lastUserMessage.content.toLowerCase();
+      if (content.includes('search') || content.includes('latest') || content.includes('recent') || 
+          content.includes('current') || content.includes('news') || content.includes('today') ||
+          content.includes('weather') || content.includes('who is') || content.includes('what is')) {
+        const searchResults = await searchWeb(lastUserMessage.content);
+        if (searchResults) {
+          searchContext = `\n\n[Recent Web Search Results for "${lastUserMessage.content}"]:\n${searchResults}\n(Use the search results above to answer the user's query with recent facts.)\n`;
+        }
+      }
+    }
+
+    const baseSystemPrompt = clientSystemPrompt || getShaylaSystemPrompt(context || {});
+    const systemPrompt = baseSystemPrompt + searchContext;
     const { fullPrompt } = PromptComposer.composeSystemPrompt(systemPrompt, context || {});
 
     const fullMessages: AIMessage[] = [
@@ -165,7 +202,23 @@ export async function handleAIChatStream(req: Request, res: Response): Promise<v
       }
     }
 
-    const systemPrompt = clientSystemPrompt || getShaylaSystemPrompt(context || {});
+    // Web Search Trigger check
+    let searchContext = '';
+    const lastUserMessage = messages[messages.length - 1];
+    if (lastUserMessage && lastUserMessage.role === 'user') {
+      const content = lastUserMessage.content.toLowerCase();
+      if (content.includes('search') || content.includes('latest') || content.includes('recent') || 
+          content.includes('current') || content.includes('news') || content.includes('today') ||
+          content.includes('weather') || content.includes('who is') || content.includes('what is')) {
+        const searchResults = await searchWeb(lastUserMessage.content);
+        if (searchResults) {
+          searchContext = `\n\n[Recent Web Search Results for "${lastUserMessage.content}"]:\n${searchResults}\n(Use the search results above to answer the user's query with recent facts.)\n`;
+        }
+      }
+    }
+
+    const baseSystemPrompt = clientSystemPrompt || getShaylaSystemPrompt(context || {});
+    const systemPrompt = baseSystemPrompt + searchContext;
     const { fullPrompt } = PromptComposer.composeSystemPrompt(systemPrompt, context || {});
 
     const fullMessages: AIMessage[] = [

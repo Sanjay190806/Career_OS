@@ -1,245 +1,346 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { GermanAcademyTabs, GermanAcademyTab } from '../components/german-academy/GermanAcademyTabs';
+import { GermanAcademyHero } from '../components/german-academy/GermanAcademyHero';
+import { CEFRProgressCard } from '../components/german-academy/CEFRProgressCard';
+import { GermanDailyGoalCard } from '../components/german-academy/GermanDailyGoalCard';
+import { GermanProgressSnapshotCard } from '../components/german-academy/GermanProgressSnapshotCard';
+import { GermanStoryCard } from '../components/german-academy/GermanStoryCard';
+import { GermanStoryReader } from '../components/german-academy/GermanStoryReader';
+import { GermanSpeakingPractice } from '../components/german-academy/GermanSpeakingPractice';
+import { GermanListeningPractice } from '../components/german-academy/GermanListeningPractice';
+import { GermanConversationPanel } from '../components/german-academy/GermanConversationPanel';
+import { GermanSRSReview } from '../components/german-academy/GermanSRSReview';
+import { GermanWeakWordsPanel } from '../components/german-academy/GermanWeakWordsPanel';
+import { GermanLessonDrawer } from '../components/german/GermanLessonDrawer';
+import { GermanUnitPath } from '../components/german/GermanUnitPath';
+import { GermanSRSQueue } from '../components/german/GermanSRSQueue';
+import { GermanDailyChallenge } from '../components/german/GermanDailyChallenge';
+import { MobileGermanQuickPractice } from '../components/mobile/MobileGermanQuickPractice';
 import { useCareerStore } from '../app/store/useCareerStore';
 import { GERMAN_LESSONS } from '../data/germanLessons';
-import { GermanUnitPath } from '../components/german/GermanUnitPath';
-import { GermanFlashcard } from '../components/german/GermanFlashcard';
-import { GermanSRSQueue } from '../components/german/GermanSRSQueue';
-import { GermanArticleTrainer } from '../components/german/GermanArticleTrainer';
-import { GermanDailyChallenge } from '../components/german/GermanDailyChallenge';
-import { useAIStore } from '../app/store/useAIStore';
-import { useUIStore } from '../app/store/useUIStore';
-import { Map, Star, GraduationCap, Sparkles, BookOpen } from 'lucide-react';
+import { GERMAN_STORIES, GermanStory } from '../data/germanStories';
+import { deriveGermanCEFRTrack, getGermanProgressSnapshot } from '../utils/germanProgressUtils';
+import { BookOpen, Flame, Languages, Mic, PlayCircle } from 'lucide-react';
 
 export const GermanPage: React.FC = () => {
   const careerState = useCareerStore((s) => s);
-  const {
-    completedLessons,
-    currentLessonId,
-    weakWords
-  } = careerState;
-
+  const updateGermanLessonNotes = useCareerStore((s) => s.updateGermanLessonNotes);
+  const completeGermanLesson = useCareerStore((s) => s.completeGermanLesson);
+  const completeGermanQuiz = useCareerStore((s) => s.completeGermanQuiz);
   const markWordKnown = useCareerStore((s) => s.markWordKnown);
   const markWordWeak = useCareerStore((s) => s.markWordWeak);
-  const queuePrompt = useAIStore((s) => s.queuePrompt);
-  const setActiveSection = useUIStore((s) => s.setActiveSection);
+  const currentLessonId = useCareerStore((s) => s.currentLessonId);
 
-  const [activeTab, setActiveTab] = useState<'path' | 'srs' | 'article' | 'flashcards'>('path');
+  const [activeTab, setActiveTab] = useState<GermanAcademyTab>('academy');
   const [selectedLessonId, setSelectedLessonId] = useState<string>(currentLessonId || 'german-1');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedStory, setSelectedStory] = useState<GermanStory | null>(GERMAN_STORIES[0]);
   const [selectedWordIdx, setSelectedWordIdx] = useState(0);
 
-  const lessons = GERMAN_LESSONS;
-  const activeLesson = lessons.find((l) => l.id === selectedLessonId) || lessons[0];
-  const lessonVocabulary = activeLesson.vocabulary || [];
-  const currentWord = lessonVocabulary[selectedWordIdx] || lessonVocabulary[0];
+  const activeLesson = useMemo(
+    () => GERMAN_LESSONS.find((lesson) => lesson.id === selectedLessonId) || GERMAN_LESSONS[0],
+    [selectedLessonId]
+  );
+  const lessonProgress = careerState.completedLessons[activeLesson.id];
+  const lessonNotes = lessonProgress?.notes || '';
+  const selectedWord = activeLesson.vocabulary[selectedWordIdx] || activeLesson.vocabulary[0];
+  const snapshot = getGermanProgressSnapshot(careerState);
+  const track = deriveGermanCEFRTrack(careerState);
+  const grammarTopics = typeof snapshot.grammarTopics === 'number' ? snapshot.grammarTopics : 0;
 
-  const askShayla = (prompt: string) => {
-    queuePrompt(prompt);
-    setActiveSection('ai');
+  useEffect(() => {
+    if (currentLessonId) {
+      setSelectedLessonId(currentLessonId);
+    }
+  }, [currentLessonId]);
+
+  useEffect(() => {
+    if (activeTab === 'speaking') {
+      // keep the latest speaking view centered in case the user jumps in from another area
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [activeTab]);
+
+  const openLesson = (lessonId: string) => {
+    setSelectedLessonId(lessonId);
+    setDrawerOpen(true);
   };
 
-  const handleLessonCompleteToggle = () => {
-    const isCompleted = completedLessons[activeLesson.id]?.completed;
-    if (isCompleted) {
-      // mark incomplete
-      useCareerStore.setState((state) => {
-        const nextCompleted = { ...state.completedLessons };
-        delete nextCompleted[activeLesson.id];
-        return { completedLessons: nextCompleted };
-      });
-    } else {
-      // complete lesson
-      useCareerStore.getState().completeGermanLesson(activeLesson.id, lessonVocabulary.length, 30);
+  const handleLessonComplete = () => {
+    completeGermanLesson(activeLesson.id, activeLesson.vocabulary.length, activeLesson.xpReward);
+    setDrawerOpen(false);
+  };
+
+  const handleQuizSubmit = (lessonId: string, score: number, total: number, quizType = 'academy-quiz') => {
+    completeGermanQuiz(lessonId, score, total, quizType);
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'academy':
+        return (
+          <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+            <GermanAcademyHero
+              level={careerState.germanLevel}
+              streak={careerState.germanStreak}
+              speakingStreak={careerState.germanSpeakingStreak}
+              readiness={snapshot.readiness}
+              onJumpSpeaking={() => setActiveTab('speaking')}
+              onJumpListening={() => setActiveTab('listening')}
+            />
+            <div className="grid gap-4">
+              <CEFRProgressCard
+                track={track}
+                lessonsCompleted={snapshot.lessonsCompleted}
+                vocabularyKnown={snapshot.vocabularyKnown}
+                speakingSessions={snapshot.speakingSessions}
+                listeningSessions={snapshot.listeningSessions}
+                grammarTopics={grammarTopics}
+                readiness={snapshot.readiness}
+              />
+              <GermanDailyGoalCard
+                speakingMinutes={careerState.germanSpeakingMinutes}
+                listeningMinutes={careerState.germanListeningMinutes}
+                reviewedToday={careerState.germanVocabularyReviewedToday}
+              />
+              <GermanProgressSnapshotCard
+                title="Progress snapshot"
+                label="German focus blend"
+                value={snapshot.readiness}
+                details={[
+                  `Speaking streak: ${snapshot.speakingStreak} days`,
+                  `Speaking minutes: ${snapshot.speakingMinutes}`,
+                  `Listening minutes: ${snapshot.listeningMinutes}`,
+                  `Grammar notes: ${snapshot.grammarTopics}`,
+                ]}
+              />
+            </div>
+          </div>
+        );
+      case 'lessons':
+        return (
+          <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+            <div className="flex flex-col gap-4">
+              <GermanUnitPath
+                completedLessons={careerState.completedLessons}
+                currentLessonId={careerState.currentLessonId}
+                onSelectLesson={(lessonId) => {
+                  setSelectedLessonId(lessonId);
+                  setDrawerOpen(true);
+                }}
+              />
+            </div>
+            <div className="flex flex-col gap-4">
+              <Card className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Current lesson</p>
+                    <h3 className="mt-1 text-lg font-semibold text-textPrimary">{activeLesson.title}</h3>
+                  </div>
+                  <Badge variant={lessonProgress?.completed ? 'success' : 'primary'}>
+                    {lessonProgress?.completed ? 'Completed' : 'Open'}
+                  </Badge>
+                </div>
+                <p className="text-sm leading-6 text-textSecondary">{activeLesson.objective}</p>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="neutral">{activeLesson.level}</Badge>
+                  <Badge variant="neutral">{activeLesson.estimatedMinutes} min</Badge>
+                  <Badge variant="primary">+{activeLesson.xpReward} XP</Badge>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="primary" onClick={() => setDrawerOpen(true)} className="gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    Open lesson
+                  </Button>
+                  <Button variant="outline" onClick={() => (lessonProgress?.completed ? setDrawerOpen(true) : handleLessonComplete())}>
+                    {lessonProgress?.completed ? 'Reopen for review' : 'Complete lesson'}
+                  </Button>
+                </div>
+              </Card>
+              <GermanDailyChallenge />
+            </div>
+          </div>
+        );
+      case 'vocabulary':
+        return (
+          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {activeLesson.vocabulary.map((word, index) => {
+                  const isWeak = careerState.weakWords.includes(word.id);
+                  const isKnown = careerState.vocabulary[word.id]?.status === 'known';
+                  return (
+                    <button
+                      key={word.id}
+                      type="button"
+                      onClick={() => setSelectedWordIdx(index)}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        selectedWordIdx === index
+                          ? 'border-accentBlue bg-accentBlue/10'
+                          : 'border-border-subtle bg-white/[0.03] hover:border-border-accent'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-textPrimary">{word.word}</p>
+                        <Badge variant={isKnown ? 'success' : isWeak ? 'warning' : 'neutral'}>
+                          {isKnown ? 'Known' : isWeak ? 'Review' : 'Learn'}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-xs text-textSecondary">{word.meaning}</p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedWord && (
+                <Card className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Flashcard</p>
+                      <h3 className="mt-1 text-xl font-semibold text-textPrimary">{selectedWord.word}</h3>
+                    </div>
+                    <Badge variant="primary">{selectedWord.category}</Badge>
+                  </div>
+                  <p className="text-sm text-textSecondary">{selectedWord.meaning}</p>
+                  <p className="text-sm leading-6 text-textPrimary">{selectedWord.exampleSentence}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="primary" onClick={() => markWordKnown(selectedWord.id)}>
+                      Mark known
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => markWordWeak(selectedWord.id)}>
+                      Mark weak
+                    </Button>
+                  </div>
+                </Card>
+              )}
+            </div>
+            <div className="flex flex-col gap-4">
+              <GermanSRSQueue weakWords={careerState.weakWords} />
+            </div>
+          </div>
+        );
+      case 'speaking':
+        return <GermanSpeakingPractice />;
+      case 'listening':
+        return <GermanListeningPractice />;
+      case 'stories':
+        return (
+          <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+            <div className="grid gap-3">
+              {GERMAN_STORIES.map((story) => (
+                <GermanStoryCard
+                  key={story.id}
+                  story={story}
+                  onExplain={(item) => {
+                    setSelectedStory(item);
+                    setActiveTab('conversation');
+                  }}
+                />
+              ))}
+            </div>
+            <GermanStoryReader story={selectedStory} />
+          </div>
+        );
+      case 'conversation':
+        return <GermanConversationPanel />;
+      case 'review':
+        return (
+          <div className="grid gap-4">
+            <GermanSRSReview />
+            <GermanWeakWordsPanel />
+            <Card className="flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Lesson review</p>
+                  <h3 className="mt-1 text-lg font-semibold text-textPrimary">Reopen any completed lesson</h3>
+                </div>
+                <Badge variant="neutral">{Object.values(careerState.completedLessons).filter((lesson) => lesson.completed).length} done</Badge>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {GERMAN_LESSONS.filter((lesson) => careerState.completedLessons[lesson.id]?.completed).slice(0, 8).map((lesson) => (
+                  <Button key={lesson.id} size="sm" variant="outline" onClick={() => openLesson(lesson.id)}>
+                    {lesson.title}
+                  </Button>
+                ))}
+              </div>
+            </Card>
+          </div>
+        );
+      case 'progress':
+        return (
+          <div className="grid gap-4 xl:grid-cols-2">
+            <CEFRProgressCard
+              track={track}
+              lessonsCompleted={snapshot.lessonsCompleted}
+              vocabularyKnown={snapshot.vocabularyKnown}
+              speakingSessions={snapshot.speakingSessions}
+              listeningSessions={snapshot.listeningSessions}
+              grammarTopics={grammarTopics}
+              readiness={snapshot.readiness}
+            />
+            <GermanProgressSnapshotCard
+              title="Milestones"
+              label="What moved recently"
+              value={snapshot.readiness}
+              details={[
+                `Lessons completed: ${snapshot.lessonsCompleted}`,
+                `Vocabulary known: ${snapshot.vocabularyKnown}`,
+                `Speaking sessions: ${snapshot.speakingSessions}`,
+                `Listening sessions: ${snapshot.listeningSessions}`,
+              ]}
+            />
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
   return (
-    <div className="flex flex-col gap-6 fade-in pb-10">
+    <div className="flex flex-col gap-6 pb-10 fade-in">
       <SectionHeader
-        title="German Hub 2.0"
-        subtitle="Spaced repetition learning, noun articles, lesson paths, and interactive speech training."
+        title="German Academy 3.0"
+        subtitle="Lessons, speaking, listening, stories, conversation, and review in one place."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="primary" className="gap-1">
+              <Languages className="h-3.5 w-3.5" />
+              {careerState.germanLevel}
+            </Badge>
+            <Badge variant="warning" className="gap-1">
+              <Flame className="h-3.5 w-3.5" />
+              {careerState.germanStreak} days
+            </Badge>
+            <Badge variant="neutral" className="gap-1">
+              <PlayCircle className="h-3.5 w-3.5" />
+              {careerState.germanSpeakingSessions} speaking sessions
+            </Badge>
+            <Badge variant="neutral" className="gap-1">
+              <Mic className="h-3.5 w-3.5" />
+              {careerState.germanListeningSessions} listening sessions
+            </Badge>
+          </div>
+        }
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        {/* Main learning hub */}
-        <div className="xl:col-span-3 flex flex-col gap-6">
-          {/* Tab Selector */}
-          <div className="flex gap-2 border-b border-border-subtle pb-3">
-            <button
-              onClick={() => setActiveTab('path')}
-              className={`px-4 py-2 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 ${
-                activeTab === 'path'
-                  ? 'bg-accentBlue/10 text-accentBlue border border-accentBlue/20'
-                  : 'text-textSecondary hover:text-textPrimary'
-              }`}
-            >
-              <Map className="h-4 w-4" /> Units Map
-            </button>
-            <button
-              onClick={() => setActiveTab('srs')}
-              className={`px-4 py-2 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 ${
-                activeTab === 'srs'
-                  ? 'bg-accentBlue/10 text-accentBlue border border-accentBlue/20'
-                  : 'text-textSecondary hover:text-textPrimary'
-              }`}
-            >
-              <Star className="h-4 w-4" /> SRS Queue ({weakWords.length} due)
-            </button>
-            <button
-              onClick={() => setActiveTab('article')}
-              className={`px-4 py-2 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 ${
-                activeTab === 'article'
-                  ? 'bg-accentBlue/10 text-accentBlue border border-accentBlue/20'
-                  : 'text-textSecondary hover:text-textPrimary'
-              }`}
-            >
-              <GraduationCap className="h-4 w-4" /> Noun Articles
-            </button>
-            {lessonVocabulary.length > 0 && (
-              <button
-                onClick={() => setActiveTab('flashcards')}
-                className={`px-4 py-2 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 ${
-                  activeTab === 'flashcards'
-                    ? 'bg-accentBlue/10 text-accentBlue border border-accentBlue/20'
-                    : 'text-textSecondary hover:text-textPrimary'
-                }`}
-              >
-                <BookOpen className="h-4 w-4" /> Flashcards
-              </button>
-            )}
-          </div>
+      <GermanAcademyTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      <MobileGermanQuickPractice />
 
-          {/* Tab Contents */}
-          <div className="flex flex-col gap-6">
-            {activeTab === 'path' && (
-              <GermanUnitPath
-                completedLessons={completedLessons}
-                currentLessonId={currentLessonId}
-                onSelectLesson={(id) => {
-                  setSelectedLessonId(id);
-                  setSelectedWordIdx(0);
-                }}
-              />
-            )}
+      {renderContent()}
 
-            {activeTab === 'srs' && (
-              <GermanSRSQueue weakWords={weakWords} />
-            )}
-
-            {activeTab === 'article' && (
-              <GermanArticleTrainer />
-            )}
-
-            {activeTab === 'flashcards' && currentWord && (
-              <div className="flex flex-col gap-4">
-                <GermanFlashcard
-                  word={currentWord}
-                  isWeak={weakWords.includes(currentWord.id)}
-                  onMarkWeak={() => markWordWeak(currentWord.id)}
-                  onMarkKnown={() => markWordKnown(currentWord.id)}
-                />
-                <div className="flex justify-between items-center gap-4 mt-2 max-w-sm mx-auto w-full">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={selectedWordIdx === 0}
-                    onClick={() => setSelectedWordIdx(selectedWordIdx - 1)}
-                    className="text-xs"
-                  >
-                    ← Previous
-                  </Button>
-                  <span className="text-[11px] text-textMuted font-mono">
-                    {selectedWordIdx + 1} / {lessonVocabulary.length}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={selectedWordIdx === lessonVocabulary.length - 1}
-                    onClick={() => setSelectedWordIdx(selectedWordIdx + 1)}
-                    className="text-xs"
-                  >
-                    Next →
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right sidebar */}
-        <div className="xl:col-span-1 flex flex-col gap-6">
-          <GermanDailyChallenge />
-
-          {/* Lesson Details Details */}
-          <Card className="flex flex-col gap-4">
-            <div className="flex justify-between items-start gap-3 border-b border-white/5 pb-2">
-              <div>
-                <span className="text-[10px] text-textMuted font-bold uppercase tracking-wider block">
-                  Active Lesson
-                </span>
-                <h4 className="text-sm font-bold text-textPrimary">{activeLesson.title}</h4>
-              </div>
-              <Badge variant={completedLessons[activeLesson.id]?.completed ? 'success' : 'neutral'}>
-                {completedLessons[activeLesson.id]?.completed ? 'Completed' : 'Study Now'}
-              </Badge>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <span className="text-[9px] text-textMuted font-bold uppercase">Lesson Objective:</span>
-              <p className="text-xs text-textSecondary leading-relaxed">{activeLesson.objective}</p>
-            </div>
-
-            {/* Grammar Points list */}
-            {activeLesson.grammar && activeLesson.grammar.length > 0 && (
-              <div className="flex flex-col gap-2 border-t border-white/5 pt-3">
-                <span className="text-[9px] text-textMuted font-bold uppercase">Grammar Focus:</span>
-                <div className="flex flex-col gap-2">
-                  {activeLesson.grammar.map((gram, idx) => (
-                    <div key={idx} className="p-2.5 rounded-lg bg-white/[0.02] border border-border-subtle text-xs">
-                      <span className="font-bold text-textPrimary block mb-1">{gram.title}</span>
-                      <p className="text-textSecondary leading-snug">{gram.explanation}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Culture Tip */}
-            {activeLesson.cultureTip && (
-              <div className="p-3.5 rounded-xl border border-accentBlue/20 bg-accentBlue/5 text-xs">
-                <span className="text-[9px] text-accentBlue font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
-                  <Sparkles className="h-3.5 w-3.5" /> Cultural Insight
-                </span>
-                <p className="text-textSecondary leading-relaxed">{activeLesson.cultureTip}</p>
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="flex flex-col gap-2 pt-3 border-t border-white/5">
-              <Button
-                size="sm"
-                variant={completedLessons[activeLesson.id]?.completed ? 'outline' : 'primary'}
-                onClick={handleLessonCompleteToggle}
-                className="w-full text-xs"
-              >
-                {completedLessons[activeLesson.id]?.completed ? '✓ Completed' : 'Complete Lesson & Earn +30 XP'}
-              </Button>
-              
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => askShayla(`Help me practice German for Lesson "${activeLesson.title}". Objective: ${activeLesson.objective}. Prompt me with 3 A1 basic dialogue sentences for me to translate.`)}
-                className="w-full text-xs text-accentBlue"
-              >
-                💬 Open Shayla German Tutor
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </div>
+      <GermanLessonDrawer
+        lesson={activeLesson}
+        isOpen={drawerOpen}
+        notes={lessonNotes}
+        onClose={() => setDrawerOpen(false)}
+        onNotesChange={(notes) => updateGermanLessonNotes(activeLesson.id, notes)}
+        onCompleteLesson={handleLessonComplete}
+        onSubmitQuiz={handleQuizSubmit}
+      />
     </div>
   );
 };

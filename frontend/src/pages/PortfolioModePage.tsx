@@ -1,207 +1,216 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { SectionHeader } from '../components/ui/SectionHeader';
-import { CircularProgress } from '../components/ui/CircularProgress';
-import { Bot, Flame, ArrowRight, Laptop, Code } from 'lucide-react';
+import { PortfolioHero } from '../components/portfolio/PortfolioHero';
+import { PortfolioMetrics } from '../components/portfolio/PortfolioMetrics';
+import { PortfolioArchitecture } from '../components/portfolio/PortfolioArchitecture';
+import { PortfolioProjectShowcase } from '../components/portfolio/PortfolioProjectShowcase';
+import { PortfolioAIDemo } from '../components/portfolio/PortfolioAIDemo';
+import { PortfolioPrivacyToggle } from '../components/portfolio/PortfolioPrivacyToggle';
+import { DEMO_PORTFOLIO } from '../data/demoPortfolioData';
+import { ArrowRight, BookOpen, Code, Languages, LineChart, Sparkles, ShieldCheck } from 'lucide-react';
+import { navigateToPath } from '../utils/navigation';
 
 export const PortfolioModePage: React.FC = () => {
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
-    { role: 'assistant', content: 'Hallo Sanju! I am Shayla, your Career OS tutor. Ask me to explain a Java DSA topic or practice basic German A1 dialogue with you!' }
-  ]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [demoMode, setDemoMode] = useState(true);
+  const [activeSection, setActiveSection] = useState<'hero' | 'walkthrough' | 'architecture' | 'ai' | 'german' | 'analytics' | 'projects' | 'tech' | 'script'>('hero');
 
-  const handleSend = () => {
-    if (!input.trim() || loading) return;
-    const userMsg = input;
-    setMessages((prev) => [...prev, { role: 'user', content: userMsg }]);
-    setInput('');
-    setLoading(true);
+  const content = useMemo(() => {
+    if (!demoMode) {
+      return {
+        ...DEMO_PORTFOLIO,
+        hero: {
+          ...DEMO_PORTFOLIO.hero,
+          subtitle: 'Sanitized live shell with private data hidden.',
+          pitch: 'This mode still keeps the recruiter-facing story safe while showing the product shell.',
+        }
+      };
+    }
+    return DEMO_PORTFOLIO;
+  }, [demoMode]);
 
-    setTimeout(() => {
-      let reply = "Das ist fantastisch! Let's practice that. Try translating: 'I study computer science at university.'";
-      if (userMsg.toLowerCase().includes('java') || userMsg.toLowerCase().includes('dsa') || userMsg.toLowerCase().includes('sort')) {
-        reply = "Pattern: Two Pointers\nWhy it fits: Sorting arrays in linear time require references from both ends.\nJava Approach: Keep left = 0, right = n-1, swap and narrow bounds.\nComplexity: O(n) time, O(1) space.";
-      }
-      setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
-      setLoading(false);
-    }, 1000);
-  };
-
-  const handleEnterWorkspace = () => {
-    window.location.pathname = '/dashboard';
-  };
+  const walkthroughSections = [
+    { id: 'hero', label: 'Hero', icon: Sparkles },
+    { id: 'walkthrough', label: 'Why I built this', icon: ShieldCheck },
+    { id: 'architecture', label: 'Architecture', icon: Code },
+    { id: 'ai', label: 'Shayla AI', icon: Sparkles },
+    { id: 'german', label: 'German Academy', icon: Languages },
+    { id: 'analytics', label: 'Career intelligence', icon: LineChart },
+    { id: 'projects', label: 'Projects', icon: BookOpen },
+    { id: 'tech', label: 'Tech stack', icon: Code },
+    { id: 'script', label: 'Demo script', icon: ArrowRight },
+  ] as const;
 
   return (
-    <div className="min-h-screen bg-bgBackground text-textPrimary flex flex-col gap-8 px-6 py-8 md:px-12 select-none">
-      {/* Top Header */}
-      <div className="flex justify-between items-center border-b border-border-subtle pb-4">
-        <div className="flex flex-col">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-textMuted">Recruiter Portfolio View</span>
-          <span className="text-xl font-bold text-textPrimary flex items-center gap-2">
-            Sanju Career OS <Badge variant="primary" className="bg-accentBlue/10 border-accentBlue/20 text-accentBlue">Demo Mode</Badge>
-          </span>
+    <div className="flex flex-col gap-6 px-4 py-6 md:px-6 lg:px-8">
+      <div className="flex flex-col gap-3 border-b border-border-subtle pb-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-textMuted">Recruiter portfolio view</p>
+          <h1 className="mt-1 text-2xl font-semibold text-textPrimary">Sanju Career OS</h1>
         </div>
-        <Button size="sm" variant="primary" onClick={handleEnterWorkspace} className="text-xs">
-          Enter Workspace <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+        <Button variant="primary" className="gap-2" onClick={() => navigateToPath('/dashboard')}>
+          Enter workspace <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
 
-      <SectionHeader
-        title="Command Your Career Journey"
-        subtitle="A showcase of the engineering and strategic systems powering Sanju's placement prep."
+      <PortfolioHero
+        name={content.hero.name}
+        subtitle={content.hero.subtitle}
+        pitch={content.hero.pitch}
+        githubUrl={content.githubUrl}
+        onViewWalkthrough={() => setActiveSection('walkthrough')}
       />
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left Column: Mock System Stats */}
-        <div className="flex flex-col gap-6">
-          <Card className="flex flex-col gap-4 border-accentBlue/20">
-            <span className="text-[10px] text-textMuted font-bold uppercase tracking-wider block border-b border-white/5 pb-2">
-              Performance Index
-            </span>
-            <div className="grid grid-cols-3 gap-4 py-2">
-              <div className="flex flex-col items-center">
-                <CircularProgress value={89} size={70} strokeWidth={6} color="#3B82F6" />
-                <span className="text-[10px] font-bold text-textSecondary mt-2">Placement</span>
+      <PortfolioPrivacyToggle demoMode={demoMode} onToggle={setDemoMode} />
+
+      <div className="flex flex-wrap gap-2">
+        {walkthroughSections.map((section) => (
+          <button
+            key={section.id}
+            type="button"
+            onClick={() => setActiveSection(section.id)}
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition ${
+              activeSection === section.id
+                ? 'border-accentBlue/30 bg-accentBlue/10 text-accentBlue'
+                : 'border-border-subtle bg-white/[0.03] text-textSecondary hover:text-textPrimary'
+            }`}
+          >
+            <section.icon className="h-3.5 w-3.5" />
+            {section.label}
+          </button>
+        ))}
+      </div>
+
+      {activeSection === 'hero' && <PortfolioMetrics items={content.metrics} />}
+
+      {activeSection === 'hero' && (
+        <Card className="flex flex-col gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Achievements</p>
+          <div className="grid gap-2 md:grid-cols-3">
+            {content.achievements.map((item) => (
+              <div key={item} className="rounded-2xl border border-border-subtle bg-white/[0.03] p-3 text-sm text-textSecondary">
+                {item}
               </div>
-              <div className="flex flex-col items-center">
-                <CircularProgress value={94} size={70} strokeWidth={6} color="#10B981" />
-                <span className="text-[10px] font-bold text-textSecondary mt-2">Consistency</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <CircularProgress value={92} size={70} strokeWidth={6} color="#8B5CF6" />
-                <span className="text-[10px] font-bold text-textSecondary mt-2">Resume ATS</span>
-              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {activeSection === 'walkthrough' && (
+        <Card className="flex flex-col gap-4">
+          <SectionHeader title="Why I built this" subtitle="A private workspace that can be shown safely in recruiter conversations." />
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="rounded-2xl border border-border-subtle bg-white/[0.03] p-4">
+              <p className="text-sm font-semibold text-textPrimary">One system</p>
+              <p className="mt-2 text-sm leading-6 text-textSecondary">Combine roadmap, AI, German, and project prep in one focused workspace.</p>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-white/[0.03] p-4">
+              <p className="text-sm font-semibold text-textPrimary">Safety first</p>
+              <p className="mt-2 text-sm leading-6 text-textSecondary">Demo mode and redaction keep private data off the portfolio route.</p>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-white/[0.03] p-4">
+              <p className="text-sm font-semibold text-textPrimary">Engineering story</p>
+              <p className="mt-2 text-sm leading-6 text-textSecondary">Show architecture, provider routing, and local-first state design clearly.</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {activeSection === 'architecture' && <PortfolioArchitecture nodes={content.architecture} />}
+
+      {activeSection === 'ai' && (
+        <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
+          <Card className="flex flex-col gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">AI provider system</p>
+            <h3 className="text-lg font-semibold text-textPrimary">One router, many providers</h3>
+            <div className="grid gap-3 text-sm text-textSecondary">
+              <div className="rounded-2xl border border-border-subtle bg-white/[0.03] p-3">Groq, OpenRouter, Ollama, LM Studio, OpenAI, Anthropic, and Gemini share one front-end contract.</div>
+              <div className="rounded-2xl border border-border-subtle bg-white/[0.03] p-3">Fallbacks and stream retries keep the UX stable when one provider is down or quota-limited.</div>
+              <div className="rounded-2xl border border-border-subtle bg-white/[0.03] p-3">The frontend only talks to the AI service, not to provider-specific APIs directly.</div>
             </div>
           </Card>
+          <PortfolioAIDemo messages={content.aiChat} />
+        </div>
+      )}
 
-          {/* Core Modules List */}
+      {activeSection === 'german' && (
+        <div className="grid gap-4 xl:grid-cols-2">
           <Card className="flex flex-col gap-3">
-            <span className="text-[10px] text-textMuted font-bold uppercase tracking-wider block border-b border-white/5 pb-2">
-              Key Architecture Features
-            </span>
-            <div className="flex flex-col gap-2.5 text-xs text-textSecondary">
-              <div className="p-3 bg-white/[0.02] border border-border-subtle rounded-xl flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accentBlue/10 text-accentBlue"><Code className="h-4 w-4" /></div>
-                <div>
-                  <span className="font-semibold text-textPrimary block">180-Day DSA Roadmap</span>
-                  <span className="text-[10px] text-textMuted">23 primary patterns, Java-focused, confidence logs</span>
-                </div>
-              </div>
-              <div className="p-3 bg-white/[0.02] border border-border-subtle rounded-xl flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accentRed/10 text-accentRed"><Laptop className="h-4 w-4" /></div>
-                <div>
-                  <span className="font-semibold text-textPrimary block">CS Core Rotation</span>
-                  <span className="text-[10px] text-textMuted">DBMS, OS, CN, OOP Java rotated revision targets</span>
-                </div>
-              </div>
-              <div className="p-3 bg-white/[0.02] border border-border-subtle rounded-xl flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accentYellow/10 text-accentYellow"><Flame className="h-4 w-4" /></div>
-                <div>
-                  <span className="font-semibold text-textPrimary block">German 2.0 System</span>
-                  <span className="text-[10px] text-textMuted">Spaced repetition queue, article practice, speech hints</span>
-                </div>
-              </div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">German Academy demo</p>
+            <h3 className="text-lg font-semibold text-textPrimary">Lessons, speaking, listening, stories, and review</h3>
+            <p className="text-sm leading-6 text-textSecondary">{content.germanDemo.summary}</p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="primary">{content.germanDemo.level}</Badge>
+              <Badge variant="success">Safe demo only</Badge>
+            </div>
+          </Card>
+          <Card className="flex flex-col gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Product walkthrough</p>
+            <h3 className="text-lg font-semibold text-textPrimary">Show how the academy works</h3>
+            <div className="grid gap-2 text-sm text-textSecondary">
+              <div>1. Open the lessons and explain the locked/unlocked flow.</div>
+              <div>2. Show speaking and listening practice without auto microphone start.</div>
+              <div>3. Use stories and review to show learning depth.</div>
             </div>
           </Card>
         </div>
+      )}
 
-        {/* Middle Column: Safe Shayla Chat Simulation */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <Card className="flex-1 flex flex-col justify-between border-accentPurple/20 min-h-[400px]">
-            <div className="border-b border-white/5 pb-2 mb-4 flex justify-between items-center">
-              <span className="text-[10px] text-textMuted font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Bot className="h-4 w-4 text-accentPurple" /> Interact with Shayla AI (Safe Sandbox)
-              </span>
-              <Badge variant="primary" className="bg-accentPurple/10 border-accentPurple/20 text-accentPurple">
-                Fast Inference
-              </Badge>
-            </div>
-
-            <div className="flex-1 overflow-y-auto flex flex-col gap-3 pr-2 max-h-[300px] mb-4">
-              {messages.map((m, idx) => (
-                <div
-                  key={idx}
-                  className={`p-3 rounded-xl max-w-[85%] text-xs leading-relaxed ${
-                    m.role === 'assistant'
-                      ? 'bg-white/[0.03] border border-border-subtle text-textSecondary self-start'
-                      : 'bg-accentPurple/15 text-textPrimary self-end'
-                  }`}
-                >
-                  <span className="font-bold text-[9px] uppercase tracking-wider block mb-1">
-                    {m.role === 'assistant' ? 'Shayla AI' : 'Sanjay'}
-                  </span>
-                  <div className="whitespace-pre-wrap">{m.content}</div>
+      {activeSection === 'analytics' && (
+        <div className="grid gap-4 xl:grid-cols-2">
+          <Card className="flex flex-col gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Career intelligence</p>
+            <h3 className="text-lg font-semibold text-textPrimary">High-level placement signals</h3>
+            <div className="grid gap-3 md:grid-cols-2">
+              {content.analyticsDemo.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-border-subtle bg-white/[0.03] p-3">
+                  <p className="text-xs text-textMuted">{item.label}</p>
+                  <p className="mt-1 text-lg font-semibold text-textPrimary">{item.value}</p>
                 </div>
               ))}
-              {loading && (
-                <div className="bg-white/[0.02] border border-border-subtle text-textMuted p-3 rounded-xl text-xs self-start animate-pulse">
-                  Shayla is typing...
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-2 border-t border-white/5 pt-3">
-              <input
-                type="text"
-                placeholder="Type 'explain quicksort' or 'hallo'..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                className="flex-1 rounded-xl border border-border-subtle bg-bgSurface/40 px-4 py-2.5 text-xs text-textPrimary focus:outline-none focus:border-accentPurple"
-              />
-              <Button size="sm" variant="primary" onClick={handleSend} className="bg-accentPurple hover:bg-accentPurple/90 text-xs">
-                Send
-              </Button>
             </div>
           </Card>
+          <Card className="flex flex-col gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Demo safety</p>
+            <h3 className="text-lg font-semibold text-textPrimary">Only safe analytics on portfolio</h3>
+            <p className="text-sm leading-6 text-textSecondary">No personal mood notes, applications, or private chat are exposed here. The dashboard shows only recruiter-friendly summary metrics.</p>
+          </Card>
         </div>
-      </div>
+      )}
 
-      {/* Tech Stack and System architecture */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+      {activeSection === 'projects' && <PortfolioProjectShowcase projects={content.projects} />}
+
+      {activeSection === 'tech' && (
+        <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+          <Card className="flex flex-col gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Tech stack</p>
+            <div className="flex flex-wrap gap-2">
+              {content.techStack.map((item) => <Badge key={item} variant="neutral">{item}</Badge>)}
+            </div>
+          </Card>
+          <Card className="flex flex-col gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">GitHub CTA</p>
+            <a className="text-sm font-semibold text-accentBlue underline-offset-4 hover:underline" href={content.githubUrl} target="_blank" rel="noreferrer">
+              {content.githubUrl}
+            </a>
+          </Card>
+        </div>
+      )}
+
+      {activeSection === 'script' && (
         <Card className="flex flex-col gap-3">
-          <span className="text-[10px] text-textMuted font-bold uppercase tracking-wider block border-b border-white/5 pb-2">
-            System Tech Stack
-          </span>
-          <div className="grid grid-cols-2 gap-4 text-xs text-textSecondary">
-            <div className="p-3 bg-white/[0.02] border border-border-subtle rounded-xl">
-              <strong className="text-textPrimary block mb-1">Frontend</strong>
-              React 18, TypeScript, TailwindCSS, Zustand State, Lucide Icons, Vite Bundler.
-            </div>
-            <div className="p-3 bg-white/[0.02] border border-border-subtle rounded-xl">
-              <strong className="text-textPrimary block mb-1">Backend</strong>
-              Node.js, Express, TypeScript, Prisma ORM, PostgreSQL database validations.
-            </div>
-            <div className="p-3 bg-white/[0.02] border border-border-subtle rounded-xl">
-              <strong className="text-textPrimary block mb-1">AI Engine</strong>
-              Groq Cloud API, OpenRouter failovers, Ollama local llama3 instance support.
-            </div>
-            <div className="p-3 bg-white/[0.02] border border-border-subtle rounded-xl">
-              <strong className="text-textPrimary block mb-1">UX Aesthetics</strong>
-              Dark Mode theme, glassmorphic card containers, micro-interactions, custom CSS.
-            </div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Demo video script</p>
+          <div className="grid gap-2 text-sm text-textSecondary">
+            {content.videoScript.map((step, index) => (
+              <div key={step} className="rounded-2xl border border-border-subtle bg-white/[0.03] p-3">
+                <span className="font-semibold text-textPrimary">Step {index + 1}:</span> {step}
+              </div>
+            ))}
           </div>
         </Card>
-
-        <Card className="flex flex-col justify-between">
-          <div>
-            <span className="text-[10px] text-textMuted font-bold uppercase tracking-wider block border-b border-white/5 pb-2 mb-3">
-              Recruiter Walkthrough Summary
-            </span>
-            <p className="text-xs text-textSecondary leading-relaxed">
-              Sanju Career OS is built as a complete career cockpit. ECE college recruiters can view this sandbox to review DSA milestones, check syllabus rotation compliance, test local/remote LLM routers, and verify structured system metrics.
-            </p>
-          </div>
-          <Button variant="outline" onClick={handleEnterWorkspace} className="w-full text-xs mt-4">
-            Enter Workspace Dashboard
-          </Button>
-        </Card>
-      </div>
+      )}
     </div>
   );
 };

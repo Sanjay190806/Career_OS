@@ -76,7 +76,8 @@ export function migrateOldVersion(): CareerState | null {
       problemLogs: {},
       projects: {
         caresync: { name:'CareSync AI', status:'building', stack:['Flutter', 'Firebase', 'Python'], github:'', demo:'', progress:{backend:20,frontend:30,ai:10,testing:0,docs:10,deploy:0}, bullets:[], description:'Patient assistant' },
-        smartedu: { name:'SmartEdu AI', status:'building', stack:['React', 'FastAPI', 'XGBoost'], github:'', demo:'', progress:{backend:40,frontend:40,ai:60,testing:10,docs:30,deploy:0}, bullets:[], description:'Student platform' }
+        smartedu: { name:'SmartEdu AI', status:'building', stack:['React', 'FastAPI', 'XGBoost'], github:'', demo:'', progress:{backend:40,frontend:40,ai:60,testing:10,docs:30,deploy:0}, bullets:[], description:'Student platform' },
+        career_os: { name:'Sanju Career OS', status:'building', stack:['React', 'TypeScript', 'Tailwind', 'Zustand', 'Prisma'], github:'', demo:'', progress:{backend:80,frontend:90,ai:85,testing:60,docs:70,deploy:50}, bullets:[], description:'AI placement preparation operating system' }
       },
       resume: {
         version: '1.0',
@@ -103,7 +104,6 @@ export function migrateOldVersion(): CareerState | null {
             sql: l.counts?.sql || 0,
             cscore: l.counts?.cscore || 0,
             german: l.counts?.german || 0,
-            ml: l.counts?.ml || 0,
             project: l.counts?.project || 0,
             resume: l.counts?.resume || 0
           },

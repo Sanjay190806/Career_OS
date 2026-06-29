@@ -9,3 +9,11 @@ export interface AIMessage {
   prompt?: string;
   createdAt?: string;
 }
+
+export interface SavedChatSession {
+  id: string;
+  title: string;
+  messages: AIMessage[];
+  savedAt: string;
+}
+
