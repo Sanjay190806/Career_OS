@@ -628,7 +628,7 @@ export const SettingsPage: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4">
               <span className="block text-[9px] font-bold text-textMuted uppercase tracking-wider">App Version</span>
-              <span className="block text-lg font-black text-textPrimary mt-1">v1.4.1</span>
+              <span className="block text-lg font-black text-textPrimary mt-1">v1.6.0</span>
             </div>
             <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4">
               <span className="block text-[9px] font-bold text-textMuted uppercase tracking-wider">Schema State version</span>

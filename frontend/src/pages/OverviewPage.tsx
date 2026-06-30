@@ -16,6 +16,7 @@ import { ShaylaBriefingResult } from '../types/shaylaAgent';
 
 import { PhaseProgressBar } from '../components/ui/PhaseProgressBar';
 import { MiniStreakStrip } from '../components/ui/MiniStreakStrip';
+import { V16IntelligenceWidgets } from '../components/overview/V16IntelligenceWidgets';
 
 export const OverviewPage: React.FC = () => {
   const careerState = useCareerStore((s) => s);
@@ -77,6 +78,7 @@ export const OverviewPage: React.FC = () => {
       <OverviewHero />
       <PhaseProgressBar />
       <MiniStreakStrip />
+      <V16IntelligenceWidgets />
       <DailyBriefingPanel
 
         briefing={briefing}

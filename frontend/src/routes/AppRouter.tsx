@@ -12,6 +12,9 @@ import { PortfolioModePage } from '../pages/PortfolioModePage';
 // Workspace console sub-pages are lazy loaded
 const OverviewPage = lazy(() => import('../pages/OverviewPage').then(m => ({ default: m.OverviewPage })));
 const TodayPage = lazy(() => import('../pages/TodayPage').then(m => ({ default: m.TodayPage })));
+const AIBrainPage = lazy(() => import('../pages/AIBrainPage').then(m => ({ default: m.AIBrainPage })));
+const SmartPlannerPage = lazy(() => import('../pages/SmartPlannerPage').then(m => ({ default: m.SmartPlannerPage })));
+const PlacementOSPage = lazy(() => import('../pages/PlacementOSPage').then(m => ({ default: m.PlacementOSPage })));
 const RoadmapPage = lazy(() => import('../pages/RoadmapPage').then(m => ({ default: m.RoadmapPage })));
 const ShaylaAIPage = lazy(() => import('../pages/ShaylaAIPage').then(m => ({ default: m.ShaylaAIPage })));
 const AISettingsPage = lazy(() => import('../pages/AISettingsPage').then(m => ({ default: m.AISettingsPage })));
@@ -115,6 +118,12 @@ export const AppRouter: React.FC = () => {
         return <OverviewPage />;
       case 'today':
         return <TodayPage />;
+      case 'ai_brain':
+        return <AIBrainPage />;
+      case 'smart_planner':
+        return <SmartPlannerPage />;
+      case 'placement_os':
+        return <PlacementOSPage />;
       case 'roadmap':
         return <RoadmapPage />;
       case 'ai':

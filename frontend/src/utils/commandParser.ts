@@ -5,13 +5,88 @@ export interface ParsedCommand {
     | 'addWeakWord'
     | 'addApplication'
     | 'markCSCoreTopic'
-    | 'updateProjectProgress';
+    | 'updateProjectProgress'
+    | 'generateTodayPlan'
+    | 'completeSmartTask'
+    | 'refreshAIBrain'
+    | 'showPlacementReadiness'
+    | 'updateCompanyStatus'
+    | 'addInterviewRound'
+    | 'addOAResult'
+    | 'recommendNextAction';
   payload: any;
   summary: string;
 }
 
 export function parseCommandOffline(text: string): ParsedCommand | null {
   const t = text.toLowerCase().trim();
+
+  if ((t.includes('generate') || t.includes('create')) && t.includes('plan') && (t.includes('today') || t.includes('daily'))) {
+    return {
+      type: 'generateTodayPlan',
+      payload: { mode: t.includes('busy') ? 'busy' : t.includes('low energy') ? 'low_energy' : t.includes('sprint') ? 'placement_sprint' : 'normal' },
+      summary: 'Generate a smart plan for today. This creates a preview and should be saved only after confirmation.'
+    };
+  }
+
+  if (t.includes('completed') && (t.includes('sql task') || t.includes('dsa task') || t.includes('planner task') || t.includes('smart task'))) {
+    const category = t.includes('sql') ? 'sql' : t.includes('dsa') ? 'coding' : undefined;
+    return {
+      type: 'completeSmartTask',
+      payload: { category },
+      summary: category ? `Mark today's ${category} smart task as complete after confirmation.` : 'Mark a matching smart task as complete after confirmation.'
+    };
+  }
+
+  if ((t.includes('refresh') || t.includes('update')) && (t.includes('ai brain') || t.includes('career brain'))) {
+    return {
+      type: 'refreshAIBrain',
+      payload: {},
+      summary: 'Refresh AI Brain career summary.'
+    };
+  }
+
+  if (t.includes('placement readiness') || t.includes('show readiness')) {
+    return {
+      type: 'showPlacementReadiness',
+      payload: {},
+      summary: 'Show placement readiness summary.'
+    };
+  }
+
+  if (t.includes('next action') || t.includes('recommend')) {
+    return {
+      type: 'recommendNextAction',
+      payload: {},
+      summary: 'Recommend the next best career action.'
+    };
+  }
+
+  if ((t.includes('update') || t.includes('mark')) && t.includes('company') && t.includes('status')) {
+    const companyMatch = text.match(/company\s+([a-zA-Z0-9\s]+?)\s+status/i);
+    const statusMatch = text.match(/status\s+([a-zA-Z_ ]+)/i);
+    return {
+      type: 'updateCompanyStatus',
+      payload: { company: companyMatch?.[1]?.trim(), status: statusMatch?.[1]?.trim() },
+      summary: `Update company status${companyMatch?.[1] ? ` for ${companyMatch[1].trim()}` : ''} after confirmation.`
+    };
+  }
+
+  if (t.includes('interview') && (t.includes('add') || t.includes('round'))) {
+    return {
+      type: 'addInterviewRound',
+      payload: { raw: text },
+      summary: 'Add an interview round after confirmation.'
+    };
+  }
+
+  if ((t.includes('oa') || t.includes('online assessment')) && (t.includes('add') || t.includes('score') || t.includes('result'))) {
+    return {
+      type: 'addOAResult',
+      payload: { raw: text },
+      summary: 'Add an OA result after confirmation.'
+    };
+  }
 
   // 1. Add Application
   // e.g., "add application Google for Software Engineer status Applied"

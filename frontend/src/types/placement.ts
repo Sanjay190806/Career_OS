@@ -56,3 +56,76 @@ export interface WeeklyReview {
   };
   savedAt: string;
 }
+
+export type ApplicationStatus =
+  | 'not_started'
+  | 'preparing'
+  | 'applied'
+  | 'oa_scheduled'
+  | 'oa_completed'
+  | 'interview_scheduled'
+  | 'interview_completed'
+  | 'selected'
+  | 'rejected'
+  | 'on_hold';
+
+export interface PlacementCompany {
+  id: string;
+  name: string;
+  type: string;
+  targetRole: string;
+  packageRange: string;
+  eligibility: string;
+  hiringProcess: string;
+  rounds: string[];
+  skillsRequired: string[];
+  dsaFocus: string;
+  sqlFocus: string;
+  aptitudeFocus: string;
+  csCoreFocus: string;
+  resumeTips: string;
+  notes: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+export interface PlacementApplication {
+  id: string;
+  companyId: string;
+  status: ApplicationStatus;
+  updatedAt: string;
+  nextAction: string;
+}
+
+export interface PlacementRound {
+  id: string;
+  companyId: string;
+  roundName: string;
+  roundType: string;
+  date: string;
+  topics: string[];
+  result: 'scheduled' | 'cleared' | 'rejected' | 'pending';
+  feedback: string;
+  mistakes: string;
+  nextAction: string;
+}
+
+export interface OARecord {
+  id: string;
+  companyId: string;
+  date: string;
+  platform: string;
+  sections: string[];
+  score: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  mistakes: string;
+  improvementPlan: string;
+}
+
+export interface PlacementOSReadiness {
+  score: number;
+  resumeScore: number;
+  companyPrepScore: number;
+  interviewScore: number;
+  oaScore: number;
+  nextAction: string;
+}

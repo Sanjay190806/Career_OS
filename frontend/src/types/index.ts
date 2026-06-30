@@ -11,6 +11,8 @@ export * from './focus';
 export * from './german';
 export * from './interview';
 export * from './placement';
+export * from './aiBrain';
+export * from './smartPlanner';
 
 import { DailyLog, ProblemLog } from './logs';
 import { Project } from './projects';
@@ -57,4 +59,3 @@ export interface CareerState {
   weeklyFreezeUsage?: Record<string, boolean>;
   chatHistory?: SavedChatSession[];
 }
-

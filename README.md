@@ -1,6 +1,14 @@
 # Sanju Career OS
 
-Local-first career and placement tracker with a React + TypeScript frontend, Express backend, Prisma, PostgreSQL, Zustand persistence, and a secure Groq proxy.
+Local-first career and placement tracker with a React + TypeScript frontend, Express backend, Prisma, PostgreSQL, Zustand persistence, a secure AI proxy, and v1.6.0 AI Brain + Smart Planner + Placement OS modules.
+
+## v1.6.0 Changelog (AI Brain + Smart Planner + Placement OS)
+
+- Added AI Brain career context summaries for Sanju's B.E. ECE placement path.
+- Added Smart Daily Planner with Normal, Busy, Low Energy, Placement Sprint, Project Build, and Revision modes.
+- Added Placement OS with target companies, application statuses, OA/interview surfaces, resume checklist, and readiness scoring.
+- Added dashboard intelligence widgets and AI command intents for the new systems.
+- Kept persistence local-first with versioned keys: `sanzz_os_ai_brain_v1`, `sanzz_os_smart_planner_v1`, and `sanzz_os_placement_os_v1`.
 
 ## v1.4.1 Changelog (Stabilization & UX Audit Release)
 

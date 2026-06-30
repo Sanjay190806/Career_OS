@@ -25,6 +25,7 @@ import {
   Code2,
   TrendingUp,
   Building2,
+  CalendarCheck,
   GitFork,
   PlugZap,
   ChevronDown,
@@ -38,6 +39,9 @@ export const Sidebar: React.FC = () => {
   const coreTrackerItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'today', label: 'Today', icon: Gauge },
+    { id: 'ai_brain', label: 'AI Brain', icon: Brain },
+    { id: 'smart_planner', label: 'Smart Planner', icon: CalendarCheck },
+    { id: 'placement_os', label: 'Placement OS', icon: Building2 },
     { id: 'placement_calendar', label: 'Placement Calendar', icon: CalendarClock },
     { id: 'applications', label: 'Applications', icon: FileText },
     { id: 'companies', label: 'Target Companies', icon: Building2 },

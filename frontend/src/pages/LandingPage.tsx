@@ -223,7 +223,7 @@ export const LandingPage: React.FC = () => {
         </div>
 
         <p className="mt-16 text-[9px] text-textMuted uppercase tracking-widest">
-          Sanju Career OS v1.4.1 · Premium Developer Workspace
+          Sanju Career OS v1.6.0 - Premium Developer Workspace
         </p>
       </footer>
     </div>
