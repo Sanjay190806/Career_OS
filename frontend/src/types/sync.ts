@@ -1,4 +1,4 @@
-export type SyncMode = 'local-only' | 'cloud-ready' | 'cloud-sync';
+export type SyncMode = 'local-only' | 'cloud-ready' | 'manual-db-snapshot' | 'cloud-sync';
 
 export type SyncStatus = 'offline' | 'online' | 'syncing' | 'synced' | 'failed' | 'conflict';
 
@@ -64,30 +64,28 @@ export interface SyncHealth {
   status: SyncStatus;
   online: boolean;
   dbConnected: boolean;
+  mode?: string;
+  authEnabled?: boolean;
+  realMultiDeviceSync?: boolean;
   latencyMs?: number;
 }
 
 export interface BackupSnapshot {
-  version: string;
-  createdAt: string;
   appName: string;
+  version: string;
   schemaVersion: number;
-  data: {
-    ai_brain?: any;
-    smart_planner?: any;
-    placement_os?: any;
-    learning_os?: any;
-    analytics?: any;
-    project_os?: any;
-    resume_manager?: any;
-    daily_tasks?: any;
-    xp_streak?: any;
-    settings?: any;
-  };
+  createdAt: string;
+  mode?: string;
+  keysIncluded?: string[];
+  keysMissing?: string[];
+  data: Record<string, string>;
 }
 
 export interface RestoreResult {
   success: boolean;
   restoredKeys: string[];
+  skippedKeys?: string[];
+  warnings?: string[];
   error?: string;
+  preRestoreSaved?: boolean;
 }

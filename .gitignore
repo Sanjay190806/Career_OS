@@ -60,3 +60,6 @@ local-data/
 .playwright/
 test-results/
 .nyc_output/
+
+# Dev seed data (large test fixture — not for production)
+**/stress_seed.json

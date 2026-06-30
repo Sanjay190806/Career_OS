@@ -22,23 +22,35 @@ export const syncQueue = {
     const ops = this.getOperations();
     const newOp: SyncOperation = {
       ...op,
-      id: `op-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      id: `op-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       createdAt: new Date().toISOString(),
       status: 'pending',
-      retries: 0
+      retries: 0,
     };
     ops.push(newOp);
     this.saveOperations(ops);
   },
 
+  markSynced(id: string): void {
+    const ops = this.getOperations().map((op) => (
+      op.id === id ? { ...op, status: 'synced' as const } : op
+    ));
+    this.saveOperations(ops);
+  },
+
+  clearCompleted(): void {
+    const ops = this.getOperations().filter((op) => op.status !== 'synced');
+    this.saveOperations(ops);
+  },
+
   dequeue(id: string): void {
-    const ops = this.getOperations();
-    const filtered = ops.filter((op) => op.id !== id);
-    this.saveOperations(filtered);
+    const ops = this.getOperations().filter((op) => op.id !== id);
+    this.saveOperations(ops);
   },
 
   clearQueue(): void {
     this.saveOperations([]);
-  }
+  },
 };
+
 export default syncQueue;

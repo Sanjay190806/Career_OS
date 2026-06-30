@@ -1,53 +1,77 @@
-import { BackupSnapshot, SyncHealth } from '../../types/sync';
+import { request } from '../apiClient';
+import { BackupSnapshotV2 } from '../backup/backupRegistry';
+
+export interface SyncHealthResponse {
+  status: 'offline' | 'online';
+  online: boolean;
+  dbConnected: boolean;
+  mode?: string;
+  authEnabled?: boolean;
+  realMultiDeviceSync?: boolean;
+  latencyMs?: number;
+}
+
+const DEFAULT_USER_ID = 'local-user';
 
 export const cloudSyncAdapter = {
-  async getHealth(): Promise<SyncHealth> {
+  async getHealth(): Promise<SyncHealthResponse> {
+    const started = Date.now();
     try {
-      const response = await fetch('/api/sync/health');
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          status: 'online',
-          online: true,
-          dbConnected: data.dbConnected || false,
-          latencyMs: 12
-        };
-      }
-    } catch (e) {
-      // Offline fallback
+      const data = await request<{
+        success?: boolean;
+        databaseAvailable?: boolean;
+        dbConnected?: boolean;
+        mode?: string;
+        authEnabled?: boolean;
+        realMultiDeviceSync?: boolean;
+      }>('/sync/health');
+
+      const dbConnected = Boolean(data.databaseAvailable ?? data.dbConnected);
+      return {
+        status: 'online',
+        online: true,
+        dbConnected,
+        mode: data.mode || 'manual_db_snapshot',
+        authEnabled: data.authEnabled ?? false,
+        realMultiDeviceSync: data.realMultiDeviceSync ?? false,
+        latencyMs: Date.now() - started,
+      };
+    } catch {
+      return {
+        status: 'offline',
+        online: false,
+        dbConnected: false,
+        mode: 'manual_db_snapshot',
+        authEnabled: false,
+        realMultiDeviceSync: false,
+      };
     }
-    return {
-      status: 'offline',
-      online: false,
-      dbConnected: false
-    };
   },
 
-  async pushSnapshot(snapshot: BackupSnapshot): Promise<boolean> {
+  async pushSnapshot(snapshot: BackupSnapshotV2, userId: string = DEFAULT_USER_ID): Promise<boolean> {
     try {
-      const response = await fetch('/api/sync/push', {
+      await request<{ success: boolean }>('/sync/push', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ snapshot })
+        body: { userId, snapshot },
       });
-      return response.ok;
+      return true;
     } catch (e) {
-      console.warn('Failed pushing snapshot to cloud server:', e);
+      console.warn('Failed pushing snapshot to backend database:', e);
       return false;
     }
   },
 
-  async pullSnapshot(): Promise<BackupSnapshot | null> {
+  async pullSnapshot(userId: string = DEFAULT_USER_ID): Promise<BackupSnapshotV2 | null> {
     try {
-      const response = await fetch('/api/sync/pull');
-      if (response.ok) {
-        const data = await response.json();
-        return data.snapshot as BackupSnapshot;
-      }
+      const data = await request<{ success: boolean; snapshot: BackupSnapshotV2 | null }>(
+        `/sync/pull?userId=${encodeURIComponent(userId)}`
+      );
+      return data.snapshot || null;
     } catch (e) {
-      console.warn('Failed pulling snapshot from cloud server:', e);
+      console.warn('Failed pulling snapshot from backend database:', e);
+      return null;
     }
-    return null;
-  }
+  },
 };
+
 export default cloudSyncAdapter;

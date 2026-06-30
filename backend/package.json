@@ -1,6 +1,6 @@
 {
   "name": "backend",
-  "version": "1.6.1",
+  "version": "1.6.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "start": "node build/server.js",
     "dev": "tsx watch src/server.ts",
     "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "node --loader ts-node/esm prisma/seed.ts"

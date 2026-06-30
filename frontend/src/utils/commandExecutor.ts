@@ -10,7 +10,7 @@ import { buildAnalyticsDashboard } from '../services/analyticsService';
 import { personalizationService } from '../services/personalizationService';
 import { achievementService } from '../services/achievementService';
 import { ACHIEVEMENT_CATALOG } from '../data/achievementCatalog';
-import { syncService } from '../services/sync/syncService';
+import syncCoreService from '../services/sync/syncService';
 import { backupService } from '../services/sync/backupService';
 import { storagePerformance } from './storagePerformance';
 
@@ -197,8 +197,8 @@ export function executeCommand(cmd: ParsedCommand): boolean {
       }
 
       case 'showSyncStatus': {
-        const mode = syncService.getSyncMode();
-        console.log(`Sync status: ${mode}`);
+        const mode = syncCoreService.getSyncMode();
+        console.log(`Sync status: ${mode} (local-first; account sync not enabled)`);
         return true;
       }
 

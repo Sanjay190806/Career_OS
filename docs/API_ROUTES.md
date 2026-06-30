@@ -86,3 +86,14 @@ Upserts a Zustand state snapshot to the PostgreSQL DB.
     "updatedAt": "2026-06-28T21:30:15.000Z"
   }
   ```
+
+### GET `/api/sync/health`
+Returns honest sync capability status (`manual_db_snapshot`, `authEnabled: false`).
+
+### GET `/api/sync/pull?userId=local-user`
+Returns `{ "success": true, "snapshot": { ... }, "updatedAt": "..." }`.
+
+### POST `/api/sync/push`
+Body: `{ "userId": "local-user", "snapshot": { ...full backup... } }`.
+
+Legacy `/api/sync` GET/POST remain for career-state-only sync.

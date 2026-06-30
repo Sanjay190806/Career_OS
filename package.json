@@ -1,6 +1,6 @@
 {
   "name": "sanju-career-os",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "private": true,
   "workspaces": [
     "frontend",
@@ -8,13 +8,20 @@
   ],
   "scripts": {
     "install:all": "npm install",
+    "build": "npm run build:all",
     "build:frontend": "npm run build --workspace=frontend",
     "build:backend": "npm run build --workspace=backend",
     "build:all": "npm run build --workspaces",
+    "typecheck": "npm run lint --workspace=frontend && npm run build --workspace=backend",
+    "lint": "npm run lint --workspace=frontend",
+    "test": "npm run test --workspace=frontend",
+    "check:all": "npm run typecheck && npm run test && npm run build:all",
+    "icons:pwa": "node scripts/generate-pwa-icons.mjs",
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:backend": "npm run dev --workspace=backend",
     "dev:all": "npm run dev --workspaces",
     "prisma:generate": "npm run prisma:generate --workspace=backend",
+    "prisma:validate": "npm run prisma:validate --workspace=backend",
     "prisma:migrate": "npm run prisma:migrate --workspace=backend",
     "prisma:studio": "npm run prisma:studio --workspace=backend",
     "prisma:seed": "npm run prisma:seed --workspace=backend",

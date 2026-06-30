@@ -1,3 +1,7 @@
+/**
+ * Conflict resolution foundation for future account-based sync (v1.7).
+ * Not wired to active UI in v1.6.4 — manual DB snapshot uses newer-timestamp fallback only.
+ */
 import { SyncConflict } from '../../types/sync';
 
 export const conflictResolver = {

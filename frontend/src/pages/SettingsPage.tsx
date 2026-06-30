@@ -164,6 +164,11 @@ export const SettingsPage: React.FC = () => {
       detail: `Last test: ${lastAiTestTime}`
     },
     {
+      label: 'App Version',
+      value: 'v1.6.4',
+      detail: 'Stability release — local-first storage'
+    },
+    {
       label: 'Environment',
       value: health?.environment || 'unknown',
       detail: health?.timestamp || 'Waiting for health check'
@@ -477,8 +482,11 @@ export const SettingsPage: React.FC = () => {
 
         <Card className="flex flex-col gap-4">
           <div className="border-b border-border-subtle/50 pb-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Local Backup</p>
-            <h3 className="mt-1 text-lg font-semibold text-textPrimary">Export, import, and restore</h3>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Manual DB Snapshot</p>
+            <h3 className="mt-1 text-lg font-semibold text-textPrimary">Legacy career-state database backup</h3>
+            <p className="mt-2 text-xs text-textSecondary">
+              These buttons push/pull the core career Zustand state only. For full app backup use Backup &amp; Restore below, or Manual DB Snapshot mode for all localStorage modules. Account-based multi-device sync is not enabled in v1.6.4.
+            </p>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
@@ -494,13 +502,13 @@ export const SettingsPage: React.FC = () => {
 
           <div className="flex flex-wrap gap-3">
             <Button onClick={handlePushSync} disabled={syncLoading || !health?.backendOnline} className="rounded-xl text-xs">
-              Push Snapshot
+              Push Career Snapshot
             </Button>
             <Button onClick={handlePullSync} disabled={syncLoading || !health?.backendOnline} variant="outline" className="rounded-xl text-xs">
-              Pull Snapshot
+              Pull Career Snapshot
             </Button>
             <Button onClick={handleExport} variant="ghost" className="rounded-xl text-xs">
-              Export JSON Backup
+              Export Legacy Career JSON
             </Button>
             <label className="flex cursor-pointer items-center justify-center rounded-xl border border-border-subtle bg-bgSurface/40 px-4 py-2 text-xs font-bold text-textPrimary transition hover:border-border-accent hover:bg-bg-glass-hover">
               Import JSON File

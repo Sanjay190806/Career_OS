@@ -1,6 +1,30 @@
-# Sanju Career OS
+# Sanju Career OS — v1.6.4
 
-Local-first career and placement tracker with a React + TypeScript frontend, Express backend, Prisma, PostgreSQL, Zustand persistence, a secure AI proxy, and v1.6.1 Learning OS + Analytics 2.0 modules.
+> **Release:** v1.6.4 Stability — local-first storage, full backup/restore, manual DB snapshots, PWA fixes. Real account-based multi-device sync is planned for v1.7.
+
+Local-first career and placement tracker with a React + TypeScript frontend, Express backend, Prisma, PostgreSQL, Zustand persistence, AI Brain, Smart Daily Planner, Placement OS, Learning OS, Analytics 2.0, German Academy, optional manual database snapshots, PWA shell, and offline fallback support.
+
+## v1.6.4 Stability (current)
+
+- Unified sync layer with honest UI labels (local-first + manual DB snapshot).
+- Added backend routes: `/api/sync/health`, `/api/sync/push`, `/api/sync/pull` (legacy `/api/sync` kept).
+- Full backup registry covering 30 localStorage module keys.
+- Safe restore with validation summary, pre-restore snapshot, and confirmation.
+- Mounted PWA install/update prompts; single canonical `manifest.webmanifest`.
+- Improved service worker shell caching; API responses not cached.
+- Root `npm run build` alias added.
+
+See `docs/SYNC.md`, `docs/BACKUP_RESTORE.md`, `docs/PWA.md`, `docs/OFFLINE_MODE.md`.
+
+## Build
+
+```powershell
+npm run build          # frontend + backend
+npm run check:all      # typecheck + tests + build
+npm run icons:pwa      # regenerate PNG icons
+```
+
+Normal daily use: run `Start-Sanzz-OS.bat` or `npm run dev:all`. Prisma validate/migrate only needed when changing database schema or first-time DB setup — not required for every startup.
 
 ## v1.6.1 Changelog (Learning OS + Analytics 2.0)
 

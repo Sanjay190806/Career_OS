@@ -2,15 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { Monitor, X, Download } from 'lucide-react';
 import { Card } from '../ui/Card';
 
+function isStandaloneInstalled(): boolean {
+  return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+}
+
 export const PWAInstallPrompt: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (isStandaloneInstalled()) return;
+
     const handleBeforePrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Check if user dismissed prompt previously this session
       const dismissed = sessionStorage.getItem('pwa_install_dismissed');
       if (!dismissed) {
         setVisible(true);
@@ -25,8 +30,7 @@ export const PWAInstallPrompt: React.FC = () => {
     if (!deferredPrompt) return;
     setVisible(false);
     deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`PWA installation choice outcomes: ${outcome}`);
+    await deferredPrompt.userChoice;
     setDeferredPrompt(null);
   };
 
@@ -35,7 +39,7 @@ export const PWAInstallPrompt: React.FC = () => {
     sessionStorage.setItem('pwa_install_dismissed', 'true');
   };
 
-  if (!visible) return null;
+  if (!visible || isStandaloneInstalled()) return null;
 
   return (
     <div className="fixed bottom-6 left-6 z-50 max-w-sm w-full select-none animate-slide-up">
@@ -56,7 +60,7 @@ export const PWAInstallPrompt: React.FC = () => {
         <div className="flex flex-col gap-1 pr-6">
           <h4 className="text-xs font-black text-textPrimary leading-tight">Install Career OS App</h4>
           <p className="text-[9px] text-textSecondary leading-normal">
-            Install Standalone App for faster startup and native integration.
+            Install the standalone app for faster startup. Offline support depends on a prior successful load.
           </p>
           <button
             type="button"
@@ -71,4 +75,5 @@ export const PWAInstallPrompt: React.FC = () => {
     </div>
   );
 };
+
 export default PWAInstallPrompt;

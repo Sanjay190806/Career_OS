@@ -2,7 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.6.4 - Stability: Sync, Backup, PWA, Build
+
+### Fixed
+- Aligned frontend cloud sync adapter with backend routes (`/api/sync/health`, `/push`, `/pull`).
+- Unified dual sync services under `syncCoreService` with compatibility wrapper in `services/syncService.ts`.
+- Expanded backup export to 30 known localStorage keys via `backupRegistry.ts`.
+- Safe restore: validation summary, pre-restore snapshot, secret rejection, schema checks.
+- Mounted `PWAInstallPrompt` and `PWAUpdatePrompt` in `App.tsx`.
+- Removed duplicate `manifest.json`; canonical manifest is `manifest.webmanifest`.
+- Added PNG PWA icons and improved service worker shell caching.
+- Added root `npm run build`, `check:all`, and frontend lightweight tests.
+
+### Changed
+- Sync UI now honestly labels local-first storage and manual DB snapshots.
+- Settings distinguishes legacy career snapshot vs full backup panel.
+
+### Security
+- No tracked secrets; backup restore rejects secret-like payloads.
+
+## v1.6.4 - Final Stabilization, Documentation & Production Release
+
+### Changed
+- Bumped version to `1.6.4` across root, `frontend/`, and `backend/` package manifests (backend was lagging at `1.6.1`).
+- Expanded `routeConfig.ts` from 15 routes to 41 — now fully synchronized with all section IDs in `AppRouter.tsx`, grouped by feature domain with inline comments.
+
+### Added
+- `docs/SETUP.md` — comprehensive first-time setup guide covering prerequisites, environment configuration, Prisma workflow, and troubleshooting.
+- `docs/FEATURES.md` — complete feature reference listing all 30+ modules, AI commands, localStorage keys, and PWA capabilities.
+- `docs/ARCHITECTURE.md` — expanded from a 676-byte stub to a full architecture document covering the frontend/backend split, persistence model, AI proxy pattern, sync layer, PWA strategy, and data flow.
+- `docs/DEPLOYMENT.md` — expanded from a 364-byte stub to a full deployment guide covering local dev, Docker production compose, environment variable checklist, health checks, and rollback procedure.
+- `docs/TESTING.md` — expanded from a 895-byte stub to a full QA testing strategy covering TypeScript compile gates, manual route regression checklist, AI command smoke tests, localStorage integrity checks, PWA offline tests, and backup/restore round-trip verification.
+- `docs/AUDIT_REPORT.md` — replaced v1.0.0 report with the full v1.6.4 audit report (TypeScript pass, build pass, security scan, route coverage, 20-key localStorage inventory, notable findings, and sign-off).
+
+### Fixed
+- Removed `frontend/public/stress_seed.json` (178 KB dev fixture) from the production build output path — it was being served publicly in every deployment.
+- Added `**/stress_seed.json` to `.gitignore` to prevent future re-addition; also untracked `docs/stress_seed.json` from git.
+
+### Security
+- Confirmed `backend/.env` (containing Groq API key) is not git-tracked. Key is correctly loaded from environment at runtime.
+- Confirmed zero hardcoded API keys in any tracked frontend or backend source file.
+- Confirmed `XSS` sanitization via `securityUtils.ts` is in place for all Markdown rendering paths.
+
+### Quality
+- TypeScript compile: **PASS** (0 errors, `tsc --noEmit`).
+- Production build: **PASS** (32 lazy chunks emitted, 4.87s build time, `vite build`).
+- Zero TODO/FIXME annotations remaining in `utils/` or `services/`.
+
+---
+
 ## v1.6.3 - Cloud Sync + PWA + Performance
+
 ### Added
 - Local and Cloud Sync adapters coordination for multi-device profile loads.
 - Offline-first operations transaction queue caching study progress locally.

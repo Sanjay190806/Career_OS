@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { Download, Upload, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Download, Upload, ShieldAlert, CheckCircle2, Info } from 'lucide-react';
 import { backupService } from '../../services/sync/backupService';
-import { localSyncAdapter } from '../../services/sync/localSyncAdapter';
+import syncCoreService from '../../services/sync/syncService';
+import { formatBackupValidationSummary } from '../../services/backup/backupRegistry';
 
 export const BackupRestorePanel: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const storageSize = localSyncAdapter.getStorageSizeKB();
+  const storageSize = syncCoreService.getStorageSizeKB();
 
   const handleExport = () => {
     try {
       backupService.exportData();
-      setSuccess('Data backup exported successfully!');
+      setSuccess('Full local backup exported successfully.');
       setError(null);
     } catch (e: any) {
       setError(e.message || 'Failed to export backup file');
@@ -23,27 +24,49 @@ export const BackupRestorePanel: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!window.confirm('WARNING: Importing this backup will overwrite all current local tracker progress. Do you want to proceed?')) {
-      event.target.value = '';
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const raw = e.target?.result as string;
         const parsed = JSON.parse(raw);
+        const validation = backupService.validateBackup(parsed);
+
+        if (!validation.valid) {
+          setError(validation.error || 'Invalid backup structure');
+          setSuccess(null);
+          event.target.value = '';
+          return;
+        }
+
+        const summary = formatBackupValidationSummary(validation);
+        const confirmMsg = [
+          'Restore this backup?',
+          '',
+          summary,
+          '',
+          'A pre-restore local snapshot will be saved automatically.',
+          'This will overwrite matching localStorage keys after confirmation.',
+        ].join('\n');
+
+        if (!window.confirm(confirmMsg)) {
+          event.target.value = '';
+          return;
+        }
+
         const res = backupService.restoreBackup(parsed);
 
         if (res.success) {
-          setSuccess(`Backup restored successfully! Overwrote: ${res.restoredKeys.join(', ')}.`);
+          const warningText = res.warnings?.length ? ` Warnings: ${res.warnings.join(' ')}` : '';
+          setSuccess(
+            `Backup restored. ${res.restoredKeys.length} keys restored.${res.preRestoreSaved ? ' Pre-restore snapshot saved locally.' : ''}${warningText}`
+          );
           setError(null);
-          setTimeout(() => window.location.reload(), 1500);
+          setTimeout(() => window.location.reload(), 2000);
         } else {
           setError(res.error || 'Invalid backup structure');
           setSuccess(null);
         }
-      } catch (err: any) {
+      } catch {
         setError('Failed parsing upload JSON: invalid syntax');
         setSuccess(null);
       }
@@ -59,7 +82,14 @@ export const BackupRestorePanel: React.FC = () => {
           <span className="text-[9px] text-textMuted font-black uppercase tracking-widest">Local Snapshot Maintenance</span>
           <h3 className="text-sm font-black text-textPrimary mt-0.5">Backup & Restore</h3>
         </div>
-        <span className="text-[10px] text-textSecondary font-mono">{storageSize} KB Used</span>
+        <span className="text-[10px] text-textSecondary font-mono">{storageSize} KB tracked</span>
+      </div>
+
+      <div className="rounded-xl border border-white/5 bg-black/45 p-3 text-[10px] text-textSecondary leading-relaxed flex gap-2">
+        <Info className="h-4 w-4 shrink-0 text-accentBlue mt-0.5" />
+        <p>
+          Exports all known Sanju Career OS localStorage modules into one JSON file. Import validates the file, shows a confirmation summary, saves a pre-restore snapshot, then restores safely. This is file-based backup — not account sync.
+        </p>
       </div>
 
       {error && (
@@ -77,11 +107,6 @@ export const BackupRestorePanel: React.FC = () => {
       )}
 
       <div className="flex flex-col gap-2">
-        <p className="text-[10px] text-textSecondary leading-normal">
-          Save your complete career tracker roadmap, achievements catalog, and planner history. 
-          Use this file to import progress across other desktop or mobile environments.
-        </p>
-
         <div className="flex gap-2 mt-2">
           <button
             type="button"
@@ -102,4 +127,5 @@ export const BackupRestorePanel: React.FC = () => {
     </div>
   );
 };
+
 export default BackupRestorePanel;
