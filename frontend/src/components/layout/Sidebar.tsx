@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useUIStore } from '../../app/store/useUIStore';
+import { useCareerStore } from '../../app/store/useCareerStore';
 import { navigateToPath, sectionToPath } from '../../utils/navigation';
+import { RankBadge } from '../ui/RankBadge';
+import { XPProgressBar } from '../ui/XPProgressBar';
 import {
   LayoutDashboard,
   Gauge,
@@ -26,6 +29,7 @@ import {
   TrendingUp,
   Building2,
   CalendarCheck,
+  GraduationCap,
   GitFork,
   PlugZap,
   ChevronDown,
@@ -35,6 +39,10 @@ import {
 export const Sidebar: React.FC = () => {
   const { sidebarCollapsed, toggleSidebar, activeSection, setActiveSection } = useUIStore();
   const [aiToolsExpanded, setAiToolsExpanded] = useState(true);
+  
+  const profileName = useCareerStore((s) => s.userProfile.name);
+  const xp = useCareerStore((s) => s.xp);
+  const level = useCareerStore((s) => s.level);
 
   const coreTrackerItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -42,6 +50,7 @@ export const Sidebar: React.FC = () => {
     { id: 'ai_brain', label: 'AI Brain', icon: Brain },
     { id: 'smart_planner', label: 'Smart Planner', icon: CalendarCheck },
     { id: 'placement_os', label: 'Placement OS', icon: Building2 },
+    { id: 'learning_os', label: 'Learning OS', icon: GraduationCap },
     { id: 'placement_calendar', label: 'Placement Calendar', icon: CalendarClock },
     { id: 'applications', label: 'Applications', icon: FileText },
     { id: 'companies', label: 'Target Companies', icon: Building2 },
@@ -140,6 +149,24 @@ export const Sidebar: React.FC = () => {
           {sidebarCollapsed ? <Menu className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </button>
       </div>
+
+      {/* RPG Mini Status Card */}
+      {!sidebarCollapsed && (
+        <div className="mx-3 mt-4 p-3.5 rounded-2xl border border-white/5 bg-white/[0.02] flex flex-col gap-3 relative overflow-hidden select-none">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-accentBlue/10 flex items-center justify-center text-accentBlue border border-accentBlue/25 font-bold text-sm">
+              {profileName.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold text-textPrimary truncate">{profileName}</span>
+              <div className="mt-1">
+                <RankBadge xp={xp} />
+              </div>
+            </div>
+          </div>
+          <XPProgressBar currentXp={xp} level={level} />
+        </div>
+      )}
 
       {/* Navigation List */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 select-none flex flex-col gap-2">

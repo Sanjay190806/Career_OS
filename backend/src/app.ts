@@ -14,6 +14,8 @@ import resumeUploadRoutes from './routes/resumeUpload.routes.js';
 import aiBrainRoutes from './routes/aiBrain.routes.js';
 import smartPlannerRoutes from './routes/smartPlanner.routes.js';
 import placementRoutes from './routes/placement.routes.js';
+import learningRoutes from './routes/learning.routes.js';
+import analyticsRoutes from './routes/analytics.routes.js';
 
 const app = express();
 
@@ -58,6 +60,8 @@ app.use('/api', rateLimitMiddleware, feedbackRoutes);
 app.use('/api', rateLimitMiddleware, aiBrainRoutes);
 app.use('/api', rateLimitMiddleware, smartPlannerRoutes);
 app.use('/api', rateLimitMiddleware, placementRoutes);
+app.use('/api', rateLimitMiddleware, learningRoutes);
+app.use('/api', rateLimitMiddleware, analyticsRoutes);
 app.use('/api', syncRoutes);
 
 // General 404 handler

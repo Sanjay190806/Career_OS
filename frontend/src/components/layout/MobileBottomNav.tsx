@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useUIStore } from '../../app/store/useUIStore';
 import { navigateToPath, sectionToPath } from '../../utils/navigation';
-import { LayoutDashboard, Target, Map, Settings2, MoreHorizontal, Bot, Languages, BarChart3, FileText, FolderKanban, UserRound, Briefcase, Code2, TrendingUp, CalendarClock, Building2, GitFork, Brain, CalendarCheck } from 'lucide-react';
+import { LayoutDashboard, Target, Map, Settings2, MoreHorizontal, Bot, Languages, BarChart3, FileText, FolderKanban, UserRound, Briefcase, Code2, TrendingUp, CalendarClock, Building2, GitFork, Brain, CalendarCheck, GraduationCap } from 'lucide-react';
 
 export const MobileBottomNav: React.FC = () => {
   const { activeSection, setActiveSection } = useUIStore();
@@ -11,17 +11,18 @@ export const MobileBottomNav: React.FC = () => {
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'today', label: 'Today', icon: Target },
     { id: 'smart_planner', label: 'Planner', icon: CalendarCheck },
-    { id: 'placement_os', label: 'Placement', icon: Building2 }
+    { id: 'learning_os', label: 'Learning', icon: GraduationCap }
   ];
 
   const moreItems = [
     { id: 'german', label: 'German', icon: Languages },
     { id: 'ai_brain', label: 'AI Brain', icon: Brain },
+    { id: 'placement_os', label: 'Placement OS', icon: Building2 },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'roadmap', label: 'Roadmap', icon: Map },
     { id: 'ai', label: 'Shayla AI', icon: Bot },
     { id: 'coding_mentor', label: 'Coding', icon: Code2 },
     { id: 'career_intelligence', label: 'Career', icon: TrendingUp },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'projects', label: 'Projects', icon: FolderKanban },
     { id: 'resume', label: 'Resume', icon: UserRound },

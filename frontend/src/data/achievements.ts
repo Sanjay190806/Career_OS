@@ -20,7 +20,7 @@ export const BADGES: readonly Badge[] = [
     name: 'First Blood',
     emoji: '🩸',
     desc: 'Complete your first day',
-    check: (s) => Object.values(s.dailyLogs || {}).some(l => l.status === 'completed')
+    check: (s) => Object.values(s.dailyLogs || {}).some((l: any) => l.status === 'completed')
   },
   {
     id: 'fire_7',

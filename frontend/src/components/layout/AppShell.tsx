@@ -7,9 +7,11 @@ import { CommandPalette } from '../navigation/CommandPalette';
 import { ShaylaLauncher } from '../ai/ShaylaLauncher';
 import { NeonAtmosphere } from './NeonAtmosphere';
 import { CursorAura } from './CursorAura';
+import { ImmersiveBackground } from '../visual/ImmersiveBackground';
 import { FloatingActions } from '../ui/FloatingActions';
 import { useCareerStore } from '../../app/store/useCareerStore';
 import { useUIStore } from '../../app/store/useUIStore';
+import { useThemePreset } from '../../hooks/useThemePreset';
 import { awardXPForLog, getLevel } from '../../utils/xpUtils';
 import { getTodayDay } from '../../utils/dateUtils';
 
@@ -18,6 +20,7 @@ interface AppShellProps {
 }
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
+  useThemePreset();
   const [commandOpen, setCommandOpen] = useState(false);
 
   useEffect(() => {
@@ -118,6 +121,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
   return (
     <div className="app-shell relative isolate text-textPrimary">
+      <ImmersiveBackground />
       <NeonAtmosphere />
       <CursorAura />
       <Sidebar />

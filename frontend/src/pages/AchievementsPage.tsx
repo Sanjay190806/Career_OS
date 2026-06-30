@@ -1,18 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SectionHeader } from '../components/ui/SectionHeader';
-import { Card } from '../components/ui/Card';
-import { ProgressBar } from '../components/ui/ProgressBar';
 import { useCareerStore } from '../app/store/useCareerStore';
-import { BADGES } from '../utils/achievementEngine';
-import { getLevel } from '../utils/xpUtils';
-
+import { useAchievements } from '../hooks/useAchievements';
+import { achievementService } from '../services/achievementService';
+import { AchievementCategoryTabs } from '../components/achievements/AchievementCategoryTabs';
+import { AchievementGrid } from '../components/achievements/AchievementGrid';
+import { AchievementProgressStrip } from '../components/achievements/AchievementProgressStrip';
+import { AchievementUnlockModal } from '../components/achievements/AchievementUnlockModal';
+import { AchievementCategory } from '../types/achievements';
 export const AchievementsPage: React.FC = () => {
   const careerState = useCareerStore((s) => s);
-  const { xp, unlockedBadges } = careerState;
+  const { achievements, claimReward, unlockedIds, claimedIds } = useAchievements();
+  
+  const [activeCategory, setActiveCategory] = useState<AchievementCategory | 'all'>('all');
+  const [activeUnlockId, setActiveUnlockId] = useState<string | null>(null);
 
-  const currentLevelInfo = getLevel(xp);
-  const nextLevelXp = currentLevelInfo.minXp + 1500; // Mock calculation bounds
-  const levelProgress = Math.min(Math.round(((xp - currentLevelInfo.minXp) / (nextLevelXp - currentLevelInfo.minXp)) * 100), 100);
+  // Sync and check for new achievements when opening page
+  useEffect(() => {
+    achievementService.evaluateAll(careerState);
+  }, [careerState]);
+
+  // Listen for real-time achievement unlock event triggers
+  useEffect(() => {
+    const handleUnlocked = (e: Event) => {
+      const customEvent = e as CustomEvent<{ id: string; title: string }>;
+      setActiveUnlockId(customEvent.detail.id);
+    };
+
+    window.addEventListener('achievement_unlocked', handleUnlocked);
+    return () => window.removeEventListener('achievement_unlocked', handleUnlocked);
+  }, []);
+
+  const filteredAchievements = achievements.filter((a) => {
+    if (activeCategory === 'all') return true;
+    return a.category === activeCategory;
+  });
 
   return (
     <div className="flex flex-col gap-6 fade-in pb-10 select-none">
@@ -21,56 +43,38 @@ export const AchievementsPage: React.FC = () => {
         subtitle="Track unlocked badges, placement quest checklists, and career experience levels"
       />
 
-      {/* Level XP Banner */}
-      <Card className="flex flex-col gap-4 border-border-accent/15 bg-gradient-to-r from-accentPurple/5 to-bgCard">
-        <div className="flex justify-between items-center">
-          <div>
-            <span className="text-[10px] font-bold text-accentPurple uppercase tracking-wider block">Developer Level Status</span>
-            <span className="text-xl font-black text-textPrimary mt-1 block">Level {currentLevelInfo.level}: {currentLevelInfo.name}</span>
-          </div>
-          <span className="text-xl font-bold font-mono text-textSecondary">{xp} XP Total</span>
-        </div>
-        <div>
-          <div className="flex justify-between items-center text-[9px] text-textMuted font-bold mb-1.5 pl-0.5">
-            <span>Progress to Next Level</span>
-            <span>{levelProgress}%</span>
-          </div>
-          <ProgressBar value={levelProgress} color="var(--accent-purple)" />
-        </div>
-      </Card>
+      {/* Rarity & Completion Stats Progress Strip */}
+      <AchievementProgressStrip />
 
-      {/* Badges Grid */}
-      <div>
-        <span className="text-xs font-bold text-textSecondary uppercase tracking-wider block pl-0.5 mb-4">Badges collection ({Object.keys(unlockedBadges || {}).length}/{BADGES.length})</span>
-        
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {BADGES.map((b) => {
-            const isUnlocked = !!(unlockedBadges || {})[b.id];
-            const unlockedDate = isUnlocked ? new Date((unlockedBadges || {})[b.id]).toLocaleDateString() : "";
-            
-            return (
-              <Card
-                key={b.id}
-                className={`flex flex-col items-center text-center p-5 border transition-all ${
-                  isUnlocked 
-                    ? 'border-accentPurple/30 bg-bgCard/60 shadow-glow-purple' 
-                    : 'border-border-subtle/50 opacity-40 bg-bgSurface/20'
-                }`}
-              >
-                <span className={`text-4xl mb-3 ${isUnlocked ? 'animate-pulse' : 'filter grayscale'}`}>{b.emoji}</span>
-                <span className="text-xs font-bold text-textPrimary leading-tight">{b.name}</span>
-                <p className="text-[10px] text-textSecondary mt-1 leading-snug min-h-[32px]">{b.desc}</p>
-                
-                {isUnlocked ? (
-                  <span className="text-[8px] text-accentPurple font-mono mt-3 uppercase tracking-wider font-extrabold">Unlocked {unlockedDate}</span>
-                ) : (
-                  <span className="text-[8px] text-textMuted font-mono mt-3 uppercase tracking-wider">Locked</span>
-                )}
-              </Card>
-            );
-          })}
+      {/* Filter category tabs */}
+      <AchievementCategoryTabs
+        activeCategory={activeCategory}
+        onChangeCategory={setActiveCategory}
+      />
+
+      {/* Grid displaying active collection */}
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-center pl-0.5">
+          <span className="text-[10px] font-black uppercase tracking-wider text-textSecondary">
+            Badges Grid ({filteredAchievements.filter(a => unlockedIds.includes(a.id)).length} / {filteredAchievements.length})
+          </span>
         </div>
+
+        <AchievementGrid
+          achievements={filteredAchievements}
+          onClaim={claimReward}
+          unlockedIds={unlockedIds}
+          claimedIds={claimedIds}
+        />
       </div>
+
+      {/* Unlock alert modal popup */}
+      <AchievementUnlockModal
+        unlockedId={activeUnlockId}
+        onClose={() => setActiveUnlockId(null)}
+        onClaim={claimReward}
+      />
     </div>
   );
 };
+export default AchievementsPage;

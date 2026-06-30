@@ -17,6 +17,10 @@ import { getMigrationLogs, resetIndividualStore, clearAllLocalData, MigrationRec
 import { FounderWorkspacePanel } from '../components/settings/FounderWorkspacePanel';
 import { FeatureFlagsPanel } from '../components/settings/FeatureFlagsPanel';
 import { FeedbackPanel } from '../components/settings/FeedbackPanel';
+import { PersonalizationPanel } from '../components/personalization/PersonalizationPanel';
+import { SyncSettingsPanel } from '../components/sync/SyncSettingsPanel';
+import { BackupRestorePanel } from '../components/sync/BackupRestorePanel';
+import { usePerformanceMode } from '../hooks/usePerformanceMode';
 
 type HealthStatus = {
   backendOnline: boolean;
@@ -64,6 +68,7 @@ function friendlyAiMessage(error: unknown): string {
 }
 
 export const SettingsPage: React.FC = () => {
+  const { mode: perfMode, updateMode: setPerfMode } = usePerformanceMode();
   const careerState = useCareerStore((s) => s);
   const setCareerState = useCareerStore.setState;
   const [health, setHealth] = useState<HealthStatus | null>(null);
@@ -409,6 +414,9 @@ export const SettingsPage: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {/* Personalization, Focus paths and Layout density toggles */}
+        <PersonalizationPanel />
+
         <Card className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3 border-b border-border-subtle/50 pb-3">
             <div>
@@ -596,6 +604,33 @@ export const SettingsPage: React.FC = () => {
           <FeedbackPanel />
         </Card>
 
+        {/* Sync, Backup, and Performance Optimization panels */}
+        <SyncSettingsPanel />
+        <BackupRestorePanel />
+
+        <Card className="flex flex-col gap-4">
+          <div className="border-b border-border-subtle/50 pb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Performance Optimization</p>
+            <h3 className="mt-1 text-lg font-semibold text-textPrimary">Visual Rendering Presets</h3>
+          </div>
+          <p className="text-xs text-textSecondary leading-normal">
+            Configure rendering behaviors. Lightweight mode disables ambient background canvas particles to maximize frame rates on slower devices.
+          </p>
+          <div className="grid gap-3 grid-cols-3">
+            {(['lightweight', 'balanced', 'full'] as const).map((m) => (
+              <Button
+                key={m}
+                type="button"
+                variant={perfMode === m ? 'primary' : 'outline'}
+                onClick={() => setPerfMode(m)}
+                className="justify-center capitalize"
+              >
+                {m} mode
+              </Button>
+            ))}
+          </div>
+        </Card>
+
         <Card className="xl:col-span-2">
           <div className="flex items-center gap-3 border-b border-border-subtle/50 pb-3">
             <ShieldCheck className="h-4 w-4 text-accentYellow" />
@@ -628,7 +663,7 @@ export const SettingsPage: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4">
               <span className="block text-[9px] font-bold text-textMuted uppercase tracking-wider">App Version</span>
-              <span className="block text-lg font-black text-textPrimary mt-1">v1.6.0</span>
+              <span className="block text-lg font-black text-textPrimary mt-1">v1.6.1</span>
             </div>
             <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4">
               <span className="block text-[9px] font-bold text-textMuted uppercase tracking-wider">Schema State version</span>

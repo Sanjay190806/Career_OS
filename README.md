@@ -1,6 +1,13 @@
 # Sanju Career OS
 
-Local-first career and placement tracker with a React + TypeScript frontend, Express backend, Prisma, PostgreSQL, Zustand persistence, a secure AI proxy, and v1.6.0 AI Brain + Smart Planner + Placement OS modules.
+Local-first career and placement tracker with a React + TypeScript frontend, Express backend, Prisma, PostgreSQL, Zustand persistence, a secure AI proxy, and v1.6.1 Learning OS + Analytics 2.0 modules.
+
+## v1.6.1 Changelog (Learning OS + Analytics 2.0)
+
+- Added Learning OS with default career learning paths, session logging, mastery tracking, revision queue, weak areas, milestones, and recommendations.
+- Added Analytics 2.0 with study hours, XP, skill breakdown, readiness, burnout, completion, and focus balance signals.
+- Integrated Learning OS signals into Smart Planner, AI Brain, dashboard widgets, and AI commands.
+- Kept persistence local-first with versioned keys: `sanzz_os_learning_os_v1`, `sanzz_os_learning_sessions_v1`, `sanzz_os_revision_items_v1`, and `sanzz_os_analytics_cache_v1`.
 
 ## v1.6.0 Changelog (AI Brain + Smart Planner + Placement OS)
 

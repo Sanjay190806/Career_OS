@@ -1,23 +1,60 @@
-import { CareerState } from './index';
+export type AchievementCategory =
+  | 'daily'
+  | 'dsa'
+  | 'skillrack'
+  | 'sql'
+  | 'aptitude'
+  | 'learning'
+  | 'german'
+  | 'projects'
+  | 'resume'
+  | 'placement'
+  | 'interview'
+  | 'comeback'
+  | 'ai_planner';
 
-export interface XPThreshold {
-  readonly level: number;
-  readonly name: string;
-  readonly minXp: number;
-  readonly color: string;
-}
+export type AchievementRarity =
+  | 'common'
+  | 'uncommon'
+  | 'rare'
+  | 'epic'
+  | 'legendary'
+  | 'mythic';
 
-export interface Badge {
-  readonly id: string;
-  readonly name: string;
-  readonly emoji: string;
-  readonly desc: string;
-  readonly check: (state: Partial<CareerState>) => boolean;
+export type AchievementStatus = 'locked' | 'in_progress' | 'unlocked' | 'claimed';
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  category: AchievementCategory;
+  rarity: AchievementRarity;
+  progressCurrent: number;
+  progressTarget: number;
+  xpReward: number;
+  unlockedAt?: string;
+  claimedAt?: string;
+  hidden?: boolean;
+  nextHint?: string;
 }
 
 export interface AchievementState {
-  xp: number;
+  unlockedIds: string[];
+  claimedIds: string[];
+  progress: Record<string, number>;
+}
+
+export interface XPThreshold {
   level: number;
-  badges: string[];
-  unlockedAt: Record<string, string>;
+  name: string;
+  minXp: number;
+  color: string;
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  emoji: string;
+  desc: string;
+  check: (s: any) => boolean;
 }

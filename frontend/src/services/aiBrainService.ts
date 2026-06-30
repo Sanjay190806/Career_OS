@@ -1,5 +1,6 @@
 import { CareerState } from '../app/store/useCareerStore';
 import { AIBrainSummary, AIRecommendation, CareerRiskFlag, SkillProgress, UserCareerProfile } from '../types/aiBrain';
+import { getDueRevisionItems, loadLearningState } from './learningService';
 
 export const AI_BRAIN_STORAGE_KEY = 'sanzz_os_ai_brain_v1';
 
@@ -65,6 +66,10 @@ function scoreSkills(state: CareerState): SkillProgress[] {
 }
 
 export function buildAIBrainSummary(state: CareerState): AIBrainSummary {
+  const learning = loadLearningState();
+  const dueRevision = getDueRevisionItems(learning.revisionItems);
+  const weakestLearning = [...learning.paths].sort((a, b) => a.masteryPercentage - b.masteryPercentage)[0];
+  const strongestLearning = [...learning.paths].sort((a, b) => b.masteryPercentage - a.masteryPercentage)[0];
   const skills = scoreSkills(state);
   const strongestSkills = [...skills].sort((a, b) => b.score - a.score).slice(0, 3);
   const weakestSkills = [...skills].sort((a, b) => a.score - b.score).slice(0, 3);
@@ -82,6 +87,8 @@ export function buildAIBrainSummary(state: CareerState): AIBrainSummary {
   const nextSkill = weakestSkills[0];
 
   const recommendations: AIRecommendation[] = [
+    ...(weakestLearning ? [{ id: 'learning-weakness', title: `Learning priority: ${weakestLearning.title}`, detail: `${weakestLearning.title} is the weakest Learning OS path at ${weakestLearning.masteryPercentage}% mastery.`, priority: 'high' as const, category: 'Placement' as const }] : []),
+    ...(dueRevision[0] ? [{ id: 'revision-backlog', title: `Review ${dueRevision[0].topic}`, detail: `${dueRevision.length} Learning OS revision item(s) are due.`, priority: 'high' as const, category: 'Recovery' as const }] : []),
     { id: 'next-skill', title: `Strengthen ${nextSkill.name}`, detail: `Spend one focused block on ${nextSkill.name}. Current signal is ${nextSkill.score}%.`, priority: 'high', category: nextSkill.name },
     { id: 'project-proof', title: 'Add one project proof point', detail: 'Update a README, demo note, metric, or architecture bullet for one portfolio project.', priority: 'medium', category: 'Projects' },
     { id: 'placement-readiness', title: 'Prepare one company story', detail: 'Pick one target company and write a 90-second project explanation tailored to its role.', priority: 'medium', category: 'Placement' }
@@ -97,24 +104,25 @@ export function buildAIBrainSummary(state: CareerState): AIBrainSummary {
   if (resumeReadiness < 65) {
     riskFlags.push({ id: 'resume', title: 'Resume readiness low', detail: 'Resume sections need sharper proof, quantified project bullets, or formatting review.', severity: 'medium' });
   }
+  if (dueRevision.length >= 3) {
+    riskFlags.push({ id: 'revision-backlog', title: 'Revision backlog', detail: `${dueRevision.length} learning revision items are waiting.`, severity: 'medium' });
+  }
 
   return {
     profile: { ...defaultCareerProfile, name: state.userProfile?.name || defaultCareerProfile.name, updatedAt: new Date().toISOString() },
     strongestSkills,
     weakestSkills,
     currentStreak: currentStreak(state.dailyLogs || {}),
-    weeklyConsistency: {
-      consistencyScore: clamp((activeDays / 7) * 100),
-      activeDays,
-      totalFocusMinutes,
-      message: activeDays >= 5 ? 'Strong weekly rhythm.' : activeDays >= 3 ? 'Decent rhythm. Protect the next two days.' : 'Consistency is the main lever this week.'
-    },
     placementReadinessScore,
     burnoutRisk,
     projectPortfolioStrength,
     resumeReadiness,
     interviewReadiness,
-    recommendedNextAction: `Do one ${nextSkill.name} task, then add one portfolio proof point.`,
+    recommendedNextAction: dueRevision[0]
+      ? `Review ${dueRevision[0].topic}, then do one ${nextSkill.name} task.`
+      : weakestLearning
+        ? `Log one ${weakestLearning.title} session, then add one portfolio proof point.`
+        : `Do one ${nextSkill.name} task, then add one portfolio proof point.`,
     recommendations,
     riskFlags,
     projects: Object.entries(state.projects || {}).map(([id, project]) => ({
@@ -128,6 +136,12 @@ export function buildAIBrainSummary(state: CareerState): AIBrainSummary {
       { id: 'analytics', label: 'AI Product / Analytics', readiness: placementReadinessScore, priority: 'high' },
       { id: 'swe', label: 'SWE placement backup', readiness: clamp(average([skills[0].score, skills[1].score, interviewReadiness], 50)), priority: 'medium' }
     ],
+    weeklyConsistency: {
+      consistencyScore: clamp(((activeDays / 7) * 60) + Math.min(40, learning.paths.reduce((sum, path) => sum + path.weeklyHours, 0) * 5)),
+      activeDays,
+      totalFocusMinutes,
+      message: strongestLearning ? `Learning strongest path: ${strongestLearning.title}. Weakest path: ${weakestLearning?.title || 'none'}.` : activeDays >= 5 ? 'Strong weekly rhythm.' : activeDays >= 3 ? 'Decent rhythm. Protect the next two days.' : 'Consistency is the main lever this week.'
+    },
     snapshot: {
       date: new Date().toISOString().split('T')[0],
       focusMinutes: latestLog?.focusMinutes || 0,

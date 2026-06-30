@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { OverviewHero } from '../components/overview/OverviewHero';
 import { OverviewMetrics } from '../components/overview/OverviewMetrics';
 import { WeeklyTrend } from '../components/overview/WeeklyTrend';
 import { JourneyHeatmap } from '../components/overview/JourneyHeatmap';
@@ -14,9 +13,7 @@ import { generateDailyBriefing } from '../services/agentService';
 import { DailyBriefingPanel } from '../components/shayla-agent/DailyBriefingPanel';
 import { ShaylaBriefingResult } from '../types/shaylaAgent';
 
-import { PhaseProgressBar } from '../components/ui/PhaseProgressBar';
-import { MiniStreakStrip } from '../components/ui/MiniStreakStrip';
-import { V16IntelligenceWidgets } from '../components/overview/V16IntelligenceWidgets';
+import { AdaptiveDashboard } from '../components/dashboard/AdaptiveDashboard';
 
 export const OverviewPage: React.FC = () => {
   const careerState = useCareerStore((s) => s);
@@ -75,19 +72,20 @@ export const OverviewPage: React.FC = () => {
 
   return (
     <div className="workspace-page flex flex-col gap-6 pb-12 md:pb-8">
-      <OverviewHero />
-      <PhaseProgressBar />
-      <MiniStreakStrip />
-      <V16IntelligenceWidgets />
-      <DailyBriefingPanel
+      {/* Redesigned Adaptive Command Center layout */}
+      <AdaptiveDashboard />
 
+      {/* Daily AI Briefing Logs */}
+      <DailyBriefingPanel
         briefing={briefing}
         history={agentStore.briefingHistory}
         loading={loading}
         onGenerateMorning={handleGenerateMorning}
         onGenerateRecovery={handleGenerateRecovery}
       />
+      
       <OverviewMetrics />
+      
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_0.95fr]">
         <JourneyHeatmap />
         <WeeklyTrend />

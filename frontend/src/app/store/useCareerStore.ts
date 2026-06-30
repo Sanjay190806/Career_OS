@@ -88,6 +88,7 @@ export interface CareerState {
   useStreakFreeze: (day: number, reason?: string) => void;
   saveChatSession: (session: SavedChatSession) => void;
   deleteChatSession: (id: string) => void;
+  awardXP: (amount: number) => void;
 }
 
 function deriveGermanLevel(completedCount: number): GermanLevel {
@@ -838,6 +839,14 @@ export const useCareerStore = create<CareerState>()(
       deleteChatSession: (id) => set((state) => {
         const nextHistory = (state.chatHistory || []).filter((s) => s.id !== id);
         return { chatHistory: nextHistory };
+      }),
+      awardXP: (amount) => set((state) => {
+        const nextXp = state.xp + amount;
+        const nextLevel = Math.floor(nextXp / 500) + 1;
+        return {
+          xp: nextXp,
+          level: nextLevel
+        };
       })
     }),
     {

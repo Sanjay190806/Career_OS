@@ -15,6 +15,7 @@ const TodayPage = lazy(() => import('../pages/TodayPage').then(m => ({ default: 
 const AIBrainPage = lazy(() => import('../pages/AIBrainPage').then(m => ({ default: m.AIBrainPage })));
 const SmartPlannerPage = lazy(() => import('../pages/SmartPlannerPage').then(m => ({ default: m.SmartPlannerPage })));
 const PlacementOSPage = lazy(() => import('../pages/PlacementOSPage').then(m => ({ default: m.PlacementOSPage })));
+const LearningOSPage = lazy(() => import('../pages/LearningOSPage').then(m => ({ default: m.LearningOSPage })));
 const RoadmapPage = lazy(() => import('../pages/RoadmapPage').then(m => ({ default: m.RoadmapPage })));
 const ShaylaAIPage = lazy(() => import('../pages/ShaylaAIPage').then(m => ({ default: m.ShaylaAIPage })));
 const AISettingsPage = lazy(() => import('../pages/AISettingsPage').then(m => ({ default: m.AISettingsPage })));
@@ -45,6 +46,7 @@ const HistoryPage = lazy(() => import('../pages/HistoryPage').then(m => ({ defau
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const AdminPage = lazy(() => import('../pages/AdminPage').then(m => ({ default: m.AdminPage })));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+const OfflinePage = lazy(() => import('../pages/OfflinePage').then(m => ({ default: m.OfflinePage })));
 
 
 
@@ -56,6 +58,7 @@ export const AppRouter: React.FC = () => {
 
   const isLanding = pathname === '/' || pathname === '/landing' || pathname.endsWith('index.html') || pathname === '';
   const isPortfolio = pathname === '/portfolio';
+  const isOffline = pathname === '/offline';
 
   // 1. Sync URL path -> Store's activeSection on mount and popstate
   useEffect(() => {
@@ -111,8 +114,16 @@ export const AppRouter: React.FC = () => {
     );
   }
 
+  if (isOffline) {
+    return (
+      <ErrorBoundary>
+        <OfflinePage />
+      </ErrorBoundary>
+    );
+  }
+
   const renderSection = () => {
-    const currentActive = isLanding ? 'landing' : isPortfolio ? 'portfolio' : (pathToSection[pathname] || 'overview');
+    const currentActive = isLanding ? 'landing' : isPortfolio ? 'portfolio' : activeSection;
     switch (currentActive) {
       case 'overview':
         return <OverviewPage />;
@@ -124,6 +135,8 @@ export const AppRouter: React.FC = () => {
         return <SmartPlannerPage />;
       case 'placement_os':
         return <PlacementOSPage />;
+      case 'learning_os':
+        return <LearningOSPage />;
       case 'roadmap':
         return <RoadmapPage />;
       case 'ai':

@@ -13,7 +13,25 @@ export interface ParsedCommand {
     | 'updateCompanyStatus'
     | 'addInterviewRound'
     | 'addOAResult'
-    | 'recommendNextAction';
+    | 'recommendNextAction'
+    | 'logLearningSession'
+    | 'showLearningOS'
+    | 'updateSkillMastery'
+    | 'showDueRevision'
+    | 'completeRevisionItem'
+    | 'showAnalytics'
+    | 'showWeeklyAnalytics'
+    | 'showWeakSkills'
+    | 'recommendLearningTask'
+    | 'generateLearningPlan'
+    | 'setFocusMode'
+    | 'setDensity'
+    | 'claimAllAchievements'
+    | 'setPerformanceMode'
+    | 'showSyncStatus'
+    | 'exportBackup'
+    | 'showStorageHealth'
+    | 'clearAppCache';
   payload: any;
   summary: string;
 }
@@ -27,6 +45,51 @@ export function parseCommandOffline(text: string): ParsedCommand | null {
       payload: { mode: t.includes('busy') ? 'busy' : t.includes('low energy') ? 'low_energy' : t.includes('sprint') ? 'placement_sprint' : 'normal' },
       summary: 'Generate a smart plan for today. This creates a preview and should be saved only after confirmation.'
     };
+  }
+
+  if (t.includes('studied') || t.includes('learning session') || t.includes('logged learning')) {
+    const minutesMatch = t.match(/(\d+)\s*(?:minute|min)/);
+    const confidence = t.includes('confidence low') || t.includes('low confidence') ? 'low' : t.includes('confidence high') || t.includes('high confidence') ? 'high' : 'medium';
+    const knownPaths = ['sql', 'java', 'dsa', 'python', 'power bi', 'excel', 'aptitude', 'german', 'statistics', 'pandas', 'communication', 'interview'];
+    const path = knownPaths.find((item) => t.includes(item)) || 'sql';
+    const topicMatch = text.match(/studied\s+(.+?)\s+for/i);
+    return {
+      type: 'logLearningSession',
+      payload: { path, topic: topicMatch?.[1]?.trim() || path, minutes: minutesMatch ? Number(minutesMatch[1]) : 30, confidence },
+      summary: `Log ${minutesMatch ? minutesMatch[1] : 30} minutes of ${path} learning with ${confidence} confidence after confirmation.`
+    };
+  }
+
+  if (t.includes('learning os') || t.includes('show learning')) {
+    return { type: 'showLearningOS', payload: {}, summary: 'Show Learning OS overview.' };
+  }
+
+  if (t.includes('due revision') || t.includes('revision due')) {
+    return { type: 'showDueRevision', payload: {}, summary: 'Show due revision items.' };
+  }
+
+  if (t.includes('complete') && t.includes('revision')) {
+    return { type: 'completeRevisionItem', payload: {}, summary: 'Complete the first due revision item after confirmation.' };
+  }
+
+  if (t.includes('weekly analytics')) {
+    return { type: 'showWeeklyAnalytics', payload: {}, summary: 'Show weekly analytics summary.' };
+  }
+
+  if (t.includes('analytics')) {
+    return { type: 'showAnalytics', payload: {}, summary: 'Show Analytics 2.0 overview.' };
+  }
+
+  if (t.includes('weak skills') || t.includes('weakest skills')) {
+    return { type: 'showWeakSkills', payload: {}, summary: 'Show weak skills from Learning OS and AI Brain.' };
+  }
+
+  if (t.includes('recommend learning') || t.includes('learning task')) {
+    return { type: 'recommendLearningTask', payload: {}, summary: 'Recommend the next Learning OS task.' };
+  }
+
+  if (t.includes('generate learning plan')) {
+    return { type: 'generateLearningPlan', payload: {}, summary: 'Generate a Learning OS-informed plan.' };
   }
 
   if (t.includes('completed') && (t.includes('sql task') || t.includes('dsa task') || t.includes('planner task') || t.includes('smart task'))) {
@@ -143,6 +206,74 @@ export function parseCommandOffline(text: string): ParsedCommand | null {
         summary: `Mark task "${taskName}" as completed.`
       };
     }
+  }
+
+  // 5. Personalization, Focus, Density, and Claims
+  if (t.includes('focus') || t.includes('career mode')) {
+    const focusVal = t.includes('analyst') ? 'analyst' : t.includes('swe') ? 'swe' : 'general';
+    return {
+      type: 'setFocusMode',
+      payload: { mode: focusVal },
+      summary: `Set career path focus mode to: ${focusVal.toUpperCase()}`
+    };
+  }
+
+  if (t.includes('density') || t.includes('layout')) {
+    const densityVal = t.includes('compact') ? 'compact' : t.includes('detailed') ? 'detailed' : 'balanced';
+    return {
+      type: 'setDensity',
+      payload: { density: densityVal },
+      summary: `Set layout density to: ${densityVal}`
+    };
+  }
+
+  if (t.includes('claim') && (t.includes('all') || t.includes('reward') || t.includes('badge'))) {
+    return {
+      type: 'claimAllAchievements',
+      payload: {},
+      summary: 'Claim all unlocked badge rewards for experience points.'
+    };
+  }
+
+  if (t.includes('sync status') || t.includes('show sync')) {
+    return {
+      type: 'showSyncStatus',
+      payload: {},
+      summary: 'Display current cloud sync connection status.'
+    };
+  }
+
+  if (t.includes('export backup') || t.includes('download backup')) {
+    return {
+      type: 'exportBackup',
+      payload: {},
+      summary: 'Export complete profile data snapshot as a JSON file.'
+    };
+  }
+
+  if (t.includes('performance mode') || t.includes('visual mode') || t.includes('rendering mode')) {
+    const perfVal = t.includes('lightweight') ? 'lightweight' : t.includes('full') ? 'full' : 'balanced';
+    return {
+      type: 'setPerformanceMode',
+      payload: { mode: perfVal },
+      summary: `Set visual performance mode preset to: ${perfVal.toUpperCase()}`
+    };
+  }
+
+  if (t.includes('storage health') || t.includes('bytes used')) {
+    return {
+      type: 'showStorageHealth',
+      payload: {},
+      summary: 'Analyze localStorage integrity and calculate bytes usage.'
+    };
+  }
+
+  if (t.includes('clear cache') || t.includes('clear app cache')) {
+    return {
+      type: 'clearAppCache',
+      payload: {},
+      summary: 'Clear cached visual elements and reset registration files.'
+    };
   }
 
   return null;

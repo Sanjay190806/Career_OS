@@ -1,5 +1,6 @@
 import { AIBrainSummary } from '../types/aiBrain';
 import { PlannerMode, SmartPlan, SmartTask } from '../types/smartPlanner';
+import { getDueRevisionItems, loadLearningState } from './learningService';
 
 export const SMART_PLANNER_STORAGE_KEY = 'sanzz_os_smart_planner_v1';
 
@@ -20,8 +21,39 @@ function task(seed: Omit<SmartTask, 'id' | 'status'>, index: number): SmartTask 
 
 export function generateSmartPlan(summary: AIBrainSummary, mode: PlannerMode = 'normal'): SmartPlan {
   const weakest = summary.weakestSkills.map((skill) => skill.name);
+  const learning = loadLearningState();
+  const dueRevision = getDueRevisionItems(learning.revisionItems);
+  const weakestLearning = [...learning.paths].sort((a, b) => a.masteryPercentage - b.masteryPercentage)[0];
   const tasks: Omit<SmartTask, 'id' | 'status'>[] = [];
   const cap = modeMinutes[mode];
+
+  if (dueRevision.length) {
+    tasks.push({
+      title: `Review ${dueRevision[0].topic}`,
+      category: 'revision',
+      description: 'Clear the highest-priority Learning OS revision item before adding new study load.',
+      estimatedMinutes: 20,
+      difficulty: dueRevision[0].difficulty,
+      priority: 'high',
+      reason: `${dueRevision.length} Learning OS revision item(s) are due today.`,
+      successCriteria: 'Review the concept, fix the mistake, and mark the revision item complete.',
+      xpReward: 25
+    });
+  }
+
+  if (weakestLearning && weakestLearning.masteryPercentage < 50) {
+    tasks.push({
+      title: `${weakestLearning.title} mastery block`,
+      category: weakestLearning.category === 'data' ? 'sql' : weakestLearning.category === 'product' ? 'product' : weakestLearning.category === 'language' ? 'german' : 'revision',
+      description: `Log one focused Learning OS session for ${weakestLearning.title}.`,
+      estimatedMinutes: mode === 'busy' ? 20 : 35,
+      difficulty: 'medium',
+      priority: weakestLearning.priority,
+      reason: `${weakestLearning.title} has only ${weakestLearning.masteryPercentage}% mastery and ${weakestLearning.weeklyHours.toFixed(1)}h this week.`,
+      successCriteria: 'One session logged with confidence and next action.',
+      xpReward: 35
+    });
+  }
 
   if (weakest.includes('Java DSA') || mode === 'placement_sprint' || mode === 'normal') {
     tasks.push({

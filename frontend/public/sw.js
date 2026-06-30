@@ -1,38 +1,53 @@
-const CACHE_NAME = 'sanju-career-os-v1';
-const APP_SHELL = ['/', '/index.html', '/offline.html', '/manifest.webmanifest'];
+const CACHE_NAME = 'sanzz_os_cache_v1';
+const ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/offline'
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS);
+    })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))).then(() => self.clients.claim())
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    })
   );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-
-  const url = new URL(event.request.url);
-
-  if (url.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        return cached || fetch(event.request).then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => {});
-          return response;
-        }).catch(() => {
-          if (event.request.mode === 'navigate') {
-            return caches.match('/offline.html');
-          }
-          return caches.match('/');
-        });
-      })
-    );
+  // Avoid caching backend API calls
+  if (event.request.url.includes('/api/')) {
+    return;
   }
-});
 
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return fetch(event.request).catch(() => {
+        // Return offline page fallback for page navigations
+        if (event.request.mode === 'navigate') {
+          return caches.match('/offline');
+        }
+      });
+    })
+  );
+});

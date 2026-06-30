@@ -1,13 +1,12 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.6.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "lint": "tsc --noEmit",
-    "preview": "vite preview"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "react": "^18.3.1",

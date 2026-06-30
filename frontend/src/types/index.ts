@@ -13,6 +13,7 @@ export * from './interview';
 export * from './placement';
 export * from './aiBrain';
 export * from './smartPlanner';
+export * from './learning';
 
 import { DailyLog, ProblemLog } from './logs';
 import { Project } from './projects';

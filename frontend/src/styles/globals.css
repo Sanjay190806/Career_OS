@@ -1,6 +1,9 @@
+@import './theme.css';
 @import './tokens.css';
 @import './layout.css';
 @import './components.css';
+@import './immersive.css';
+@import './effects.css';
 @import './animations.css';
 
 @tailwind base;
