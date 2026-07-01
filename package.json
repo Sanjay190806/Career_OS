@@ -1,6 +1,6 @@
 {
   "name": "sanju-career-os",
-  "version": "1.6.4",
+  "version": "1.7.2",
   "private": true,
   "workspaces": [
     "frontend",
@@ -15,19 +15,22 @@
     "typecheck": "npm run lint --workspace=frontend && npm run build --workspace=backend",
     "lint": "npm run lint --workspace=frontend",
     "test": "npm run test --workspace=frontend",
-    "check:all": "npm run typecheck && npm run test && npm run build:all",
+    "check:all": "npm run prisma:validate && npm run typecheck && npm run test && npm run build:all",
     "icons:pwa": "node scripts/generate-pwa-icons.mjs",
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:backend": "npm run dev --workspace=backend",
     "dev:all": "npm run dev --workspaces",
-    "prisma:generate": "npm run prisma:generate --workspace=backend",
-    "prisma:validate": "npm run prisma:validate --workspace=backend",
-    "prisma:migrate": "npm run prisma:migrate --workspace=backend",
+    "prisma:generate": "cd backend && npx prisma generate",
+    "prisma:generate:safe": "node scripts/prisma-generate-safe.js",
+    "prisma:validate": "cd backend && npx prisma validate",
+    "prisma:migrate": "cd backend && npx prisma migrate dev",
     "prisma:studio": "npm run prisma:studio --workspace=backend",
     "prisma:seed": "npm run prisma:seed --workspace=backend",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
-    "db:restart": "docker compose down && docker compose up -d"
+    "db:restart": "docker compose down && docker compose up -d",
+    "db:status": "cd backend && npx prisma migrate status",
+    "db:doctor": "node scripts/db-doctor.js"
   }
 }

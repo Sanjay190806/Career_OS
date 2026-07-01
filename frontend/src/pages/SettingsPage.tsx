@@ -20,7 +20,17 @@ import { FeedbackPanel } from '../components/settings/FeedbackPanel';
 import { PersonalizationPanel } from '../components/personalization/PersonalizationPanel';
 import { SyncSettingsPanel } from '../components/sync/SyncSettingsPanel';
 import { BackupRestorePanel } from '../components/sync/BackupRestorePanel';
+import { NotificationSettingsPanel } from '../components/settings/NotificationSettingsPanel';
 import { usePerformanceMode } from '../hooks/usePerformanceMode';
+import { usePortfolioStore } from '../app/store/usePortfolioStore';
+import { useAIMentorStore } from '../app/store/useAIMentorStore';
+import { AccountSettingsPanel } from '../components/settings/AccountSettingsPanel';
+import { CloudSyncSettingsPanel } from '../components/settings/CloudSyncSettingsPanel';
+import { DeviceManagementPanel } from '../components/settings/DeviceManagementPanel';
+import { CloudBackupPanel } from '../components/settings/CloudBackupPanel';
+import { MigrationSettingsPanel } from '../components/settings/MigrationSettingsPanel';
+import { SecuritySettingsPanel } from '../components/settings/SecuritySettingsPanel';
+import { BackendHealthCard } from '../components/system/BackendHealthCard';
 
 type HealthStatus = {
   backendOnline: boolean;
@@ -165,8 +175,8 @@ export const SettingsPage: React.FC = () => {
     },
     {
       label: 'App Version',
-      value: 'v1.6.4',
-      detail: 'Stability release — local-first storage'
+      value: 'v1.7.2',
+      detail: 'Database + auth stability repair'
     },
     {
       label: 'Environment',
@@ -400,7 +410,7 @@ export const SettingsPage: React.FC = () => {
     <div className="fade-in flex flex-col gap-6 pb-10">
       <SectionHeader
         title="Settings & Cloud Backups"
-        subtitle="Manage local storage, exports, sync state, and AI/backend readiness"
+        subtitle="Manage accounts, local storage, cloud sync, backups, and AI/backend readiness"
       />
 
       {notice && (
@@ -419,6 +429,16 @@ export const SettingsPage: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <Card className="xl:col-span-2">
+          <BackendHealthCard />
+        </Card>
+        <AccountSettingsPanel />
+        <CloudSyncSettingsPanel />
+        <DeviceManagementPanel />
+        <CloudBackupPanel />
+        <MigrationSettingsPanel />
+        <SecuritySettingsPanel />
+
         {/* Personalization, Focus paths and Layout density toggles */}
         <PersonalizationPanel />
 
@@ -485,7 +505,7 @@ export const SettingsPage: React.FC = () => {
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Manual DB Snapshot</p>
             <h3 className="mt-1 text-lg font-semibold text-textPrimary">Legacy career-state database backup</h3>
             <p className="mt-2 text-xs text-textSecondary">
-              These buttons push/pull the core career Zustand state only. For full app backup use Backup &amp; Restore below, or Manual DB Snapshot mode for all localStorage modules. Account-based multi-device sync is not enabled in v1.6.4.
+              These buttons push/pull the core career Zustand state only. For full app backup use Backup &amp; Restore below, or the Account Cloud Sync panels above after login.
             </p>
           </div>
 
@@ -615,6 +635,7 @@ export const SettingsPage: React.FC = () => {
         {/* Sync, Backup, and Performance Optimization panels */}
         <SyncSettingsPanel />
         <BackupRestorePanel />
+        <NotificationSettingsPanel />
 
         <Card className="flex flex-col gap-4">
           <div className="border-b border-border-subtle/50 pb-3">
@@ -661,6 +682,55 @@ export const SettingsPage: React.FC = () => {
           </div>
         </Card>
 
+        {/* Portfolio & AI Mentor OS Configuration Panel */}
+        <Card className="xl:col-span-2 flex flex-col gap-4">
+          <div className="border-b border-border-subtle/50 pb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Portfolio & AI Mentor Settings</p>
+            <h3 className="mt-1 text-lg font-semibold text-textPrimary">Visibility & Coaching Tone Preferences</h3>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4 flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-textMuted uppercase tracking-wider">Default Portfolio Visibility</label>
+              <select
+                value={usePortfolioStore((s) => s.visibility.profileSummary)}
+                onChange={(e) => usePortfolioStore.getState().updateVisibility({ profileSummary: e.target.value as any })}
+                className="mt-1 w-full rounded-xl border border-border-subtle bg-black/45 px-3 py-2 text-xs font-semibold text-textPrimary focus:outline-none"
+              >
+                <option value="private">Private (All Hidden)</option>
+                <option value="preview">Preview (Summaries Only)</option>
+                <option value="public">Public (Full Recruiter Ready)</option>
+              </select>
+            </div>
+
+            <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4 flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-textMuted uppercase tracking-wider">AI Coaching Style Tone</label>
+              <select
+                value={useAIMentorStore((s) => s.profile.coachingTone)}
+                onChange={(e) => useAIMentorStore.getState().updateProfile({ coachingTone: e.target.value as any })}
+                className="mt-1 w-full rounded-xl border border-border-subtle bg-black/45 px-3 py-2 text-xs font-semibold text-textPrimary focus:outline-none"
+              >
+                <option value="encouraging">Encouraging (Positive Reinforce)</option>
+                <option value="strict">Strict (High Standards Nudges)</option>
+                <option value="pragmatic">Pragmatic (Data & KPI Focused)</option>
+              </select>
+            </div>
+
+            <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4 flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-textMuted uppercase tracking-wider">Nudge Alerts Frequency</label>
+              <select
+                value={useAIMentorStore((s) => s.profile.nudgeFrequency)}
+                onChange={(e) => useAIMentorStore.getState().updateProfile({ nudgeFrequency: e.target.value as any })}
+                className="mt-1 w-full rounded-xl border border-border-subtle bg-black/45 px-3 py-2 text-xs font-semibold text-textPrimary focus:outline-none"
+              >
+                <option value="daily">Daily Briefing Alerts</option>
+                <option value="weekly">Weekly Milestones Summaries</option>
+                <option value="never">Never (Mute System Nudges)</option>
+              </select>
+            </div>
+          </div>
+        </Card>
+
         {/* System Health & State Versioning Maintenance Panel */}
         <Card className="xl:col-span-2 flex flex-col gap-4">
           <div className="border-b border-border-subtle/50 pb-3">
@@ -671,7 +741,7 @@ export const SettingsPage: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4">
               <span className="block text-[9px] font-bold text-textMuted uppercase tracking-wider">App Version</span>
-              <span className="block text-lg font-black text-textPrimary mt-1">v1.6.1</span>
+              <span className="block text-lg font-black text-textPrimary mt-1">v1.7.2</span>
             </div>
             <div className="rounded-2xl border border-border-subtle bg-white/[0.04] p-4">
               <span className="block text-[9px] font-bold text-textMuted uppercase tracking-wider">Schema State version</span>

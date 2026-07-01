@@ -33,7 +33,8 @@ import {
   GitFork,
   PlugZap,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -54,6 +55,7 @@ export const Sidebar: React.FC = () => {
     { id: 'placement_calendar', label: 'Placement Calendar', icon: CalendarClock },
     { id: 'applications', label: 'Applications', icon: FileText },
     { id: 'companies', label: 'Target Companies', icon: Building2 },
+    { id: 'company_intelligence', label: 'Company Intelligence', icon: Building2 },
   ];
 
   const prepItems = [
@@ -64,10 +66,12 @@ export const Sidebar: React.FC = () => {
     { id: 'sql', label: 'SQL', icon: Sigma },
     { id: 'cscore', label: 'CS Core', icon: BookOpen },
     { id: 'skill_tree', label: 'Skill Tree', icon: GitFork },
+    { id: 'mock_interview_os', label: 'Mock Interview OS', icon: MessageSquare },
   ];
 
   const assetsItems = [
     { id: 'resume', label: 'Resume Studio', icon: FileText },
+    { id: 'portfolio_os', label: 'Portfolio OS', icon: FolderKanban },
     { id: 'integrations', label: 'Integrations', icon: PlugZap },
     { id: 'projects', label: 'Projects Showcase', icon: FolderKanban },
     { id: 'german', label: 'German Academy', icon: Languages },
@@ -77,6 +81,7 @@ export const Sidebar: React.FC = () => {
 
   const aiToolsItems = [
     { id: 'ai', label: 'Shayla AI Mentor', icon: Bot },
+    { id: 'ai_mentor', label: 'AI Mentor', icon: Bot },
     { id: 'interview_coach', label: 'Interview Coach', icon: Bot },
     { id: 'coding_mentor', label: 'Coding Mentor', icon: Code2 },
     { id: 'career_intelligence', label: 'Career Intelligence', icon: TrendingUp },

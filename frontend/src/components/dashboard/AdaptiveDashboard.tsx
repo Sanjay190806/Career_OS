@@ -7,6 +7,8 @@ import { AchievementProgressPanel } from './AchievementProgressPanel';
 import { WeeklyMomentumPanel } from './WeeklyMomentumPanel';
 import { ProjectResumePriorityPanel } from './ProjectResumePriorityPanel';
 import { QuickActionDock } from './QuickActionDock';
+import { CalendarDashboardWidget } from './CalendarDashboardWidget';
+import { PortfolioMentorDashboardWidget } from './PortfolioMentorDashboardWidget';
 
 import { useAdaptiveDashboard } from '../../hooks/useAdaptiveDashboard';
 import { NoZeroDayRescueCard } from '../adaptive/NoZeroDayRescueCard';
@@ -48,6 +50,8 @@ export const AdaptiveDashboard: React.FC = () => {
 
         {/* Informative Status / Statistics Column */}
         <div className="flex flex-col gap-5">
+          <PortfolioMentorDashboardWidget />
+          <CalendarDashboardWidget />
           <SkillProgressGrid />
           <ProjectResumePriorityPanel />
           <AchievementProgressPanel />

@@ -13,6 +13,8 @@ import { ACHIEVEMENT_CATALOG } from '../data/achievementCatalog';
 import syncCoreService from '../services/sync/syncService';
 import { backupService } from '../services/sync/backupService';
 import { storagePerformance } from './storagePerformance';
+import { portfolioService } from '../services/portfolioService';
+import { automationEngine } from '../services/automationEngine';
 
 export function executeCommand(cmd: ParsedCommand): boolean {
   try {
@@ -198,7 +200,37 @@ export function executeCommand(cmd: ParsedCommand): boolean {
 
       case 'showSyncStatus': {
         const mode = syncCoreService.getSyncMode();
-        console.log(`Sync status: ${mode} (local-first; account sync not enabled)`);
+        console.log(`Sync status: ${mode}`);
+        return true;
+      }
+
+      case 'showAccountStatus':
+      case 'showCloudSyncStatus':
+      case 'showCloudBackups':
+      case 'startCloudMigration':
+      case 'showDevices':
+      case 'showSecuritySettings':
+      case 'logoutHelp':
+      case 'switchToCloudMode': {
+        useUIStore.getState().setActiveSection('settings');
+        window.history.pushState({}, '', '/settings');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        return true;
+      }
+
+      case 'switchToLocalMode': {
+        if (!window.confirm('Switch this browser to local-only mode? Cloud account data will not be deleted.')) return false;
+        localStorage.setItem('sanzz_os_account_mode_v1', 'local_only');
+        syncCoreService.setSyncMode('local-only');
+        return true;
+      }
+
+      case 'syncNow':
+      case 'createCloudBackup': {
+        useUIStore.getState().setActiveSection('settings');
+        window.history.pushState({}, '', '/settings');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        alert('Open Settings and use the Cloud Sync or Cloud Backup buttons to confirm this account action.');
         return true;
       }
 
@@ -217,6 +249,45 @@ export function executeCommand(cmd: ParsedCommand): boolean {
       case 'showStorageHealth': {
         const health = storagePerformance.validateStorageHealth();
         console.log(`Storage health: ${health.healthy ? 'Healthy' : 'Issues found'} - Size: ${health.totalSizeKB} KB`);
+        return true;
+      }
+
+      case 'showPortfolioOS': {
+        useUIStore.getState().setActiveSection('portfolio_os');
+        window.history.pushState({}, '', '/portfolio-os');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        return true;
+      }
+
+      case 'showPortfolioReadiness': {
+        const stats = portfolioService.calculateReadiness();
+        alert(`Portfolio Readiness overall score: ${stats.overall}% (${stats.band})`);
+        return true;
+      }
+
+      case 'showAIMentor': {
+        useUIStore.getState().setActiveSection('ai_mentor');
+        window.history.pushState({}, '', '/ai-mentor');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        return true;
+      }
+
+      case 'generateWeeklyReview': {
+        const logs = Object.values(useCareerStore.getState().dailyLogs || {});
+        if (logs.length === 0) {
+          alert('No checklists logs found to compile review.');
+          return false;
+        }
+        alert('Weekly Performance Review generated successfully! Redirecting...');
+        useUIStore.getState().setActiveSection('ai_mentor');
+        window.history.pushState({}, '', '/ai-mentor');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        return true;
+      }
+
+      case 'runAutomationCheck': {
+        const runs = automationEngine.checkAndExecuteRules();
+        alert(`Automation check completed. Actions executed: ${runs.length}`);
         return true;
       }
 

@@ -26,8 +26,15 @@ if not exist "frontend\node_modules" (
 )
 
 echo.
-echo Starting Backend...
-start "Sanzz OS Backend" cmd /k "cd /d %~dp0backend && npm run dev"
+echo Checking if backend is already running...
+netstat -ano | findstr :5000 >nul 2>&1
+if %errorlevel% equ 0 (
+    echo Backend is already running on port 5000.
+    echo Skipping backend startup.
+) else (
+    echo Starting Backend...
+    start "Sanzz OS Backend" cmd /k "cd /d %~dp0backend && npm run dev"
+)
 
 timeout /t 5 /nobreak > nul
 

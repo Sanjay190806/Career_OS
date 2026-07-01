@@ -1,43 +1,74 @@
-# Troubleshooting (v1.6.4)
+# Troubleshooting - v1.7.2 Stable Base
 
-## Build fails at root
+## Backend Already Running
 
-Use `npm run build` (alias for `build:all`) from repo root, not inside `frontend/` alone for full release checks.
+If port `5000` is already running, `Start-Sanzz-OS.bat` skips starting another backend. This prevents duplicate backend crashes.
 
-## Sync Now fails
+Check it with:
 
-1. Start backend: `npm run dev:backend`
-2. Start PostgreSQL: `npm run db:up`
-3. Run migrations if needed: `npm run prisma:migrate`
-4. Enable **Manual DB Snapshot** mode in Settings (not Local Only)
+```bat
+netstat -ano | findstr :5000
+```
 
-This pushes a manual snapshot — not account sync.
+## Database Unavailable
 
-## Database 503
+Auth and cloud sync may return:
 
-Backend sync returns `database_unavailable` when PostgreSQL is down or `DATABASE_URL` is wrong.
+```json
+{
+  "success": false,
+  "error": {
+    "code": "database_unavailable",
+    "message": "Database is unavailable. You can continue Local-only mode."
+  }
+}
+```
 
-## Backup import rejected
+Use **Continue Local Only** and keep working. Fix PostgreSQL later.
 
-- Wrong `appName`
-- Newer unsupported `schemaVersion`
-- Secret-like content detected
-- File too large (>25 MB)
+## Invalid PostgreSQL Credentials
 
-## PWA install missing
+Run:
 
-- Use production build, not `vite dev`
-- Visit app online once
-- Check `manifest.webmanifest` and icons under `/icons/`
+```bash
+npm run db:doctor
+npm run db:status
+```
 
-## Offline page only
+If credentials are invalid, update only `backend/.env`. Never commit real `.env` files.
 
-Load the app online first so the service worker can cache JS/CSS assets.
+## Prisma EPERM On Windows
 
-## AI errors
+`npx prisma generate` can fail if a running Node process locks `query_engine-windows.dll.node`.
 
-Groq key must be in ignored `backend/.env` — never commit it.
+Manual fix:
 
-## Prisma validate
+1. Stop the backend.
+2. Close terminals running backend or Prisma code.
+3. Kill Node processes only if needed.
+4. Re-run `npx prisma generate` from `backend/` or `npm run prisma:generate` from root.
+5. Reboot if the DLL remains locked.
 
-Only needed when editing `schema.prisma`. Normal daily startup does not require `prisma validate`.
+## Build Fails
+
+Run from repo root:
+
+```bash
+npm run build
+```
+
+## Tests Fail
+
+Run from repo root:
+
+```bash
+npm run test
+```
+
+## Backup Export
+
+Use Settings backup/export. Backups skip secret-like content such as tokens, passwords, API keys, and `.env` data.
+
+## Daily Use
+
+Do not run Prisma every day. Start the app, use local-only if the DB is not ready, and focus on career work.

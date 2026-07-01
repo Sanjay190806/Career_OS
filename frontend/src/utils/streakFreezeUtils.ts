@@ -48,7 +48,7 @@ export function calculateStreakWithFreezes(dailyLogs: Record<string, DailyLog>, 
     // Check if the day is completed (or minimum day completed, which keeps streak alive!)
     // Wait, the rules say "At least 5 SkillRack problems OR 1 LeetCode problem OR 30 min Java DSA" etc. is Minimum Day.
     // If the completionType is 'minimum' or 'perfect' or the status is 'completed'
-    const isCompleted = log.status === 'completed' || log.completionType === 'minimum' || log.completionType === 'perfect';
+    const isCompleted = log.status === 'completed' || log.completionType === 'minimum' || log.completionType === 'perfect' || log.rescueCompleted === true;
     
     if (isCompleted) {
       activeStreak++;
@@ -76,7 +76,7 @@ export function calculateStreakWithFreezes(dailyLogs: Record<string, DailyLog>, 
       continue; // Freeze day is skipped, streak is protected
     }
     
-    const isCompleted = log.status === 'completed' || log.completionType === 'minimum' || log.completionType === 'perfect';
+    const isCompleted = log.status === 'completed' || log.completionType === 'minimum' || log.completionType === 'perfect' || log.rescueCompleted === true;
     if (isCompleted) {
       currentStreak++;
       tempDay--;

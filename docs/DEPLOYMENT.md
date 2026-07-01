@@ -1,4 +1,4 @@
-# Deployment Guide — Sanju Career OS v1.6.4
+# Deployment Guide - Sanju Career OS v1.7.2
 
 This guide covers three deployment scenarios:
 1. **Local Development** — run everything on your machine
@@ -259,3 +259,30 @@ Use **Settings → Backup & Restore** to export/import a JSON snapshot of all lo
 | Prisma EPERM on Windows | Node lock on `.prisma` | `taskkill /F /IM node.exe` then re-generate |
 | Port 5000 in use | Another process | Change `PORT` in `backend/.env` |
 | DB connection refused | Docker not running | `npm run db:up` |
+# v1.7.2 Auth And Cloud Sync Notes
+
+Required backend env:
+
+```bash
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public"
+JWT_SECRET="replace_with_secure_random_secret"
+FRONTEND_URL="https://your-frontend.example"
+NODE_ENV="production"
+PORT="5000"
+```
+
+Required frontend env:
+
+```bash
+VITE_API_BASE_URL="https://your-backend.example"
+```
+
+Run before deploying the backend:
+
+```bash
+npm run prisma:generate --workspace=backend
+npm run prisma:validate --workspace=backend
+npm run prisma:migrate --workspace=backend -- --name v1_7_auth_cloud_sync
+```
+
+Do not deploy with placeholder `JWT_SECRET` or a local `DATABASE_URL`.

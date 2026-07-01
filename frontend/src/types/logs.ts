@@ -28,6 +28,7 @@ export interface DailyLog {
   freezeUsed?: boolean;
   freezeReason?: string;
   completionType?: 'missed' | 'partial' | 'minimum' | 'perfect' | 'freeze';
+  rescueCompleted?: boolean;
 }
 
 export interface ProblemLog {

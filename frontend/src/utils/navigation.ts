@@ -34,6 +34,10 @@ export const sectionToPath: Record<string, string> = {
   'history': '/history',
   'settings': '/settings',
   'admin': '/admin',
+  'mock_interview_os': '/mock-interview-os',
+  'company_intelligence': '/company-intelligence',
+  'portfolio_os': '/portfolio-os',
+  'ai_mentor': '/ai-mentor',
 };
 
 export const pathToSection: Record<string, string> = {
@@ -78,6 +82,10 @@ export const pathToSection: Record<string, string> = {
   '/history': 'history',
   '/settings': 'settings',
   '/admin': 'admin',
+  '/mock-interview-os': 'mock_interview_os',
+  '/company-intelligence': 'company_intelligence',
+  '/portfolio-os': 'portfolio_os',
+  '/ai-mentor': 'ai_mentor',
 };
 
 export function navigateToPath(path: string): void {

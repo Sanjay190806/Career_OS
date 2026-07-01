@@ -1,8 +1,8 @@
 import { storagePerformance } from '../../utils/storagePerformance';
 
 export const APP_NAME = 'Sanju Career OS';
-export const BACKUP_VERSION = '1.6.4';
-export const BACKUP_SCHEMA_VERSION = 2;
+export const BACKUP_VERSION = '1.7.2';
+export const BACKUP_SCHEMA_VERSION = 5;
 export const MAX_BACKUP_BYTES = 25 * 1024 * 1024;
 
 export const PRE_RESTORE_BACKUP_KEY = 'sanzz_os_pre_restore_backup_v1';
@@ -46,11 +46,36 @@ export const BACKUP_STORAGE_KEYS: BackupRegistryEntry[] = [
   { id: 'syncMode', storageKey: 'sanzz_os_sync_mode_v1', module: 'Sync', description: 'Sync mode preference', isJson: false },
   { id: 'lastSync', storageKey: 'sanzz_os_last_sync_v1', module: 'Sync', description: 'Last DB snapshot sync time', isJson: false },
   { id: 'syncQueue', storageKey: 'sanzz_os_sync_queue_v1', module: 'Sync', description: 'Pending offline sync queue', isJson: true },
+  { id: 'accountMode', storageKey: 'sanzz_os_account_mode_v1', module: 'Account', description: 'Local-only or account sync mode preference', isJson: false },
+  { id: 'deviceId', storageKey: 'sanzz_os_device_id_v1', module: 'Account', description: 'Anonymous local device identifier for sync metadata', isJson: false },
+  { id: 'onboarding', storageKey: 'sanzz_os_onboarding_v1', module: 'Onboarding', description: 'Onboarding completion and dashboard preference', isJson: true },
   { id: 'legacyCareer', storageKey: 'sanju-career-os-v1', module: 'Legacy', description: 'Legacy career export key', isJson: true },
+  { id: 'calendarEvents', storageKey: 'sanzz_os_calendar_events_v1', module: 'Calendar', description: 'Calendar events database', isJson: true },
+  { id: 'notificationStore', storageKey: 'sanzz_os_notification_store_v1', module: 'Notifications', description: 'Notifications history and reviews', isJson: true },
+  { id: 'mockInterview', storageKey: 'sanzz_os_mock_interview_v1', module: 'Interview', description: 'Mock interview session configs', isJson: true },
+  { id: 'interviewQuestions', storageKey: 'sanzz_os_interview_questions_v1', module: 'Interview', description: 'Interview questions bank database', isJson: true },
+  { id: 'communicationPractice', storageKey: 'sanzz_os_communication_practice_v1', module: 'Interview', description: 'Speech coach metrics logs', isJson: true },
+  { id: 'projectExplanation', storageKey: 'sanzz_os_project_explanation_practice_v1', module: 'Interview', description: 'Project elevator pitch practices', isJson: true },
+  { id: 'companyIntelligence', storageKey: 'sanzz_os_company_intelligence_v1', module: 'Company', description: 'Target company intelligence profiles', isJson: true },
+  { id: 'companyPrepPlans', storageKey: 'sanzz_os_company_prep_plans_v1', module: 'Company', description: 'Target company study timelines', isJson: true },
+  { id: 'companyReadiness', storageKey: 'sanzz_os_company_readiness_v1', module: 'Company', description: 'Readiness levels and checklist tasks', isJson: true },
+  { id: 'oaAttempts', storageKey: 'sanzz_os_oa_attempts_v1', module: 'Company', description: 'Online assessments tracking attempts logs', isJson: true },
+  { id: 'placementStrategy', storageKey: 'sanzz_os_placement_strategy_v1', module: 'Company', description: 'Job applications strategic pipeline', isJson: true },
+  { id: 'portfolioOS', storageKey: 'sanzz_os_portfolio_os_v1', module: 'Portfolio', description: 'Portfolio configurations and summaries', isJson: true },
+  { id: 'portfolioSnapshots', storageKey: 'sanzz_os_public_portfolio_snapshots_v1', module: 'Portfolio', description: 'Recruiter-facing snapshots', isJson: true },
+  { id: 'githubOS', storageKey: 'sanzz_os_github_os_v1', module: 'Portfolio', description: 'GitHub OS guidelines checklist', isJson: true },
+  { id: 'linkedinDrafts', storageKey: 'sanzz_os_linkedin_drafts_v1', module: 'Portfolio', description: 'LinkedIn post drafts', isJson: true },
+  { id: 'aiMentorProfile', storageKey: 'sanzz_os_ai_mentor_v3', module: 'Mentor', description: 'AI Mentor 3.0 profile parameters', isJson: true },
+  { id: 'mentorReviews', storageKey: 'sanzz_os_mentor_reviews_v1', module: 'Mentor', description: 'Weekly/monthly performance summaries', isJson: true },
+  { id: 'automationRules', storageKey: 'sanzz_os_automation_rules_v1', module: 'Mentor', description: 'Local automation rules triggers list', isJson: true },
+  { id: 'automationRuns', storageKey: 'sanzz_os_automation_runs_v1', module: 'Mentor', description: 'Automation execution history logs', isJson: true },
+  { id: 'mentorMissions', storageKey: 'sanzz_os_mentor_missions_v1', module: 'Mentor', description: 'AI mentor target missions checklists', isJson: true },
+  { id: 'portfolioSettings', storageKey: 'sanzz_os_portfolio_settings_v1', module: 'Portfolio', description: 'Portfolio settings preference', isJson: true },
+  { id: 'aiMentorSettings', storageKey: 'sanzz_os_ai_mentor_settings_v1', module: 'Mentor', description: 'AI Mentor settings preference', isJson: true },
 ];
 
-const SECRET_KEY_PATTERN = /(api[_-]?key|secret|token|password|authorization|groq|bearer|credential)/i;
-const EXCLUDED_BACKUP_IDS = new Set(['preRestoreBackup']);
+const SECRET_KEY_PATTERN = /(\.env|api[_-]?key|secret|token|password|authorization|groq|bearer|credential)/i;
+const EXCLUDED_BACKUP_IDS = new Set(['aiSettings', 'preRestoreBackup']);
 
 export interface BackupSnapshotV2 {
   appName: string;
@@ -88,7 +113,9 @@ export function getBackupRegistry(): BackupRegistryEntry[] {
 }
 
 export function getRegistryStorageKeys(): string[] {
-  return BACKUP_STORAGE_KEYS.map((entry) => entry.storageKey);
+  return BACKUP_STORAGE_KEYS
+    .filter((entry) => !EXCLUDED_BACKUP_IDS.has(entry.id))
+    .map((entry) => entry.storageKey);
 }
 
 function readStorageValue(key: string, isJson: boolean): string | null {
@@ -111,10 +138,21 @@ export function collectBackupData(): BackupSnapshotV2 {
   const keysMissing: string[] = [];
 
   for (const entry of BACKUP_STORAGE_KEYS) {
+    if (EXCLUDED_BACKUP_IDS.has(entry.id) || SECRET_KEY_PATTERN.test(entry.storageKey)) {
+      keysMissing.push(entry.storageKey);
+      continue;
+    }
+
     const value = readStorageValue(entry.storageKey, entry.isJson);
     if (value !== null) {
-      data[entry.storageKey] = value;
-      keysIncluded.push(entry.storageKey);
+      const secretHit = detectSecretInStoredValue(value, entry);
+      if (secretHit) {
+        console.warn(`Skipping backup key with secret-like content: ${entry.storageKey}`);
+        keysMissing.push(entry.storageKey);
+      } else {
+        data[entry.storageKey] = value;
+        keysIncluded.push(entry.storageKey);
+      }
     } else {
       keysMissing.push(entry.storageKey);
     }
@@ -154,6 +192,18 @@ function containsSecretLikeContent(value: unknown, path = ''): string | null {
     }
   }
   return null;
+}
+
+function detectSecretInStoredValue(value: string, entry: BackupRegistryEntry): string | null {
+  if (SECRET_KEY_PATTERN.test(entry.id) || SECRET_KEY_PATTERN.test(entry.storageKey)) {
+    return entry.storageKey;
+  }
+
+  try {
+    return containsSecretLikeContent(JSON.parse(value), entry.storageKey);
+  } catch {
+    return SECRET_KEY_PATTERN.test(value) ? entry.storageKey : null;
+  }
 }
 
 function normalizeIncomingBackup(raw: unknown): BackupSnapshotV2 | null {
@@ -339,7 +389,7 @@ export function restoreBackupData(raw: unknown): RestoreResultV2 {
   const knownKeys = new Set(getRegistryStorageKeys());
 
   for (const [key, value] of Object.entries(snapshot.data)) {
-    if (!knownKeys.has(key) || EXCLUDED_BACKUP_IDS.has(key) || key === PRE_RESTORE_BACKUP_KEY) {
+    if (!knownKeys.has(key) || key === PRE_RESTORE_BACKUP_KEY) {
       skippedKeys.push(key);
       continue;
     }

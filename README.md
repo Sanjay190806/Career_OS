@@ -1,10 +1,10 @@
-# Sanju Career OS — v1.6.4
+# Sanju Career OS - v1.7.2
 
-> **Release:** v1.6.4 Stability — local-first storage, full backup/restore, manual DB snapshots, PWA fixes. Real account-based multi-device sync is planned for v1.7.
+> **Release:** v1.7.2 Database + Auth Stability Repair - local-first mode remains available while account/cloud features report safe database diagnostics.
 
 Local-first career and placement tracker with a React + TypeScript frontend, Express backend, Prisma, PostgreSQL, Zustand persistence, AI Brain, Smart Daily Planner, Placement OS, Learning OS, Analytics 2.0, German Academy, optional manual database snapshots, PWA shell, and offline fallback support.
 
-## v1.6.4 Stability (current)
+## v1.7.2 Stability (current)
 
 - Unified sync layer with honest UI labels (local-first + manual DB snapshot).
 - Added backend routes: `/api/sync/health`, `/api/sync/push`, `/api/sync/pull` (legacy `/api/sync` kept).

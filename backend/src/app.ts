@@ -16,6 +16,8 @@ import smartPlannerRoutes from './routes/smartPlanner.routes.js';
 import placementRoutes from './routes/placement.routes.js';
 import learningRoutes from './routes/learning.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import cloudSyncRoutes from './routes/cloudSync.routes.js';
 
 const app = express();
 
@@ -49,6 +51,7 @@ const rateLimitMiddleware = (req: express.Request, res: express.Response, next: 
 
 // Routes
 app.use('/api', healthRoutes);
+app.use('/api', rateLimitMiddleware, authRoutes);
 app.use('/api', rateLimitMiddleware, aiRoutes); // Mount rate-limiting on AI mentor routes
 app.use('/api', rateLimitMiddleware, agentRoutes);
 app.use('/api', rateLimitMiddleware, germanRoutes);
@@ -62,6 +65,7 @@ app.use('/api', rateLimitMiddleware, smartPlannerRoutes);
 app.use('/api', rateLimitMiddleware, placementRoutes);
 app.use('/api', rateLimitMiddleware, learningRoutes);
 app.use('/api', rateLimitMiddleware, analyticsRoutes);
+app.use('/api', rateLimitMiddleware, cloudSyncRoutes);
 app.use('/api', syncRoutes);
 
 // General 404 handler

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sanzz_os_cache_v2';
+const CACHE_NAME = 'sanzz_os_cache_v3';
 const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/offline'];
 
 self.addEventListener('install', (event) => {
@@ -17,8 +17,15 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-function shouldSkipCache(url) {
-  return url.includes('/api/') || url.includes('chrome-extension');
+function shouldSkipCache(url, request) {
+  return (
+    url.includes('/api/') ||
+    url.includes('/api/auth/') ||
+    url.includes('/api/cloud/') ||
+    url.includes('/api/sync/') ||
+    request.headers.has('authorization') ||
+    url.includes('chrome-extension')
+  );
 }
 
 function isStaticAsset(url) {
@@ -28,7 +35,7 @@ function isStaticAsset(url) {
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
 
-  if (shouldSkipCache(requestUrl.href)) {
+  if (shouldSkipCache(requestUrl.href, event.request)) {
     return;
   }
 

@@ -2,6 +2,87 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.7.2 - Stable Base Release
+
+### Fixed
+- Prisma environment loading consistency by routing root Prisma scripts through `backend/`.
+- Windows Prisma generate recovery guidance with `npm run prisma:generate:safe`.
+- PostgreSQL diagnostics now return safe host/user/database metadata without exposing passwords.
+- Auth endpoints return safe 503 database errors instead of crashing when PostgreSQL is unavailable.
+- Cloud sync endpoints return safe database-unavailable responses.
+- Version mismatch across root, backend, frontend, and backup metadata.
+- Backend health diagnostics now classify common PostgreSQL setup failures.
+
+## v1.7.1 - Auth Stability + Google Sign-In
+
+### Added
+- Google Sign-In OAuth 2.0 integration with Authorization Code Flow
+- Backend port conflict error handling with clear diagnostic messages
+- Frontend backend health check on login/signup pages
+- Google Sign-In button on login and signup pages with Google branding
+- Provider field in User model (email/google) and providerId for Google users
+- Google OAuth environment variables (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL)
+- Backend Google auth routes (/api/auth/google, /api/auth/google/callback)
+- Google auth service with secure token exchange and ID verification
+- Auth callback page for handling OAuth redirects with error handling
+- Provider badge in Account Settings panel showing auth method
+- Last login timestamp display in settings panel
+- Google OAuth setup documentation (docs/GOOGLE_AUTH.md)
+- Improved error messages for network failures and HTTP status codes (401, 403, 404, 500, 503)
+
+### Changed
+- Updated auth types to include AuthProvider ('email' | 'google' | null)
+- Updated AccountSettingsPanel to show provider and last login info
+- Updated launcher script to check if backend is already running before starting
+- Updated AUTH.md documentation with Google Sign-In information
+- Improved API client error handling with specific messages for different status codes
+- Made auth.service.ts publicUser function compatible with new provider field
+
+### Fixed
+- Backend now handles EADDRINUSE port conflicts gracefully with helpful error messages
+- Frontend shows backend health status (online/offline) on login/signup pages
+- "Failed to fetch" errors now show specific messages about backend reachability
+- HTTP status codes now have user-friendly error messages
+- Launcher script prevents duplicate backend instances
+
+### Security
+- Google OAuth uses Authorization Code Flow (secure, server-side)
+- Google secrets never exposed to frontend
+- ID tokens verified with Google's tokeninfo endpoint
+- Email conflict checking prevents Google users from hijacking email accounts
+- Service worker continues to bypass auth/cloud/sync API caching
+
+### Database
+- Added `provider` field to User model (default: 'email')
+- Added `providerId` field to User model for Google user IDs
+- Migration pending: Run `npx prisma migrate dev` when database is available
+
+### Notes
+- Prisma client needs regeneration after database is available (file lock prevented generation during development)
+- Google Sign-In gracefully degrades if not configured (shows 501 error)
+- Email/password and local-only modes continue to work without Google OAuth
+- All existing v1.7.0 features remain stable
+
+## v1.7.0 - Career OS Pro: Real Auth + Cloud Sync
+
+### Added
+- Real backend signup/login/logout/session restore endpoints.
+- Account-owned cloud snapshot APIs, cloud backups, device tracking, and sync status.
+- Local-to-cloud migration wizard with explicit upload/pull/local-only choices.
+- Auth pages, onboarding flow, account settings, cloud sync settings, device management, cloud backup panel, and dashboard sync widget.
+- AI command intents for account, sync, migration, device, backup, and security workflows.
+
+### Changed
+- Preserved legacy local/manual DB snapshot mode while adding authenticated `/api/cloud/*` routes.
+- Service worker now bypasses auth/cloud/sync APIs and authorized requests.
+- Backup registry includes safe account mode/device/onboarding metadata and continues to reject secret-like payloads.
+
+### Security
+- Removed fake authenticated frontend state.
+- Cloud endpoints scope all data from authenticated user identity.
+- Passwords are hashed with `crypto.scrypt`; plaintext passwords are never stored.
+- Placeholder-only env examples include `JWT_SECRET`, `DATABASE_URL`, `FRONTEND_URL`, and `VITE_API_BASE_URL`.
+
 ## v1.6.4 - Stability: Sync, Backup, PWA, Build
 
 ### Fixed

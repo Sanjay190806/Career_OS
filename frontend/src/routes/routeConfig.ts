@@ -5,7 +5,7 @@ export interface RouteDef {
 
 /**
  * Full route definition list — synchronized with AppRouter.tsx section map.
- * Last updated: v1.6.4
+ * Last updated: v1.7.2
  *
  * Public routes (no AppShell):
  *   /           → landing
@@ -77,4 +77,6 @@ export const routes: RouteDef[] = [
   { path: '/integrations',       sectionId: 'integrations' },
   { path: '/settings',           sectionId: 'settings' },
   { path: '/admin',              sectionId: 'admin' },
+  { path: '/portfolio-os',       sectionId: 'portfolio_os' },
+  { path: '/ai-mentor',          sectionId: 'ai_mentor' },
 ];

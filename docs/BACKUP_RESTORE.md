@@ -1,4 +1,4 @@
-# Backup & Restore (v1.6.4)
+# Backup & Restore (v1.7.2)
 
 ## Export
 
@@ -44,3 +44,14 @@ Before restore:
 ## Legacy export
 
 Settings → **Export Legacy Career JSON** exports only the core Zustand career store. Prefer the full Backup & Restore panel.
+# v1.7.2 Cloud Backup Notes
+
+Local JSON backup remains supported. Account cloud backups are available after login from Settings.
+
+Cloud backups:
+
+- Are user-owned through authenticated `/api/cloud/backups`.
+- Store full app backup snapshots.
+- Reject secret-like payloads.
+- Require UI confirmation before restore.
+- Save a pre-restore local backup before replacing local keys.

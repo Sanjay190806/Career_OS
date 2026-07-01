@@ -14,6 +14,7 @@ import { DailyBriefingPanel } from '../components/shayla-agent/DailyBriefingPane
 import { ShaylaBriefingResult } from '../types/shaylaAgent';
 
 import { AdaptiveDashboard } from '../components/dashboard/AdaptiveDashboard';
+import { AccountSyncWidget } from '../components/dashboard/AccountSyncWidget';
 
 export const OverviewPage: React.FC = () => {
   const careerState = useCareerStore((s) => s);
@@ -74,6 +75,8 @@ export const OverviewPage: React.FC = () => {
     <div className="workspace-page flex flex-col gap-6 pb-12 md:pb-8">
       {/* Redesigned Adaptive Command Center layout */}
       <AdaptiveDashboard />
+
+      <AccountSyncWidget />
 
       {/* Daily AI Briefing Logs */}
       <DailyBriefingPanel

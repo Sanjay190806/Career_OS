@@ -3,6 +3,12 @@ import { getTodayDay } from './dateUtils';
 import { getTotalLCSolved, getStreak, calcResumeScore, calcPlacementScore } from './xpUtils';
 import { ROADMAP } from '../data/roadmap';
 import { GERMAN_LESSONS } from '../data/germanLessons';
+import { useCalendarStore } from '../app/store/useCalendarStore';
+import { useNotificationStore } from '../app/store/useNotificationStore';
+import { mockInterviewService } from '../services/mockInterviewService';
+import { companyIntelligenceService } from '../services/companyIntelligenceService';
+import { portfolioService } from '../services/portfolioService';
+import { useAIMentorStore } from '../app/store/useAIMentorStore';
 
 export function buildAIContext(s: CareerState): any {
   const today = getTodayDay(s.userProfile.startDate);
@@ -39,6 +45,18 @@ export function buildAIContext(s: CareerState): any {
     selectedDay: today,
     roadmapDay: today,
     primaryFocus: 'College placement readiness for top software roles',
+    calendarEvents: useCalendarStore.getState().events.map(e => ({ title: e.title, start: e.start, type: e.type, status: e.status })),
+    activeNotifications: useNotificationStore.getState().notifications.filter(n => !n.read).map(n => ({ title: n.title, message: n.message, priority: n.priority })),
+    dailyAgenda: useNotificationStore.getState().agendas[today] || null,
+    mockInterviewStats: {
+      totalSessions: mockInterviewService.compileMockStats().totalSessions,
+      avgConfidence: mockInterviewService.compileMockStats().avgConfidenceAnswers,
+      weakestArea: mockInterviewService.compileMockStats().weakestArea,
+      avgCommunication: mockInterviewService.compileMockStats().avgCommunicationScore,
+    },
+    targetCompanies: companyIntelligenceService.getCompanies().map(c => ({ name: c.name, category: c.category, readinessScore: c.readinessScore })),
+    portfolioReadiness: portfolioService.calculateReadiness().overall,
+    activeMentorMissions: useAIMentorStore.getState().missions.filter(m => !m.completed).map(m => m.title),
     primaryPrep: ['Java DSA', 'SkillRack', 'Aptitude', 'SQL', 'CS Core', 'Projects', 'Resume', 'Consistency'],
     secondaryLongTerm: ['German A1/A2 for Germany readiness', 'AI product builder and future founder path'],
     currentTopic: todayProblems[0]?.topic || 'Revision',

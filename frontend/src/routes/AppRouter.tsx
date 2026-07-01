@@ -4,6 +4,7 @@ import { AppShell } from '../components/layout/AppShell';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { PageLoadingFallback } from '../components/ui/PageLoadingFallback';
 import { pathToSection, sectionToPath } from '../utils/navigation';
+import { useAuthStore } from '../app/store/useAuthStore';
 
 // Public pages are statically imported for zero-latency initial loads
 import { LandingPage } from '../pages/LandingPage';
@@ -47,6 +48,15 @@ const SettingsPage = lazy(() => import('../pages/SettingsPage').then(m => ({ def
 const AdminPage = lazy(() => import('../pages/AdminPage').then(m => ({ default: m.AdminPage })));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 const OfflinePage = lazy(() => import('../pages/OfflinePage').then(m => ({ default: m.OfflinePage })));
+const MockInterviewOSPage = lazy(() => import('../pages/MockInterviewOSPage').then(m => ({ default: m.MockInterviewOSPage })));
+const CompanyIntelligencePage = lazy(() => import('../pages/CompanyIntelligencePage').then(m => ({ default: m.CompanyIntelligencePage })));
+const PortfolioOSPage = lazy(() => import('../pages/PortfolioOSPage').then(m => ({ default: m.PortfolioOSPage })));
+const AIMentorPage = lazy(() => import('../pages/AIMentorPage').then(m => ({ default: m.AIMentorPage })));
+const AuthHomePage = lazy(() => import('../pages/auth/AuthHomePage').then(m => ({ default: m.AuthHomePage })));
+const LoginPage = lazy(() => import('../pages/auth/LoginPage').then(m => ({ default: m.LoginPage })));
+const SignupPage = lazy(() => import('../pages/auth/SignupPage').then(m => ({ default: m.SignupPage })));
+const AuthCallbackPage = lazy(() => import('../pages/auth/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })));
+const OnboardingPage = lazy(() => import('../pages/onboarding/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 
 
 
@@ -55,10 +65,16 @@ export const AppRouter: React.FC = () => {
   const setActiveSection = useUIStore((s) => s.setActiveSection);
   const [pathname, setPathname] = React.useState(typeof window !== 'undefined' ? window.location.pathname : '/');
   const [hasSyncedUrl, setHasSyncedUrl] = React.useState(false);
+  const initializeAuth = useAuthStore((s) => s.initialize);
 
   const isLanding = pathname === '/' || pathname === '/landing' || pathname.endsWith('index.html') || pathname === '';
   const isPortfolio = pathname === '/portfolio';
   const isOffline = pathname === '/offline';
+  const isAuthRoute = ['/auth', '/login', '/signup', '/auth/callback', '/onboarding'].includes(pathname);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   // 1. Sync URL path -> Store's activeSection on mount and popstate
   useEffect(() => {
@@ -67,8 +83,8 @@ export const AppRouter: React.FC = () => {
       setPathname(nextPath);
       if (nextPath === '/' || nextPath === '/landing' || nextPath.endsWith('index.html') || nextPath === '') {
         // public landing - do not force shell section
-      } else if (nextPath === '/portfolio') {
-        // public portfolio
+      } else if (nextPath === '/portfolio' || ['/auth', '/login', '/signup', '/auth/callback', '/onboarding'].includes(nextPath)) {
+        // public/special routes
       } else {
         const sect = pathToSection[nextPath];
         if (sect) {
@@ -88,7 +104,7 @@ export const AppRouter: React.FC = () => {
   // 2. Sync section changes -> URL only after the current URL has initialized the store.
   useEffect(() => {
     if (!hasSyncedUrl) return;
-    if (isLanding || isPortfolio) return;
+    if (isLanding || isPortfolio || isAuthRoute) return;
     const currentSection = pathToSection[pathname] || 'overview';
     if (activeSection === currentSection) return;
     const targetPath = sectionToPath[activeSection];
@@ -118,6 +134,23 @@ export const AppRouter: React.FC = () => {
     return (
       <ErrorBoundary>
         <OfflinePage />
+      </ErrorBoundary>
+    );
+  }
+
+  if (isAuthRoute) {
+    const authPage = pathname === '/login'
+      ? <LoginPage />
+      : pathname === '/signup'
+        ? <SignupPage />
+        : pathname === '/auth/callback'
+          ? <AuthCallbackPage />
+          : pathname === '/onboarding'
+            ? <OnboardingPage />
+            : <AuthHomePage />;
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoadingFallback />}>{authPage}</Suspense>
       </ErrorBoundary>
     );
   }
@@ -197,6 +230,14 @@ export const AppRouter: React.FC = () => {
         return <SettingsPage />;
       case 'admin':
         return <AdminPage />;
+      case 'mock_interview_os':
+        return <MockInterviewOSPage />;
+      case 'company_intelligence':
+        return <CompanyIntelligencePage />;
+      case 'portfolio_os':
+        return <PortfolioOSPage />;
+      case 'ai_mentor':
+        return <AIMentorPage />;
 
       default:
         return <NotFoundPage />;

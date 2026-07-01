@@ -24,8 +24,14 @@ test('backup registry includes core module keys', () => {
   }
 });
 
-test('backup schema version is 2', () => {
-  assert.match(registrySource, /BACKUP_SCHEMA_VERSION = 2/);
+test('backup schema version is 5', () => {
+  assert.match(registrySource, /BACKUP_SCHEMA_VERSION = 5/);
+});
+
+test('backup export skips secret-like data', () => {
+  assert.match(registrySource, /EXCLUDED_BACKUP_IDS = new Set\(\['aiSettings', 'preRestoreBackup'\]\)/);
+  assert.match(registrySource, /detectSecretInStoredValue/);
+  assert.match(registrySource, /\.env\|api\[_-\]\?key\|secret\|token\|password/);
 });
 
 test('service worker skips API caching', () => {
@@ -47,4 +53,37 @@ test('cloud sync health route exists in backend routes', () => {
   assert.match(routes, /\/sync\/health/);
   assert.match(routes, /\/sync\/push/);
   assert.match(routes, /\/sync\/pull/);
+});
+
+test('v1.7.2 root scripts route Prisma commands through backend', () => {
+  assert.equal(rootPkg.version, '1.7.2');
+  assert.equal(rootPkg.scripts['prisma:validate'], 'cd backend && npx prisma validate');
+  assert.equal(rootPkg.scripts['prisma:generate:safe'], 'node scripts/prisma-generate-safe.js');
+  assert.equal(rootPkg.scripts['db:doctor'], 'node scripts/db-doctor.js');
+});
+
+test('database error classifier maps common Prisma failures safely', () => {
+  const source = readFileSync(join(root, '..', 'backend/src/utils/databaseError.ts'), 'utf8');
+  assert.match(source, /invalid_credentials/);
+  assert.match(source, /connection_refused/);
+  assert.match(source, /database_not_found/);
+  assert.match(source, /missing_database_url/);
+  assert.doesNotMatch(source, /password:|DATABASE_URL.*password/i);
+});
+
+test('auth and cloud controllers handle database failures without crashing', () => {
+  const authController = readFileSync(join(root, '..', 'backend/src/controllers/auth.controller.ts'), 'utf8');
+  const cloudController = readFileSync(join(root, '..', 'backend/src/controllers/cloudSync.controller.ts'), 'utf8');
+  assert.match(authController, /sendDatabaseUnavailable/);
+  assert.match(authController, /handleAuthError/);
+  assert.match(cloudController, /sendDatabaseUnavailable/);
+  assert.match(cloudController, /handleCloudError/);
+});
+
+test('auth config route exposes provider availability', () => {
+  const routes = readFileSync(join(root, '..', 'backend/src/routes/auth.routes.ts'), 'utf8');
+  const controller = readFileSync(join(root, '..', 'backend/src/controllers/auth.controller.ts'), 'utf8');
+  assert.match(routes, /\/auth\/config/);
+  assert.match(controller, /providers/);
+  assert.match(controller, /google: isGoogleConfigured/);
 });

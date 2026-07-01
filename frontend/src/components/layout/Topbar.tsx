@@ -5,6 +5,7 @@ import { getStreak } from '../../utils/xpUtils';
 import { syncService } from '../../services/syncService';
 import { navigateToPath } from '../../utils/navigation';
 import { Command, CircleCheckBig, CircleAlert, Flame, Search, Settings2 } from 'lucide-react';
+import { UserMenu } from '../auth/UserMenu';
 
 interface TopbarProps {
   onOpenCommandPalette?: () => void;
@@ -98,6 +99,8 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenCommandPalette }) => {
           <Flame className="h-3.5 w-3.5" />
           <span>{streak} day streak</span>
         </div>
+
+        <UserMenu />
 
         <button
           type="button"

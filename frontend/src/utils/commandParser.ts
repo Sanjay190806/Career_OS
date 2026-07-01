@@ -29,8 +29,24 @@ export interface ParsedCommand {
     | 'claimAllAchievements'
     | 'setPerformanceMode'
     | 'showSyncStatus'
+    | 'showAccountStatus'
+    | 'showCloudSyncStatus'
+    | 'syncNow'
+    | 'createCloudBackup'
+    | 'showCloudBackups'
+    | 'startCloudMigration'
+    | 'showDevices'
+    | 'logoutHelp'
+    | 'switchToLocalMode'
+    | 'switchToCloudMode'
+    | 'showSecuritySettings'
     | 'exportBackup'
     | 'showStorageHealth'
+    | 'showPortfolioOS'
+    | 'showPortfolioReadiness'
+    | 'showAIMentor'
+    | 'generateWeeklyReview'
+    | 'runAutomationCheck'
     | 'clearAppCache';
   payload: any;
   summary: string;
@@ -38,6 +54,22 @@ export interface ParsedCommand {
 
 export function parseCommandOffline(text: string): ParsedCommand | null {
   const t = text.toLowerCase().trim();
+
+  if (t.includes('show portfolio') || t.includes('portfolio os')) {
+    return { type: 'showPortfolioOS', payload: {}, summary: 'Navigate to Recruiter Portfolio OS.' };
+  }
+  if (t.includes('portfolio readiness') || t.includes('portfolio score')) {
+    return { type: 'showPortfolioReadiness', payload: {}, summary: 'Calculate and display portfolio readiness score details.' };
+  }
+  if (t.includes('show AI mentor') || t.includes('ai mentor')) {
+    return { type: 'showAIMentor', payload: {}, summary: 'Navigate to AI Mentor 3.0 Workspace.' };
+  }
+  if (t.includes('weekly review') || t.includes('generate review')) {
+    return { type: 'generateWeeklyReview', payload: {}, summary: 'Compile weekly performance review after confirmation.' };
+  }
+  if (t.includes('run automation') || t.includes('check automation')) {
+    return { type: 'runAutomationCheck', payload: {}, summary: 'Run local automation rules check.' };
+  }
 
   if ((t.includes('generate') || t.includes('create')) && t.includes('plan') && (t.includes('today') || t.includes('daily'))) {
     return {
@@ -233,6 +265,50 @@ export function parseCommandOffline(text: string): ParsedCommand | null {
       payload: {},
       summary: 'Claim all unlocked badge rewards for experience points.'
     };
+  }
+
+  if (t.includes('account status') || t.includes('show account')) {
+    return { type: 'showAccountStatus', payload: {}, summary: 'Open Account settings.' };
+  }
+
+  if (t.includes('cloud sync status') || t.includes('show cloud sync')) {
+    return { type: 'showCloudSyncStatus', payload: {}, summary: 'Open Cloud Sync settings.' };
+  }
+
+  if (t.includes('sync now') || t.includes('push to cloud')) {
+    return { type: 'syncNow', payload: {}, summary: 'Preview cloud sync. User confirmation is required before changing data.' };
+  }
+
+  if (t.includes('cloud backup') && (t.includes('create') || t.includes('backup to cloud'))) {
+    return { type: 'createCloudBackup', payload: {}, summary: 'Create a cloud backup after confirmation.' };
+  }
+
+  if (t.includes('show cloud backups') || t.includes('list cloud backups')) {
+    return { type: 'showCloudBackups', payload: {}, summary: 'Open Cloud Backup settings.' };
+  }
+
+  if (t.includes('cloud migration') || t.includes('migrate to cloud')) {
+    return { type: 'startCloudMigration', payload: {}, summary: 'Open local-to-cloud migration wizard.' };
+  }
+
+  if (t.includes('show devices') || t.includes('signed in devices')) {
+    return { type: 'showDevices', payload: {}, summary: 'Open device management.' };
+  }
+
+  if (t.includes('logout')) {
+    return { type: 'logoutHelp', payload: {}, summary: 'Show logout controls. Logout through command text still requires UI confirmation.' };
+  }
+
+  if (t.includes('switch to local mode') || t.includes('local only mode')) {
+    return { type: 'switchToLocalMode', payload: {}, summary: 'Switch to local-only mode after confirmation.' };
+  }
+
+  if (t.includes('switch to cloud mode') || t.includes('account cloud mode')) {
+    return { type: 'switchToCloudMode', payload: {}, summary: 'Open account sync setup. Login is handled only through the UI.' };
+  }
+
+  if (t.includes('security settings') || t.includes('show security')) {
+    return { type: 'showSecuritySettings', payload: {}, summary: 'Open Security settings.' };
   }
 
   if (t.includes('sync status') || t.includes('show sync')) {
