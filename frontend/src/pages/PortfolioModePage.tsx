@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -43,27 +43,78 @@ export const PortfolioModePage: React.FC = () => {
     { id: 'script', label: 'Demo script', icon: ArrowRight },
   ] as const;
 
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Ambient particle canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animId: number;
+    const parent = canvas.parentElement;
+    let w = (canvas.width = parent?.offsetWidth || window.innerWidth);
+    let h = (canvas.height = parent?.offsetHeight || window.innerHeight);
+    const onResize = () => {
+      if (!canvas || !canvas.parentElement) return;
+      w = canvas.width = canvas.parentElement.offsetWidth;
+      h = canvas.height = canvas.parentElement.offsetHeight;
+    };
+    window.addEventListener('resize', onResize);
+
+    const colors = ['#00f0ff', '#eab308', '#3b82f6', '#a855f7'];
+    const particles = Array.from({ length: 25 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+      size: Math.random() * 1.5 + 0.4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: Math.random() * 0.12 + 0.03
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        ctx.globalAlpha = p.alpha;
+        ctx.shadowBlur = 5; ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      animId = requestAnimationFrame(render);
+    };
+    render();
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(animId); };
+  }, []);
+
   return (
-    <div className="flex flex-col gap-6 px-4 py-6 md:px-6 lg:px-8">
-      <div className="flex flex-col gap-3 border-b border-border-subtle pb-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-textMuted">Recruiter portfolio view</p>
-          <h1 className="mt-1 text-2xl font-semibold text-textPrimary">Sanju Career OS</h1>
+    <div className="flex flex-col gap-6 px-4 py-6 md:px-6 lg:px-8 select-none relative overflow-hidden">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-60" />
+
+      <div className="relative z-10 flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-3 border-b border-cyan-500/30 pb-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-cyan-400 font-mono">⚡ STARK INDUSTRIES / RECRUITER PORTFOLIO VIEW</p>
+            <h1 className="mt-1 text-2xl font-black text-white font-mono">Sanju Career OS // Armor Command</h1>
+          </div>
+          <Button variant="primary" className="gap-2 bg-cyan-600 hover:bg-cyan-500 text-black font-black shadow-[0_0_15px_rgba(0,240,255,0.4)]" onClick={() => navigateToPath('/dashboard')}>
+            Enter workspace <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
-        <Button variant="primary" className="gap-2" onClick={() => navigateToPath('/dashboard')}>
-          Enter workspace <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
 
-      <PortfolioHero
-        name={content.hero.name}
-        subtitle={content.hero.subtitle}
-        pitch={content.hero.pitch}
-        githubUrl={content.githubUrl}
-        onViewWalkthrough={() => setActiveSection('walkthrough')}
-      />
+        <div className="p-1 bg-black/40 rounded-3xl border border-cyan-500/20 backdrop-blur-sm">
+          <PortfolioHero
+            name={content.hero.name}
+            subtitle={content.hero.subtitle}
+            pitch={content.hero.pitch}
+            githubUrl={content.githubUrl}
+            onViewWalkthrough={() => setActiveSection('walkthrough')}
+          />
+        </div>
 
-      <PortfolioPrivacyToggle demoMode={demoMode} onToggle={setDemoMode} />
+        <PortfolioPrivacyToggle demoMode={demoMode} onToggle={setDemoMode} />
 
       <div className="flex flex-wrap gap-2">
         {walkthroughSections.map((section) => (
@@ -211,6 +262,7 @@ export const PortfolioModePage: React.FC = () => {
           </div>
         </Card>
       )}
+      </div>
     </div>
   );
 };

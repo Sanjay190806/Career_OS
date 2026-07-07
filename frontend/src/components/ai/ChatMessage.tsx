@@ -1,8 +1,9 @@
 import React from 'react';
 import { AIMessage } from '../../types';
 import { renderSafeMarkdown } from '../../utils/securityUtils';
+import { speakShaylaText } from '../../utils/shaylaVoice';
 import { Button } from '../ui/Button';
-import { Copy } from 'lucide-react';
+import { Copy, Volume2 } from 'lucide-react';
 
 interface ChatMessageProps {
   message: AIMessage;
@@ -19,6 +20,22 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onRetry, onEd
   const isSending = message.status === 'sending';
 
   const [copied, setCopied] = React.useState(false);
+  const [textExpanded, setTextExpanded] = React.useState(false);
+
+  // Parse document attachments
+  let displayContent = message.content;
+  let attachmentName: string | null = null;
+  let extractedText: string | null = null;
+
+  if (isUser && message.content && message.content.startsWith('[Document Attachment: ')) {
+    const attachmentRegex = /^\[Document Attachment: ([^\]]+)\]\n-+\n([\s\S]*?)\n-+\nUser Message: ([\s\S]*)$/;
+    const match = message.content.match(attachmentRegex);
+    if (match) {
+      attachmentName = match[1];
+      extractedText = match[2];
+      displayContent = match[3];
+    }
+  }
 
   const handleCopy = async (text: string) => {
     try {
@@ -99,6 +116,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onRetry, onEd
   else if (isSystem) roleName = 'System';
   else if (message.role) roleName = message.role.charAt(0).toUpperCase() + message.role.slice(1);
 
+  const speakText = (text: string) => {
+    speakShaylaText(text);
+  };
+
   return (
     <div 
       className={`mt-3 flex w-full ${isUser ? 'justify-end' : 'justify-start'} animate-fadeIn`}
@@ -115,17 +136,26 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onRetry, onEd
             : 'rounded-bl-none border border-border-subtle bg-bgCard/60 text-textPrimary'
         }`}
       >
-        {/* Copy Button (top-right, absolute, visible on hover/focus) */}
+        {/* Actions Button Group (top-right, absolute, visible on hover/focus) */}
         {!isSystem && message.content && (
-          <button
-            onClick={() => handleCopy(message.content)}
-            className="absolute top-2.5 right-3 inline-flex items-center gap-1 rounded border border-border-subtle/50 bg-bgSurface/90 px-2 py-0.5 text-[10px] text-textSecondary opacity-0 transition-opacity hover:bg-bgSurface hover:text-textPrimary focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-accentBlue group-hover:opacity-100 chat-copy-button"
-            title={isUser ? 'Copy message' : 'Copy Shayla message'}
-            aria-label={isUser ? "Copy my message" : "Copy Shayla message"}
-          >
-            <Copy className="h-3 w-3" aria-hidden="true" />
-            {copied ? 'Copied' : 'Copy'}
-          </button>
+          <div className="absolute top-2.5 right-3 flex gap-1 group-hover:opacity-100 opacity-0 transition-opacity chat-copy-button">
+            <button
+              onClick={() => handleCopy(message.content)}
+              className="inline-flex items-center gap-1 rounded border border-border-subtle/50 bg-bgSurface/90 px-2 py-0.5 text-[10px] text-textSecondary hover:bg-bgSurface hover:text-textPrimary focus:outline-none"
+              title="Copy message"
+            >
+              <Copy className="h-3 w-3" />
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+            <button
+              onClick={() => speakText(message.content)}
+              className="inline-flex items-center gap-1 rounded border border-border-subtle/50 bg-bgSurface/90 px-2 py-0.5 text-[10px] text-textSecondary hover:bg-bgSurface hover:text-textPrimary focus:outline-none"
+              title="Listen Message"
+            >
+              <Volume2 className="h-3 w-3" />
+              Listen
+            </button>
+          </div>
         )}
 
         {/* Header / Meta */}
@@ -148,7 +178,34 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onRetry, onEd
 
         {/* Content body */}
         {isUser || isSystem ? (
-          <p className="whitespace-pre-wrap">{message.content}</p>
+          <div className="flex flex-col">
+            {attachmentName && (
+              <div className="mb-2.5 p-2.5 rounded-xl border border-white/10 bg-white/5 flex flex-col gap-1 text-[10px] text-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <span>📎</span>
+                    <span>{attachmentName}</span>
+                    <span className="opacity-60 text-[9px] font-normal">({extractedText?.length || 0} chars)</span>
+                  </div>
+                  {extractedText && (
+                    <button
+                      type="button"
+                      onClick={() => setTextExpanded(!textExpanded)}
+                      className="text-white underline text-[9px] font-bold"
+                    >
+                      {textExpanded ? 'Hide Text' : 'View Text'}
+                    </button>
+                  )}
+                </div>
+                {textExpanded && extractedText && (
+                  <pre className="mt-2 p-2 rounded bg-black/45 border border-white/5 font-mono text-[9px] max-h-[120px] overflow-y-auto whitespace-pre-wrap text-white/80">
+                    {extractedText}
+                  </pre>
+                )}
+              </div>
+            )}
+            <p className="whitespace-pre-wrap">{displayContent}</p>
+          </div>
         ) : (
           <>
             {message.content ? (

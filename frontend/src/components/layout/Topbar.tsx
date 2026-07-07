@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useUIStore } from '../../app/store/useUIStore';
 import { useCareerStore } from '../../app/store/useCareerStore';
 import { getStreak } from '../../utils/xpUtils';
-import { syncService } from '../../services/syncService';
+import { getAnimeRankInfo } from '../../utils/animeLevelUtils';
+import { checkBackendHealth } from '../../services/apiClient';
 import { navigateToPath } from '../../utils/navigation';
 import { Command, CircleCheckBig, CircleAlert, Flame, Search, Settings2 } from 'lucide-react';
 import { UserMenu } from '../auth/UserMenu';
@@ -15,6 +16,8 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenCommandPalette }) => {
   const { activeSection, setActiveSection } = useUIStore();
   const careerState = useCareerStore((s) => s);
   const streak = getStreak(careerState);
+  const level = useCareerStore((s) => s.level);
+  const anime = getAnimeRankInfo(level);
 
   const [backendOnline, setBackendOnline] = useState<boolean>(false);
 
@@ -22,9 +25,9 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenCommandPalette }) => {
     let mounted = true;
 
     const checkHealth = async () => {
-      const status = await syncService.checkBackendHealth();
+      const status = await checkBackendHealth();
       if (mounted) {
-        setBackendOnline(status);
+        setBackendOnline(status.online);
       }
     };
 
@@ -65,7 +68,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenCommandPalette }) => {
   };
 
   return (
-    <header className="shell-topbar flex h-16 shrink-0 items-center justify-between border-b border-border-subtle bg-bgSurface/80 px-4 shadow-sm backdrop-blur-xl md:px-6">
+    <header className="shell-topbar topbar-glow flex h-16 shrink-0 items-center justify-between border-b border-border-subtle bg-bgSurface/80 px-4 shadow-sm backdrop-blur-xl md:px-6">
       <div className="flex min-w-0 items-center gap-3 md:gap-4">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-textMuted">Dashboard</p>
@@ -98,6 +101,14 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenCommandPalette }) => {
         <div className="topbar-chip text-[11px] font-semibold text-accentOrange">
           <Flame className="h-3.5 w-3.5" />
           <span>{streak} day streak</span>
+        </div>
+
+        {/* Hero/Villain Rank Chip */}
+        <div className="hidden md:flex topbar-chip text-[10px] font-bold gap-1">
+          <span className="text-orange-400" title={anime.narutoRank}>🍥</span>
+          <span className="text-red-500" title="Spider-Man Protocol Active">🕷️</span>
+          <span className="text-yellow-400" title="Batman Protocol Active">🦇</span>
+          <span className="text-purple-400" title="Joker Mode">🃏</span>
         </div>
 
         <UserMenu />

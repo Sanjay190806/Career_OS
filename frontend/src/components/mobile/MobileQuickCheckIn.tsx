@@ -4,12 +4,14 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useCareerStore } from '../../app/store/useCareerStore';
 import { useDailyLogStore } from '../../app/store/useDailyLogStore';
+import { useUIStore } from '../../app/store/useUIStore';
 
 export const MobileQuickCheckIn: React.FC = () => {
   const [mood, setMood] = useState(3);
   const [energy, setEnergy] = useState(3);
   const updateDailyLog = useCareerStore((s) => s.updateDailyLog);
   const currentDay = useDailyLogStore((s) => s.selectedDay);
+  const setActiveSection = useUIStore((s) => s.setActiveSection);
 
   const save = () => {
     updateDailyLog(currentDay, { mood, energy, status: 'partial' } as any);
@@ -35,6 +37,12 @@ export const MobileQuickCheckIn: React.FC = () => {
         </label>
       </div>
       <Button onClick={save} className="w-full">Save quick check-in</Button>
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="outline" size="sm" onClick={() => setActiveSection('today')}>Focus timer</Button>
+        <Button variant="outline" size="sm" onClick={() => setActiveSection('german')}>German cards</Button>
+        <Button variant="outline" size="sm" onClick={() => setActiveSection('applications')}>Application update</Button>
+        <Button variant="outline" size="sm" onClick={() => setActiveSection('ai')}>Ask Shayla</Button>
+      </div>
     </Card>
   );
 };

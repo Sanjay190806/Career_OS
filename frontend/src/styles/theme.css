@@ -105,3 +105,52 @@
   --accent-glow: rgba(255, 255, 255, 0.05);
   --shadow-glow: 0 0 8px rgba(255, 255, 255, 0.03);
 }
+
+/* === Batman's Gotham Knight Theme === */
+:root[data-theme="gotham-knight"] {
+  --bg-base: #010105;
+  --bg-surface: #05050e;
+  --bg-card: #09091a;
+  --bg-glass: rgba(234, 179, 8, 0.02);
+  --bg-glass-hover: rgba(234, 179, 8, 0.05);
+  --border-subtle: rgba(234, 179, 8, 0.06);
+  --border-accent: rgba(234, 179, 8, 0.35);
+  --text-primary: #F5F0E0;
+  --text-secondary: #B8A96E;
+  --text-muted: #665E40;
+
+  --accent-primary: #EAB308; /* Bat-gold */
+  --accent-glow: rgba(234, 179, 8, 0.2);
+  --shadow-glow: 0 0 24px rgba(234, 179, 8, 0.18);
+  --accent-secondary: #374151; /* Gotham grey */
+  --spider-red: #DC2626;
+  --spider-blue: #3B82F6;
+  --batman-gold: #EAB308;
+  --joker-green: #22C55E;
+  --joker-purple: #A855F7;
+}
+
+/* === Spider-Man Spider-Verse Theme === */
+:root[data-theme="spider-verse"] {
+  --bg-base: #020008;
+  --bg-surface: #05001a;
+  --bg-card: #080028;
+  --bg-glass: rgba(220, 38, 38, 0.03);
+  --bg-glass-hover: rgba(220, 38, 38, 0.07);
+  --border-subtle: rgba(220, 38, 38, 0.08);
+  --border-accent: rgba(220, 38, 38, 0.35);
+  --text-primary: #FFF5F5;
+  --text-secondary: #CDB0B0;
+  --text-muted: #80605E;
+
+  --accent-primary: #DC2626; /* Spider-red */
+  --accent-glow: rgba(220, 38, 38, 0.25);
+  --shadow-glow: 0 0 24px rgba(220, 38, 38, 0.2);
+  --accent-secondary: #3B82F6; /* Spider-blue */
+  --spider-red: #DC2626;
+  --spider-blue: #3B82F6;
+  --batman-gold: #EAB308;
+  --joker-green: #22C55E;
+  --joker-purple: #A855F7;
+}
+

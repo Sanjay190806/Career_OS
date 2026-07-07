@@ -16,7 +16,8 @@ interface CommandPaletteProps {
 type Result =
   | { type: 'section'; label: string; detail: string; section: string }
   | { type: 'roadmap'; label: string; detail: string; query: string }
-  | { type: 'project'; label: string; detail: string; section: string };
+  | { type: 'project'; label: string; detail: string; section: string }
+  | { type: 'command'; label: string; detail: string; command: string; section?: string };
 
 const pages = [
   { label: 'Overview Dashboard', detail: 'Jump to the main dashboard', section: 'overview' },
@@ -32,6 +33,14 @@ const pages = [
   { label: 'Interview Coach', detail: 'Open the AI interview practice coach', section: 'interview_coach' },
   { label: 'Reports', detail: 'View progress reports', section: 'reports' },
   { label: 'Settings', detail: 'AI, sync, and backup controls', section: 'settings' },
+];
+
+const commands = [
+  { label: 'Add task', detail: 'Jump to Today and add/log a task in the daily command center', command: 'add_task', section: 'today' },
+  { label: 'Start focus timer', detail: 'Open Today focus timer controls', command: 'start_timer', section: 'today' },
+  { label: 'Export backup', detail: 'Download a local JSON backup of tracker storage', command: 'export_backup' },
+  { label: 'Ask Shayla', detail: 'Open Shayla AI Mentor', command: 'ask_shayla', section: 'ai' },
+  { label: 'Jump to weak areas', detail: 'Open Learning OS weak area and revision panels', command: 'weak_areas', section: 'learning_os' },
 ];
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose }) => {
@@ -50,7 +59,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
           label: project.name,
           detail: project.description,
           section: 'projects'
-        }))
+        })),
+        ...commands.map((command) => ({ type: 'command' as const, ...command }))
       ];
     }
 
@@ -85,13 +95,32 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
         query: problem.title
       }));
 
-    return [...pageMatches, ...projectMatches, ...roadmapMatches].slice(0, 10);
+    const commandMatches = commands.filter((command) =>
+      [command.label, command.detail, command.command].some((value) => value.toLowerCase().includes(normalized))
+    ).map((command) => ({ type: 'command' as const, ...command }));
+
+    return [...commandMatches, ...pageMatches, ...projectMatches, ...roadmapMatches].slice(0, 10);
   }, [projects, query]);
 
   if (!open) return null;
 
   const handleSelect = (result: Result) => {
-    if (result.type === 'roadmap') {
+    if (result.type === 'command') {
+      if (result.command === 'export_backup') {
+        const snapshot: Record<string, string | null> = {};
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('sanzz_os_')) snapshot[key] = localStorage.getItem(key);
+        });
+        const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), snapshot }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `sanzz-os-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+      if (result.section) setActiveSection(result.section);
+    } else if (result.type === 'roadmap') {
       setSearchQuery(result.query);
       setActiveSection('roadmap');
     } else if (result.section === 'portfolio') {

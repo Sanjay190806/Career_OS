@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -40,6 +40,51 @@ export const GermanPage: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedStory, setSelectedStory] = useState<GermanStory | null>(GERMAN_STORIES[0]);
   const [selectedWordIdx, setSelectedWordIdx] = useState(0);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Ambient particle canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animId: number;
+    const parent = canvas.parentElement;
+    let w = (canvas.width = parent?.offsetWidth || window.innerWidth);
+    let h = (canvas.height = parent?.offsetHeight || window.innerHeight);
+    const onResize = () => {
+      if (!canvas || !canvas.parentElement) return;
+      w = canvas.width = canvas.parentElement.offsetWidth;
+      h = canvas.height = canvas.parentElement.offsetHeight;
+    };
+    window.addEventListener('resize', onResize);
+
+    const colors = ['#dc2626', '#10b981', '#3b82f6', '#eab308', '#a855f7'];
+    const particles = Array.from({ length: 25 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+      size: Math.random() * 1.5 + 0.4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: Math.random() * 0.12 + 0.03
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        ctx.globalAlpha = p.alpha;
+        ctx.shadowBlur = 5; ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      animId = requestAnimationFrame(render);
+    };
+    render();
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(animId); };
+  }, []);
 
   const activeLesson = useMemo(
     () => GERMAN_LESSONS.find((lesson) => lesson.id === selectedLessonId) || GERMAN_LESSONS[0],
@@ -301,46 +346,56 @@ export const GermanPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-10 fade-in">
-      <SectionHeader
-        title="German Academy 3.0"
-        subtitle="Lessons, speaking, listening, stories, conversation, and review in one place."
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="primary" className="gap-1">
-              <Languages className="h-3.5 w-3.5" />
-              {careerState.germanLevel}
-            </Badge>
-            <Badge variant="warning" className="gap-1">
-              <Flame className="h-3.5 w-3.5" />
-              {careerState.germanStreak} days
-            </Badge>
-            <Badge variant="neutral" className="gap-1">
-              <PlayCircle className="h-3.5 w-3.5" />
-              {careerState.germanSpeakingSessions} speaking sessions
-            </Badge>
-            <Badge variant="neutral" className="gap-1">
-              <Mic className="h-3.5 w-3.5" />
-              {careerState.germanListeningSessions} listening sessions
-            </Badge>
-          </div>
-        }
-      />
+    <div className="flex flex-col gap-6 pb-10 fade-in relative overflow-hidden select-none">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-60" />
+      
+      <div className="relative z-10 flex flex-col gap-6 w-full">
+        <SectionHeader
+          title={
+            <span style={{ background: 'linear-gradient(135deg, #fff 40%, #dc2626 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              📓 Death Note German Academy
+            </span>
+          }
+          subtitle="Lessons, speaking practice, interactive stories, and review queue in one place."
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="primary" className="gap-1 bg-red-950/40 border border-red-500/30 text-red-400">
+                <Languages className="h-3.5 w-3.5" />
+                {careerState.germanLevel}
+              </Badge>
+              <Badge variant="warning" className="gap-1 bg-yellow-950/40 border border-yellow-500/30 text-yellow-400">
+                <Flame className="h-3.5 w-3.5" />
+                {careerState.germanStreak} days
+              </Badge>
+              <Badge variant="neutral" className="gap-1 bg-white/5 border border-white/10 text-white/70">
+                <PlayCircle className="h-3.5 w-3.5" />
+                {careerState.germanSpeakingSessions} speaking
+              </Badge>
+              <Badge variant="neutral" className="gap-1 bg-white/5 border border-white/10 text-white/70">
+                <Mic className="h-3.5 w-3.5" />
+                {careerState.germanListeningSessions} listening
+              </Badge>
+            </div>
+          }
+        />
 
-      <GermanAcademyTabs activeTab={activeTab} onTabChange={setActiveTab} />
-      <MobileGermanQuickPractice />
+        <GermanAcademyTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <MobileGermanQuickPractice />
 
-      {renderContent()}
+        <div className="rounded-3xl overflow-hidden p-0.5" style={{ background: 'linear-gradient(135deg, rgba(220,38,38,0.12), rgba(0,0,0,0.5))' }}>
+          {renderContent()}
+        </div>
 
-      <GermanLessonDrawer
-        lesson={activeLesson}
-        isOpen={drawerOpen}
-        notes={lessonNotes}
-        onClose={() => setDrawerOpen(false)}
-        onNotesChange={(notes) => updateGermanLessonNotes(activeLesson.id, notes)}
-        onCompleteLesson={handleLessonComplete}
-        onSubmitQuiz={handleQuizSubmit}
-      />
+        <GermanLessonDrawer
+          lesson={activeLesson}
+          isOpen={drawerOpen}
+          notes={lessonNotes}
+          onClose={() => setDrawerOpen(false)}
+          onNotesChange={(notes) => updateGermanLessonNotes(activeLesson.id, notes)}
+          onCompleteLesson={handleLessonComplete}
+          onSubmitQuiz={handleQuizSubmit}
+        />
+      </div>
     </div>
   );
 };

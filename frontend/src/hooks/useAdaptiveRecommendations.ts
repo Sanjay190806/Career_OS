@@ -12,11 +12,13 @@ export function useAdaptiveRecommendations() {
   const aptitudeSolved = careerState.dailyLogs ? Object.values(careerState.dailyLogs).reduce((acc, log) => acc + (log.counts?.aptitude || 0), 0) : 0;
   const germanStreak = careerState.germanStreak || 0;
   const resumeScore = careerState.resume?.atsScore || 0;
+  const projectCount = Object.keys(careerState.projects || {}).length;
+  const hasAnyProgress = dsaSolved > 0 || sqlSolved > 0 || aptitudeSolved > 0 || germanStreak > 0 || resumeScore > 0 || projectCount > 0;
 
   const recommendations = adaptiveRecommendationService.getRecommendations(
     focusMode,
     energyMode,
-    { dsaSolved, sqlSolved, aptitudeSolved, germanStreak, resumeScore }
+    { dsaSolved, sqlSolved, aptitudeSolved, germanStreak, resumeScore, projectCount, hasAnyProgress }
   );
 
   return {

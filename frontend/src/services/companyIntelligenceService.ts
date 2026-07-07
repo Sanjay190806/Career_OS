@@ -40,44 +40,52 @@ export const companyIntelligenceService = {
     // Fallback if company is not found
     if (!company) {
       return {
-        overall: 50, coding: 50, aptitude: 50, sql: 50, resume: 50, project: 50, communication: 50,
-        band: 'Preparing', color: 'text-accentBlue'
+        overall: 0, coding: 0, aptitude: 0, sql: 0, resume: 0, project: 0, communication: 0,
+        band: 'Not Ready', color: 'text-red-400 bg-red-400/10 border-red-400/20'
       };
     }
 
     // A. Gather metrics
     const resumeScore = calcResumeScore(careerState);
     const placementScore = calcPlacementScore(careerState);
-    const mockConfidence = mockStats.avgConfidenceAnswers * 20; // convert 1-5 to 0-100 scale
-    const communicationScore = mockStats.avgCommunicationScore;
+    const hasMockData = mockStats.totalSessions > 0 || mockStats.savedAnswersCount > 0;
+    const mockConfidence = hasMockData ? mockStats.avgConfidenceAnswers * 20 : 0;
+    const communicationScore = hasMockData ? mockStats.avgCommunicationScore : 0;
 
     // Standard coding calculations from daily checklist logs
-    let codingScore = 40;
-    let sqlScore = 40;
-    let aptitudeScore = 40;
+    let codingActivity = 0;
+    let sqlActivity = 0;
+    let aptitudeActivity = 0;
 
     Object.values(careerState.dailyLogs || {}).forEach((log) => {
       const c = log.counts || {};
-      if (c.leetcode || c.skillrack) codingScore += 1.5;
-      if (c.sql) sqlScore += 2.0;
-      if (c.aptitude) aptitudeScore += 1.0;
+      codingActivity += (c.leetcode || 0) + (c.skillrack || 0);
+      sqlActivity += c.sql || 0;
+      aptitudeActivity += c.aptitude || 0;
     });
 
-    codingScore = Math.min(codingScore, 100);
-    sqlScore = Math.min(sqlScore, 100);
-    aptitudeScore = Math.min(aptitudeScore, 100);
+    const codingScore = Math.min(codingActivity * 2, 100);
+    const sqlScore = Math.min(sqlActivity * 4, 100);
+    const aptitudeScore = Math.min(aptitudeActivity * 2, 100);
+    const projectScores = Object.values(careerState.projects || {}).map((project: any) => {
+      const values = Object.values(project.progress || {}) as number[];
+      return values.length ? values.reduce((sum, value) => sum + Number(value || 0), 0) / values.length : 0;
+    });
+    const projectScore = projectScores.length
+      ? projectScores.reduce((sum, score) => sum + score, 0) / projectScores.length
+      : 0;
 
     // B. Calculate weighted overall score based on company focus
     let weightedScore = 0;
     if (company.category === 'Product-based') {
       // Zoho style: heavy Coding + Projects + SQL + Mock Interview Confidence
-      weightedScore = codingScore * 0.35 + resumeScore * 0.15 + mockConfidence * 0.15 + sqlScore * 0.15 + communicationScore * 0.2;
+      weightedScore = codingScore * 0.3 + resumeScore * 0.15 + projectScore * 0.15 + mockConfidence * 0.1 + sqlScore * 0.15 + communicationScore * 0.15;
     } else if (company.category === 'Analytics') {
       // Fractal/Mu Sigma style: heavy SQL + Statistics + Case thinking
-      weightedScore = sqlScore * 0.35 + codingScore * 0.15 + aptitudeScore * 0.15 + resumeScore * 0.15 + mockConfidence * 0.1 + communicationScore * 0.1;
+      weightedScore = sqlScore * 0.3 + codingScore * 0.15 + aptitudeScore * 0.15 + resumeScore * 0.15 + projectScore * 0.1 + mockConfidence * 0.075 + communicationScore * 0.075;
     } else {
       // Accenture style: heavy Aptitude + Communication + OOPS basics + Overall Placement XP Score
-      weightedScore = aptitudeScore * 0.25 + codingScore * 0.15 + sqlScore * 0.1 + resumeScore * 0.15 + communicationScore * 0.15 + placementScore * 0.2;
+      weightedScore = aptitudeScore * 0.22 + codingScore * 0.14 + sqlScore * 0.1 + resumeScore * 0.14 + projectScore * 0.1 + communicationScore * 0.1 + placementScore * 0.2;
     }
 
     // Apply multiplier based on active preparation plan if it exists
@@ -117,7 +125,7 @@ export const companyIntelligenceService = {
       aptitude: Math.round(aptitudeScore),
       sql: Math.round(sqlScore),
       resume: Math.round(resumeScore),
-      project: 80, // placeholder baseline project design completion
+      project: Math.round(projectScore),
       communication: Math.round(communicationScore),
       band,
       color,

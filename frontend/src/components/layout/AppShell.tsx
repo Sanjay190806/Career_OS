@@ -8,6 +8,7 @@ import { ShaylaLauncher } from '../ai/ShaylaLauncher';
 import { NeonAtmosphere } from './NeonAtmosphere';
 import { CursorAura } from './CursorAura';
 import { ImmersiveBackground } from '../visual/ImmersiveBackground';
+import { CinematicUniverseOverlay } from '../visual/CinematicUniverseOverlay';
 import { FloatingActions } from '../ui/FloatingActions';
 import { useCareerStore } from '../../app/store/useCareerStore';
 import { useUIStore } from '../../app/store/useUIStore';
@@ -126,6 +127,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       <ImmersiveBackground />
       <NeonAtmosphere />
       <CursorAura />
+      <CinematicUniverseOverlay />
       <Sidebar />
       <div className="shell-main">
         <Topbar onOpenCommandPalette={() => setCommandOpen(true)} />

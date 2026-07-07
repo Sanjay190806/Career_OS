@@ -1,4 +1,4 @@
-import { getStreak, getTotalLCSolved, calcResumeScore, calcPlacementScore } from './xpUtils';
+import { getStreak, getTotalLCSolved, calcResumeScore, calcPlacementScore, getLevel } from './xpUtils';
 
 export interface BadgeDefinition {
   id: string;
@@ -55,9 +55,11 @@ export function runAchievementEngine(state: any, updateState: any, triggerToast:
   }
 
   if (changed) {
+    const nextXP = (state.xp || 0) + xpEarned;
     updateState({
       unlockedBadges: unlocked,
-      xp: (state.xp || 0) + xpEarned
+      xp: nextXP,
+      level: getLevel(nextXP).level
     });
   }
 }

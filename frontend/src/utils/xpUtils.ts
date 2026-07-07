@@ -14,6 +14,29 @@ export function getLevel(xp: number): XPThreshold {
   return lvl;
 }
 
+export function getXPProgress(xp: number) {
+  const safeXp = Math.max(0, xp || 0);
+  const currentLevel = getLevel(safeXp);
+  const currentIndex = LEVELS.findIndex((l) => l.level === currentLevel.level);
+  const nextLevel = LEVELS[currentIndex + 1] || null;
+  const levelStartXp = currentLevel.minXp;
+  const levelEndXp = nextLevel?.minXp ?? currentLevel.minXp;
+  const xpInLevel = Math.max(0, safeXp - levelStartXp);
+  const xpNeeded = nextLevel ? Math.max(1, levelEndXp - levelStartXp) : Math.max(1, xpInLevel);
+  const percentage = nextLevel ? Math.min(100, Math.round((xpInLevel / xpNeeded) * 100)) : 100;
+
+  return {
+    level: currentLevel.level,
+    levelName: currentLevel.name,
+    levelStartXp,
+    levelEndXp,
+    xpInLevel,
+    xpNeeded,
+    nextLevel,
+    percentage
+  };
+}
+
 export function getStreak(s: Partial<CareerState>): number {
   if (!s.dailyLogs || !s.userProfile?.startDate) return 0;
   return calculateStreakWithFreezes(s.dailyLogs, s.userProfile.startDate).currentStreak;

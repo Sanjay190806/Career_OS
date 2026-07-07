@@ -7,6 +7,7 @@ import { PlacementStrategyBoard } from '../components/company/PlacementStrategyB
 import { useCompanyIntelligence } from '../hooks/useCompanyIntelligence';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import { ShaylaPromptButton } from '../components/ai/ShaylaPromptButton';
 
 type TabType = 'plan' | 'readiness' | 'oa' | 'pipeline';
 
@@ -22,6 +23,14 @@ export const CompanyIntelligencePage: React.FC = () => {
       <SectionHeader
         title="Company Intelligence & Placement Planner"
         subtitle="Manage target company profiles, generate customized preparation sprints, log online assessments, and map job pipeline boards."
+        actions={
+          <ShaylaPromptButton
+            prompt="Shayla, review my Company Intelligence planner. Use company profiles, readiness, OA logs, and strategy pipeline only. Give me a German-English placement plan with the next 3 actions."
+            variant="secondary"
+          >
+            Ask Shayla
+          </ShaylaPromptButton>
+        }
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 select-none">
@@ -47,7 +56,7 @@ export const CompanyIntelligencePage: React.FC = () => {
                       {c.preparationPriority}
                     </Badge>
                   </div>
-                  <span className="text-[8px] text-textMuted">{c.category} | Readiness: {c.readinessScore}%</span>
+                  <span className="text-[8px] text-textMuted">{c.category} | Readiness: {c.readinessScore > 0 ? `${c.readinessScore}%` : 'Not enough data'}</span>
                 </button>
               );
             })}
@@ -99,6 +108,14 @@ export const CompanyIntelligencePage: React.FC = () => {
                   <span className="text-[9px] text-accentBlue font-black uppercase tracking-widest block">Company context</span>
                   <h4 className="text-sm font-black text-textPrimary mt-0.5">{selectedCompany.name} Workspace</h4>
                   <p className="text-[10px] text-textSecondary mt-2 leading-relaxed">{selectedCompany.generalHiringFocus}</p>
+                  <div className="mt-3">
+                    <ShaylaPromptButton
+                      prompt={`Shayla, create a company-specific prep plan for ${selectedCompany.name}. Hiring focus: ${selectedCompany.generalHiringFocus}. My readiness score is ${selectedCompany.readinessScore || 0}. Keep it honest and do not assume I completed anything.`}
+                      size="sm"
+                    >
+                      Shayla plan
+                    </ShaylaPromptButton>
+                  </div>
                 </Card>
                 <PrepPlanGenerator
                   companyId={selectedCompany.id}

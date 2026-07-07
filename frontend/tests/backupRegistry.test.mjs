@@ -57,7 +57,7 @@ test('cloud sync health route exists in backend routes', () => {
 
 test('v1.7.2 root scripts route Prisma commands through backend', () => {
   assert.equal(rootPkg.version, '1.7.2');
-  assert.equal(rootPkg.scripts['prisma:validate'], 'cd backend && npx prisma validate');
+  assert.equal(rootPkg.scripts['prisma:validate'], 'node scripts/prisma-validate-safe.js');
   assert.equal(rootPkg.scripts['prisma:generate:safe'], 'node scripts/prisma-generate-safe.js');
   assert.equal(rootPkg.scripts['db:doctor'], 'node scripts/db-doctor.js');
 });

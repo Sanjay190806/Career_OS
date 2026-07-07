@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -63,32 +63,81 @@ export const HistoryPage: React.FC = () => {
     }
   };
 
-  return (
-    <div className="flex flex-col gap-6 fade-in pb-10">
-      <SectionHeader
-        title="Reflection & Chat History"
-        subtitle="Review your historical study logs, reflection notes, and saved Shayla AI mentor chat sessions."
-      />
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-      {/* Tabs */}
-      <div className="flex border-b border-border-subtle gap-2">
-        <button
-          onClick={() => { setActiveTab('logs'); setSearchTerm(''); }}
-          className={`px-4 py-2.5 text-xs font-bold transition border-b-2 -mb-[2px] ${
-            activeTab === 'logs' ? 'border-accentBlue text-accentBlue' : 'border-transparent text-textMuted hover:text-textPrimary'
-          }`}
-        >
-          Study Logs
-        </button>
-        <button
-          onClick={() => { setActiveTab('chats'); setSearchTerm(''); }}
-          className={`px-4 py-2.5 text-xs font-bold transition border-b-2 -mb-[2px] ${
-            activeTab === 'chats' ? 'border-accentBlue text-accentBlue' : 'border-transparent text-textMuted hover:text-textPrimary'
-          }`}
-        >
-          AI Chat History ({chatHistory.length})
-        </button>
-      </div>
+  // Ambient particle canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animId: number;
+    const parent = canvas.parentElement;
+    let w = (canvas.width = parent?.offsetWidth || window.innerWidth);
+    let h = (canvas.height = parent?.offsetHeight || window.innerHeight);
+    const onResize = () => {
+      if (!canvas || !canvas.parentElement) return;
+      w = canvas.width = canvas.parentElement.offsetWidth;
+      h = canvas.height = canvas.parentElement.offsetHeight;
+    };
+    window.addEventListener('resize', onResize);
+
+    const colors = ['#dc2626', '#eab308', '#a855f7', '#3b82f6'];
+    const particles = Array.from({ length: 25 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+      size: Math.random() * 1.5 + 0.4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: Math.random() * 0.12 + 0.03
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        ctx.globalAlpha = p.alpha;
+        ctx.shadowBlur = 5; ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      animId = requestAnimationFrame(render);
+    };
+    render();
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(animId); };
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-6 fade-in pb-10 select-none relative overflow-hidden">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-60" />
+
+      <div className="relative z-10 flex flex-col gap-6 w-full">
+        <SectionHeader
+          title="⏳ Tokyo Revengers Time Leap Archives"
+          subtitle="Review your past study logs, reflection telemetry, and saved Shayla AI mentor memory sessions across timelines."
+        />
+
+        {/* Tabs */}
+        <div className="flex border-b border-red-500/30 gap-2">
+          <button
+            onClick={() => { setActiveTab('logs'); setSearchTerm(''); }}
+            className={`px-4 py-2.5 text-xs font-bold transition border-b-2 -mb-[2px] font-mono ${
+              activeTab === 'logs' ? 'border-red-500 text-red-400 shadow-[0_4px_10px_rgba(220,38,38,0.3)]' : 'border-transparent text-textMuted hover:text-white'
+            }`}
+          >
+            🔥 Study Logs Timeline
+          </button>
+          <button
+            onClick={() => { setActiveTab('chats'); setSearchTerm(''); }}
+            className={`px-4 py-2.5 text-xs font-bold transition border-b-2 -mb-[2px] font-mono ${
+              activeTab === 'chats' ? 'border-red-500 text-red-400 shadow-[0_4px_10px_rgba(220,38,38,0.3)]' : 'border-transparent text-textMuted hover:text-white'
+            }`}
+          >
+            ⚡ AI Chat Memory ({chatHistory.length})
+          </button>
+        </div>
 
       {/* Filter panel */}
       <div className="flex flex-wrap items-center gap-4 bg-bgSurface/40 p-4 rounded-2xl border border-border-subtle">
@@ -241,6 +290,7 @@ export const HistoryPage: React.FC = () => {
           </div>
         )}
       </Drawer>
+      </div>
     </div>
   );
 };

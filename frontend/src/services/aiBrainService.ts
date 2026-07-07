@@ -13,7 +13,7 @@ export const defaultCareerProfile: UserCareerProfile = {
   batch: '2024-2028',
   currentDirection: ['AI Product', 'Product Analytics', 'Data Analyst', 'Product Analyst', 'SWE backup'],
   corePlacementSkills: ['Java DSA', 'SQL', 'Aptitude', 'Python', 'Power BI / Excel', 'Communication', 'Projects', 'Resume', 'Interview'],
-  projects: ['CareSync AI', 'SmartEdu AI', 'Sanju Career OS'],
+  projects: [],
   targetCompanies: ['Zoho', 'HCLTech', 'Accenture', 'Wipro', 'Cognizant', 'Capgemini', 'Infosys', 'TCS', 'Fractal Analytics', 'Tiger Analytics', 'Quantiphi', 'Mu Sigma'],
   updatedAt: new Date().toISOString()
 };
@@ -43,25 +43,25 @@ function currentStreak(logs: CareerState['dailyLogs']): number {
 
 function scoreSkills(state: CareerState): SkillProgress[] {
   const dsaSolved = Object.values(state.dsaPatternMastery || {}).reduce((sum, item) => sum + (item.solvedCount || 0), 0);
-  const dsaTotal = Object.values(state.dsaPatternMastery || {}).reduce((sum, item) => sum + (item.totalCount || 0), 0) || 60;
-  const sqlScore = average(Object.values(state.sqlProgress || {}).map((item) => Math.min(100, (item.solvedCount || 0) * 10 + (item.confidence || 0) * 8)), 35);
-  const aptitudeScore = average(Object.values(state.aptitudeProgress || {}).map((item) => Math.min(100, (item.questionsSolved || 0) * 2 + (item.accuracy || 0) * 0.5 + (item.confidence || 0) * 5)), 35);
+  const dsaTotal = Object.values(state.dsaPatternMastery || {}).reduce((sum, item) => sum + (item.totalCount || 0), 0);
+  const sqlScore = average(Object.values(state.sqlProgress || {}).map((item) => Math.min(100, (item.solvedCount || 0) * 10 + (item.confidence || 0) * 8)), 0);
+  const aptitudeScore = average(Object.values(state.aptitudeProgress || {}).map((item) => Math.min(100, (item.questionsSolved || 0) * 2 + (item.accuracy || 0) * 0.5 + (item.confidence || 0) * 5)), 0);
   const projectScores = Object.values(state.projects || {}).map((project) => average(Object.values(project.progress || {}), 0));
-  const resumeScore = average(Object.values(state.resume?.sections || {}), state.resume?.atsScore || 60);
-  const communication = Math.min(92, 45 + (state.applications?.length || 0) * 4 + (state.germanSpeakingSessions || 0) * 2);
-  const python = Math.min(85, 40 + projectScores.filter((score) => score >= 60).length * 10);
-  const powerBi = Math.min(80, 38 + sqlScore * 0.25 + aptitudeScore * 0.15);
+  const resumeScore = average(Object.values(state.resume?.sections || {}), state.resume?.atsScore || 0);
+  const communication = Math.min(92, (state.applications?.length || 0) * 4 + (state.germanSpeakingSessions || 0) * 2);
+  const python = Math.min(85, projectScores.filter((score) => score >= 60).length * 10);
+  const powerBi = Math.min(80, sqlScore * 0.25 + aptitudeScore * 0.15);
 
   return [
-    { id: 'java-dsa', name: 'Java DSA', score: clamp((dsaSolved / dsaTotal) * 100), evidence: `${dsaSolved} DSA pattern problems logged`, trend: dsaSolved > 10 ? 'up' : 'flat' },
+    { id: 'java-dsa', name: 'Java DSA', score: dsaTotal ? clamp((dsaSolved / dsaTotal) * 100) : 0, evidence: `${dsaSolved} DSA pattern problems logged`, trend: dsaSolved > 10 ? 'up' : 'flat' },
     { id: 'sql', name: 'SQL', score: clamp(sqlScore), evidence: `${Object.keys(state.sqlProgress || {}).length} SQL topics tracked`, trend: sqlScore > 55 ? 'up' : 'flat' },
     { id: 'aptitude', name: 'Aptitude', score: clamp(aptitudeScore), evidence: `${Object.keys(state.aptitudeProgress || {}).length} aptitude categories tracked`, trend: aptitudeScore > 55 ? 'up' : 'flat' },
     { id: 'python', name: 'Python', score: clamp(python), evidence: 'Python strength inferred from AI/data project portfolio', trend: 'flat' },
     { id: 'powerbi-excel', name: 'Power BI / Excel', score: clamp(powerBi), evidence: 'Analytics readiness inferred from SQL and aptitude signals', trend: 'flat' },
     { id: 'communication', name: 'Communication', score: clamp(communication), evidence: 'Communication readiness inferred from interview/application practice', trend: communication > 60 ? 'up' : 'flat' },
-    { id: 'projects', name: 'Projects', score: clamp(average(projectScores, 50)), evidence: `${projectScores.length} projects in portfolio`, trend: average(projectScores, 50) > 60 ? 'up' : 'flat' },
+    { id: 'projects', name: 'Projects', score: clamp(average(projectScores, 0)), evidence: `${projectScores.length} projects in portfolio`, trend: average(projectScores, 0) > 60 ? 'up' : 'flat' },
     { id: 'resume', name: 'Resume', score: clamp(resumeScore), evidence: `ATS score ${state.resume?.atsScore || 0}`, trend: resumeScore > 70 ? 'up' : 'flat' },
-    { id: 'interview', name: 'Interview', score: clamp(45 + (state.applications?.length || 0) * 3 + (resumeScore > 70 ? 10 : 0)), evidence: 'Interview readiness inferred from resume and applications', trend: 'flat' }
+    { id: 'interview', name: 'Interview', score: clamp((state.applications?.length || 0) * 3 + (resumeScore > 70 ? 10 : 0)), evidence: 'Interview readiness inferred from resume and applications', trend: 'flat' }
   ];
 }
 
@@ -77,10 +77,10 @@ export function buildAIBrainSummary(state: CareerState): AIBrainSummary {
   const recentLogs = logs.slice(-7);
   const activeDays = recentLogs.filter((log) => log.status === 'completed' || (log.focusMinutes || 0) > 0 || Object.values(log.counts || {}).some((count) => count > 0)).length;
   const totalFocusMinutes = recentLogs.reduce((sum, log) => sum + (log.focusMinutes || 0), 0);
-  const projectPortfolioStrength = clamp(average(Object.values(state.projects || {}).map((project) => average(Object.values(project.progress || {}), 0)), 55));
-  const resumeReadiness = clamp(average(Object.values(state.resume?.sections || {}), state.resume?.atsScore || 65));
-  const interviewReadiness = clamp(average([skills.find((skill) => skill.name === 'Communication')?.score || 50, resumeReadiness, projectPortfolioStrength], 55));
-  const placementReadinessScore = clamp(average([average(skills.map((skill) => skill.score)), projectPortfolioStrength, resumeReadiness, interviewReadiness], 50));
+  const projectPortfolioStrength = clamp(average(Object.values(state.projects || {}).map((project) => average(Object.values(project.progress || {}), 0)), 0));
+  const resumeReadiness = clamp(average(Object.values(state.resume?.sections || {}), state.resume?.atsScore || 0));
+  const interviewReadiness = clamp(average([skills.find((skill) => skill.name === 'Communication')?.score || 0, resumeReadiness, projectPortfolioStrength], 0));
+  const placementReadinessScore = clamp(average([average(skills.map((skill) => skill.score), 0), projectPortfolioStrength, resumeReadiness, interviewReadiness], 0));
   const lowEnergyDays = recentLogs.filter((log) => (log.energy || 3) <= 2).length;
   const latestLog = recentLogs.length ? recentLogs[recentLogs.length - 1] : undefined;
   const burnoutRisk = totalFocusMinutes > 900 || lowEnergyDays >= 3 ? 'high' : totalFocusMinutes > 600 || lowEnergyDays >= 2 ? 'medium' : 'low';
@@ -90,8 +90,8 @@ export function buildAIBrainSummary(state: CareerState): AIBrainSummary {
     ...(weakestLearning ? [{ id: 'learning-weakness', title: `Learning priority: ${weakestLearning.title}`, detail: `${weakestLearning.title} is the weakest Learning OS path at ${weakestLearning.masteryPercentage}% mastery.`, priority: 'high' as const, category: 'Placement' as const }] : []),
     ...(dueRevision[0] ? [{ id: 'revision-backlog', title: `Review ${dueRevision[0].topic}`, detail: `${dueRevision.length} Learning OS revision item(s) are due.`, priority: 'high' as const, category: 'Recovery' as const }] : []),
     { id: 'next-skill', title: `Strengthen ${nextSkill.name}`, detail: `Spend one focused block on ${nextSkill.name}. Current signal is ${nextSkill.score}%.`, priority: 'high', category: nextSkill.name },
-    { id: 'project-proof', title: 'Add one project proof point', detail: 'Update a README, demo note, metric, or architecture bullet for one portfolio project.', priority: 'medium', category: 'Projects' },
-    { id: 'placement-readiness', title: 'Prepare one company story', detail: 'Pick one target company and write a 90-second project explanation tailored to its role.', priority: 'medium', category: 'Placement' }
+    ...(Object.keys(state.projects || {}).length ? [{ id: 'project-proof', title: 'Add one project proof point', detail: 'Update a README, demo note, metric, or architecture bullet for one portfolio project.', priority: 'medium' as const, category: 'Projects' as const }] : []),
+    { id: 'placement-readiness', title: 'Prepare one company story', detail: 'Pick one target company and write a 90-second project explanation tailored to its role.', priority: 'medium', category: 'Placement' as const }
   ];
 
   const riskFlags: CareerRiskFlag[] = [];
@@ -121,8 +121,8 @@ export function buildAIBrainSummary(state: CareerState): AIBrainSummary {
     recommendedNextAction: dueRevision[0]
       ? `Review ${dueRevision[0].topic}, then do one ${nextSkill.name} task.`
       : weakestLearning
-        ? `Log one ${weakestLearning.title} session, then add one portfolio proof point.`
-        : `Do one ${nextSkill.name} task, then add one portfolio proof point.`,
+        ? `Log one ${weakestLearning.title} session, then update your tracker with real progress.`
+        : `Do one ${nextSkill.name} task, then update your tracker with real progress.`,
     recommendations,
     riskFlags,
     projects: Object.entries(state.projects || {}).map(([id, project]) => ({
@@ -165,7 +165,14 @@ export function saveAIBrainSummary(summary: AIBrainSummary): void {
 export function loadAIBrainSummary(): AIBrainSummary | null {
   try {
     const raw = localStorage.getItem(AI_BRAIN_STORAGE_KEY);
-    return raw ? JSON.parse(raw) as AIBrainSummary : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AIBrainSummary;
+    const hasSeededProjects = parsed.profile?.projects?.some((project) => ['CareSync AI', 'SmartEdu AI', 'Sanju Career OS'].includes(project));
+    if (hasSeededProjects && parsed.placementReadinessScore > 0 && parsed.projects.length === 0) {
+      localStorage.removeItem(AI_BRAIN_STORAGE_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }

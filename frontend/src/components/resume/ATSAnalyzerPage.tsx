@@ -24,7 +24,7 @@ export const ATSAnalyzerPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const latestTopIssue = analyses[0]?.issues[0]?.title || 'No saved analysis yet';
 
-  const canAnalyze = Boolean(file && (manualText.trim() || file.name.toLowerCase().endsWith('.txt')));
+  const canAnalyze = Boolean(manualText.trim() || (file && file.name.toLowerCase().endsWith('.txt')));
 
   const handleParse = async () => {
     if (!file) return;
@@ -42,19 +42,20 @@ export const ATSAnalyzerPage: React.FC = () => {
   };
 
   const handleAnalyze = async () => {
-    if (!file) return;
+    if (!file && !manualText.trim()) return;
     setLoading(true);
     setError('');
     try {
-      const parsed = await parseResumeFile(file, manualText);
+      const parseTarget = file || new File([manualText], 'pasted-resume.txt', { type: 'text/plain' });
+      const parsed = await parseResumeFile(parseTarget, manualText);
       const score = await scoreResume(parsed.extractedText, targetRole, targetCompany);
       const next: ResumeAnalysis = {
         ...score,
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
-        fileName: file.name,
+        fileName: parseTarget.name,
         fileType: parsed.fileType,
-        fileSize: file.size,
+        fileSize: parseTarget.size,
         extractedTextPreview: parsed.extractedText.slice(0, 1800),
         fullExtractedText: parsed.extractedText,
       };

@@ -18,8 +18,8 @@ export const DEFAULT_COMPANY_PROFILES: CompanyProfile[] = [
     skillsToPrepare: ['Java', 'OOPS', 'SQL', 'DSA'],
     resumeEmphasis: 'Hands-on projects, backend architectures.',
     projectEmphasis: 'Sanju Career OS, custom local database designs.',
-    readinessScore: 65,
-    notes: 'Zoho focuses heavily on problem-solving from scratch. Practice raw loops and collections without using template libraries.',
+    readinessScore: 0,
+    notes: '',
     lastUpdated: new Date().toISOString(),
   },
   {
@@ -37,9 +37,9 @@ export const DEFAULT_COMPANY_PROFILES: CompanyProfile[] = [
     interviewFocus: ['SQL Queries', 'Statistics', 'CareSync AI metrics'],
     skillsToPrepare: ['SQL', 'Python Pandas', 'Statistics', 'Excel'],
     resumeEmphasis: 'Data visualization, analytics models.',
-    projectEmphasis: 'CareSync AI patient triage scores and ML modules.',
-    readinessScore: 50,
-    notes: 'Focus on explaining isolation forest anomaly detection conceptually.',
+    projectEmphasis: 'Analytics project proof, SQL case studies, and measurable dashboards.',
+    readinessScore: 0,
+    notes: '',
     lastUpdated: new Date().toISOString(),
   },
   {
@@ -58,9 +58,9 @@ export const DEFAULT_COMPANY_PROFILES: CompanyProfile[] = [
     interviewFocus: ['Self Introduction', 'Resume explanation', 'Basic Java OOPS'],
     skillsToPrepare: ['Aptitude', 'Java Basics', 'SQL Basics', 'Communication'],
     resumeEmphasis: 'Full stack projects, certs, hackathons.',
-    projectEmphasis: 'SmartEdu AI user dashboards.',
-    readinessScore: 75,
-    notes: 'Ensure 100% completion on minimum daily aptitude benchmarks to lock Accenture readiness.',
+    projectEmphasis: 'Clear full-stack project walkthroughs and communication proof.',
+    readinessScore: 0,
+    notes: '',
     lastUpdated: new Date().toISOString(),
   }
 ];

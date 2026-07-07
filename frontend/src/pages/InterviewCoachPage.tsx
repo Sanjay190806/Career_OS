@@ -127,6 +127,51 @@ export const InterviewCoachPage: React.FC = () => {
   const recognitionRef = useRef<any>(null);
   const speechStartedAtRef = useRef<number | null>(null);
   const speechTranscriptRef = useRef('');
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Ambient particle canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animId: number;
+    const parent = canvas.parentElement;
+    let w = (canvas.width = parent?.offsetWidth || window.innerWidth);
+    let h = (canvas.height = parent?.offsetHeight || window.innerHeight);
+    const onResize = () => {
+      if (!canvas || !canvas.parentElement) return;
+      w = canvas.width = canvas.parentElement.offsetWidth;
+      h = canvas.height = canvas.parentElement.offsetHeight;
+    };
+    window.addEventListener('resize', onResize);
+
+    const colors = ['#eab308', '#3b82f6', '#00f0ff', '#ef4444'];
+    const particles = Array.from({ length: 25 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+      size: Math.random() * 1.5 + 0.4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: Math.random() * 0.12 + 0.03
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        ctx.globalAlpha = p.alpha;
+        ctx.shadowBlur = 5; ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      animId = requestAnimationFrame(render);
+    };
+    render();
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(animId); };
+  }, []);
 
   const interviewContext = useMemo(
     () => buildInterviewCoachContext(careerState, {
@@ -471,10 +516,13 @@ export const InterviewCoachPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-6 pb-10 fade-in">
-      <SectionHeader
-        title="Interview Coach"
-        subtitle="Practice HR, technical, behavioral, German, and resume-based interviews with scoring, follow-ups, and voice mode."
+    <div className="flex flex-col gap-6 pb-10 fade-in select-none relative overflow-hidden">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-60" />
+
+      <div className="relative z-10 flex flex-col gap-6 w-full">
+        <SectionHeader
+          title="🦇 Batman Gotham AI Interrogation Matrix // Interview Telemetry"
+          subtitle="Practice HR, technical, behavioral, German, and resume-based interrogation protocols with scoring, follow-ups, and voice telemetry."
         actions={(
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleNewSession} className="gap-2">
@@ -862,6 +910,7 @@ export const InterviewCoachPage: React.FC = () => {
             )}
           </Card>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useCareerStore } from '../app/store/useCareerStore';
 import { SKILL_TREE_DATA } from '../data/skillTree';
 import { Card } from '../components/ui/Card';
@@ -116,201 +116,251 @@ export const SkillTreePage: React.FC = () => {
     setChecklistState((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Ambient particle canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animId: number;
+    const parent = canvas.parentElement;
+    let w = (canvas.width = parent?.offsetWidth || window.innerWidth);
+    let h = (canvas.height = parent?.offsetHeight || window.innerHeight);
+    const onResize = () => {
+      if (!canvas || !canvas.parentElement) return;
+      w = canvas.width = canvas.parentElement.offsetWidth;
+      h = canvas.height = canvas.parentElement.offsetHeight;
+    };
+    window.addEventListener('resize', onResize);
+
+    const colors = ['#f97316', '#eab308', '#a855f7', '#dc2626'];
+    const particles = Array.from({ length: 25 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+      size: Math.random() * 1.5 + 0.4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: Math.random() * 0.12 + 0.03
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        ctx.globalAlpha = p.alpha;
+        ctx.shadowBlur = 5; ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      animId = requestAnimationFrame(render);
+    };
+    render();
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(animId); };
+  }, []);
+
   return (
-    <div className="workspace-page flex flex-col gap-6 pb-12 select-none">
-      <SectionHeader 
-        title="Syllabus Skill Tree 2.0"
-        subtitle="Progressive placement roadmap unlocking milestones from basic DSA up to mock interview readiness."
-      />
+    <div className="workspace-page flex flex-col gap-6 pb-12 select-none relative overflow-hidden">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-60" />
 
-      {/* Group Navigation Bar */}
-      <div className="flex gap-2 pb-2 overflow-x-auto border-b border-white/5">
-        {groups.map((group) => {
-          const groupNodes = nodes.filter((n) => n.group === group);
-          const completed = groupNodes.filter((n) => n.status === 'completed' || n.status === 'interview-ready').length;
-          const percent = Math.round((completed / groupNodes.length) * 100);
+      <div className="relative z-10 flex flex-col gap-6 w-full">
+        <SectionHeader 
+          title="🍥 Naruto Domain Expansion Skill Tree"
+          subtitle="Progressive ninja way roadmap unlocking chakra milestones from Genin basic DSA up to Hokage mock interview readiness."
+        />
 
-          return (
-            <button
-              key={group}
-              onClick={() => {
-                setActiveGroup(group);
-                setSelectedNodeId(null);
-              }}
-              className={`h-12 px-5 rounded-2xl text-xs font-bold transition flex flex-col justify-center items-start whitespace-nowrap border ${
-                activeGroup === group
-                  ? 'bg-accentBlue/10 border-accentBlue text-accentBlue'
-                  : 'bg-white/5 border-white/5 text-textSecondary hover:bg-white/10'
-              }`}
-            >
-              <span>{group}</span>
-              <span className="text-[9px] opacity-75 mt-0.5">{percent}% Mastered ({completed}/{groupNodes.length})</span>
-            </button>
-          );
-        })}
-      </div>
+        {/* Group Navigation Bar */}
+        <div className="flex gap-2 pb-2 overflow-x-auto border-b border-orange-500/20">
+          {groups.map((group) => {
+            const groupNodes = nodes.filter((n) => n.group === group);
+            const completed = groupNodes.filter((n) => n.status === 'completed' || n.status === 'interview-ready').length;
+            const percent = Math.round((completed / groupNodes.length) * 100);
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1.7fr] gap-6 items-start">
-        {/* Left: Interactive Visual Flow Nodes */}
-        <div className="flex flex-col gap-3.5">
-          <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1">Syllabus Milestones</h3>
-          
-          <div className="flex flex-col gap-4 relative pl-3 border-l border-white/5">
-            {filteredNodes.map((node) => {
-              const isSelected = selectedNodeId === node.id;
-              
-              return (
-                <div key={node.id} className="relative group">
-                  {/* Tree connector bullet */}
-                  <div className={`absolute -left-[17px] top-[14px] h-2 w-2 rounded-full border transition ${
-                    node.status === 'interview-ready' || node.status === 'completed'
-                      ? 'bg-accentEmerald border-accentEmerald'
-                      : node.status === 'learning'
-                      ? 'bg-accentBlue border-accentBlue animate-ping'
-                      : 'bg-bgSurface border-white/20'
-                  }`} />
-
-                  <Card 
-                    onClick={() => setSelectedNodeId(node.id)}
-                    className={`p-3.5 border transition cursor-pointer flex justify-between items-center ${
-                      isSelected
-                        ? 'border-accentBlue bg-accentBlue/5 ring-1 ring-accentBlue/20 shadow-glow-blue/5'
-                        : 'border-white/5 bg-bgCard/40 hover:bg-white/[0.04]'
-                    } ${node.status === 'locked' ? 'pointer-events-none opacity-60' : ''}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-xl border ${getStatusColor(node.status)}`}>
-                        {getStatusIcon(node.status)}
-                      </div>
-                      <div>
-                        <h4 className="font-extrabold text-textPrimary text-xs">{node.title}</h4>
-                        <span className="text-[9px] text-textMuted uppercase font-bold tracking-wider mt-0.5 block">{node.status}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-textMuted group-hover:text-textPrimary transition">
-                      <span className="text-[9px] font-bold">Details</span>
-                      <ChevronRight className="h-4.5 w-4.5" />
-                    </div>
-                  </Card>
-                </div>
-              );
-            })}
-          </div>
+            return (
+              <button
+                key={group}
+                onClick={() => {
+                  setActiveGroup(group);
+                  setSelectedNodeId(null);
+                }}
+                className={`h-12 px-5 rounded-2xl text-xs font-bold transition flex flex-col justify-center items-start whitespace-nowrap border ${
+                  activeGroup === group
+                    ? 'bg-orange-500/20 border-orange-500 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.2)]'
+                    : 'bg-black/40 border-white/10 text-textSecondary hover:bg-white/10 hover:border-orange-500/30'
+                }`}
+              >
+                <span>{group}</span>
+                <span className="text-[9px] opacity-75 mt-0.5 font-mono">{percent}% Mastery ({completed}/{groupNodes.length})</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Right: Detail Drawer Panel */}
-        <div className="lg:sticky lg:top-4">
-          {selectedNode ? (
-            <Card className="p-5 border border-border-accent/30 bg-bgCard/35 flex flex-col gap-4 shadow-glow-blue/5">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[9px] font-bold text-accentBlue uppercase tracking-wider">{selectedNode.group}</span>
-                  <h3 className="font-black text-textPrimary text-lg mt-0.5">{selectedNode.title}</h3>
-                </div>
-                <Badge variant={
-                  selectedNode.status === 'interview-ready' ? 'warning' : 
-                  selectedNode.status === 'completed' ? 'success' : 
-                  selectedNode.status === 'learning' ? 'primary' : 'neutral'
-                }>
-                  {selectedNode.status.toUpperCase()}
-                </Badge>
-              </div>
-
-              {/* Status Controls */}
-              <div className="flex flex-wrap gap-2 bg-white/5 border border-white/5 p-2 rounded-2xl">
-                <span className="text-[9px] font-bold text-textMuted uppercase tracking-wider block w-full pl-1.5 mb-1.5">Update Prep Status:</span>
+        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1.7fr] gap-6 items-start">
+          {/* Left: Interactive Visual Flow Nodes */}
+          <div className="flex flex-col gap-3.5">
+            <h3 className="text-sm font-black text-orange-400 uppercase tracking-wider pl-1 font-mono">⚡ Ninja Way Milestones</h3>
+            
+            <div className="flex flex-col gap-4 relative pl-3 border-l border-orange-500/20">
+              {filteredNodes.map((node) => {
+                const isSelected = selectedNodeId === node.id;
                 
-                <button
-                  onClick={() => handleStatusChange(selectedNode.id, 'unlocked')}
-                  className={`h-7 px-3 rounded-lg text-[10px] font-bold transition ${
-                    selectedNode.status === 'unlocked' ? 'bg-white/10 text-textPrimary' : 'text-textSecondary hover:bg-white/5'
-                  }`}
-                >
-                  Unlocked
-                </button>
-                <button
-                  onClick={() => handleStatusChange(selectedNode.id, 'learning')}
-                  className={`h-7 px-3 rounded-lg text-[10px] font-bold transition ${
-                    selectedNode.status === 'learning' ? 'bg-accentBlue/20 text-accentBlue border border-accentBlue/30' : 'text-textSecondary hover:bg-white/5'
-                  }`}
-                >
-                  Learning
-                </button>
-                <button
-                  onClick={() => handleStatusChange(selectedNode.id, 'completed')}
-                  className={`h-7 px-3 rounded-lg text-[10px] font-bold transition ${
-                    selectedNode.status === 'completed' ? 'bg-accentEmerald/20 text-accentEmerald border border-accentEmerald/30' : 'text-textSecondary hover:bg-white/5'
-                  }`}
-                >
-                  Completed
-                </button>
-                <button
-                  onClick={() => handleStatusChange(selectedNode.id, 'interview-ready')}
-                  className={`h-7 px-3 rounded-lg text-[10px] font-bold transition ${
-                    selectedNode.status === 'interview-ready' ? 'bg-accentGold/20 text-accentGold border border-accentGold/30' : 'text-textSecondary hover:bg-white/5'
-                  }`}
-                >
-                  Interview Ready
-                </button>
-              </div>
+                return (
+                  <div key={node.id} className="relative group">
+                    {/* Tree connector bullet */}
+                    <div className={`absolute -left-[17px] top-[14px] h-2 w-2 rounded-full border transition ${
+                      node.status === 'interview-ready' || node.status === 'completed'
+                        ? 'bg-emerald-400 border-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+                        : node.status === 'learning'
+                        ? 'bg-orange-500 border-orange-500 animate-ping'
+                        : 'bg-black border-white/20'
+                    }`} />
 
-              {/* Goal & Why */}
-              <div className="flex flex-col gap-3 text-xs leading-relaxed">
-                <div>
-                  <span className="font-bold text-textMuted uppercase tracking-wider text-[9px]">Syllabus Goal</span>
-                  <p className="text-textPrimary mt-1 font-medium">{selectedNode.goal}</p>
-                </div>
-                <div>
-                  <span className="font-bold text-textMuted uppercase tracking-wider text-[9px]">Why this matters</span>
-                  <p className="text-textSecondary mt-1 italic">"{selectedNode.why}"</p>
-                </div>
-              </div>
-
-              {/* What to do Checklist */}
-              <div className="border-t border-white/5 pt-4 flex flex-col gap-2.5">
-                <span className="font-bold text-textMuted uppercase tracking-wider text-[9px] block">Required Tasks Checklist:</span>
-                <div className="flex flex-col gap-2 text-xs">
-                  {selectedNode.whatToDo.map((task, idx) => {
-                    const isChecked = checklistState[`${selectedNode.id}_${idx}`] || false;
-                    return (
-                      <div 
-                        key={idx}
-                        onClick={() => handleToggleChecklistItem(selectedNode.id, idx)}
-                        className="flex items-start gap-2.5 cursor-pointer bg-white/5 hover:bg-white/10 p-2.5 rounded-xl border border-white/5 transition"
-                      >
-                        {isChecked ? (
-                          <CheckSquare className="h-4.5 w-4.5 text-accentEmerald shrink-0 mt-0.5" />
-                        ) : (
-                          <Square className="h-4.5 w-4.5 text-textMuted shrink-0 mt-0.5" />
-                        )}
-                        <span className={`leading-normal ${isChecked ? 'text-textSecondary line-through opacity-65' : 'text-textPrimary'}`}>
-                          {task}
-                        </span>
+                    <Card 
+                      onClick={() => setSelectedNodeId(node.id)}
+                      className={`p-3.5 border transition cursor-pointer flex justify-between items-center bg-black/70 backdrop-blur-md ${
+                        isSelected
+                          ? 'border-orange-500 bg-orange-500/10 ring-1 ring-orange-500/30 shadow-[0_0_15px_rgba(249,115,22,0.2)]'
+                          : 'border-white/10 hover:border-orange-500/40 hover:bg-white/[0.04]'
+                      } ${node.status === 'locked' ? 'pointer-events-none opacity-60' : ''}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl border ${getStatusColor(node.status)}`}>
+                          {getStatusIcon(node.status)}
+                        </div>
+                        <div>
+                          <h4 className="font-black text-white text-xs font-mono">{node.title}</h4>
+                          <span className="text-[9px] text-orange-400 uppercase font-bold tracking-wider mt-0.5 block font-mono">{node.status}</span>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
 
-              {/* Practice Target & Mini Boss */}
-              <div className="border-t border-white/5 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <span className="font-bold text-textMuted uppercase tracking-wider text-[9px] block">Practice Target</span>
-                  <p className="text-textPrimary mt-1.5 font-bold">{selectedNode.practiceTarget}</p>
+                      <div className="flex items-center gap-1.5 text-textMuted group-hover:text-orange-400 transition">
+                        <span className="text-[9px] font-bold font-mono">Inspect</span>
+                        <ChevronRight className="h-4.5 w-4.5" />
+                      </div>
+                    </Card>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right: Detail Drawer Panel */}
+          <div className="lg:sticky lg:top-4">
+            {selectedNode ? (
+              <Card className="p-5 border border-orange-500/40 bg-black/80 backdrop-blur-md flex flex-col gap-4 shadow-[0_0_20px_rgba(249,115,22,0.15)]" style={{ border: '1px solid rgba(249,115,22,0.3)', background: 'rgba(12,10,15,0.9)' }}>
+                <div className="flex justify-between items-start border-b border-white/10 pb-3">
+                  <div>
+                    <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider font-mono">{selectedNode.group}</span>
+                    <h3 className="font-black text-white text-lg mt-0.5">{selectedNode.title}</h3>
+                  </div>
+                  <Badge variant={
+                    selectedNode.status === 'interview-ready' ? 'warning' : 
+                    selectedNode.status === 'completed' ? 'success' : 
+                    selectedNode.status === 'learning' ? 'primary' : 'neutral'
+                  }>
+                    {selectedNode.status.toUpperCase()}
+                  </Badge>
                 </div>
-                <div>
-                  <span className="font-bold text-textMuted uppercase tracking-wider text-[9px] block">Mini Boss Challenge</span>
-                  <p className="text-accentBlue mt-1.5 font-bold">{selectedNode.miniBoss}</p>
+
+                {/* Status Controls */}
+                <div className="flex flex-wrap gap-2 bg-white/[0.02] border border-white/10 p-3 rounded-2xl">
+                  <span className="text-[10px] font-bold text-orange-300 uppercase tracking-wider block w-full pl-1 mb-1 font-mono">⚡ Update Ninja Rank Status:</span>
+                  
+                  <button
+                    onClick={() => handleStatusChange(selectedNode.id, 'unlocked')}
+                    className={`h-7 px-3 rounded-lg text-[10px] font-bold transition font-mono ${
+                      selectedNode.status === 'unlocked' ? 'bg-white/10 text-white' : 'text-textSecondary hover:bg-white/5'
+                    }`}
+                  >
+                    Unlocked
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange(selectedNode.id, 'learning')}
+                    className={`h-7 px-3 rounded-lg text-[10px] font-bold transition font-mono ${
+                      selectedNode.status === 'learning' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40' : 'text-textSecondary hover:bg-white/5'
+                    }`}
+                  >
+                    Learning
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange(selectedNode.id, 'completed')}
+                    className={`h-7 px-3 rounded-lg text-[10px] font-bold transition font-mono ${
+                      selectedNode.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'text-textSecondary hover:bg-white/5'
+                    }`}
+                  >
+                    Completed
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange(selectedNode.id, 'interview-ready')}
+                    className={`h-7 px-3 rounded-lg text-[10px] font-bold transition font-mono ${
+                      selectedNode.status === 'interview-ready' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' : 'text-textSecondary hover:bg-white/5'
+                    }`}
+                  >
+                    Hokage Ready
+                  </button>
                 </div>
-              </div>
-            </Card>
-          ) : (
-            <Card className="p-8 text-center border border-white/5 bg-bgCard/20 text-textSecondary text-xs">
-              <GitFork className="h-8 w-8 text-textMuted mx-auto mb-3" />
-              <span>Select any unlocked milestone node from the left tree map to view goals, why it matters, timed mini boss objectives, and practice checklist details.</span>
-            </Card>
-          )}
+
+                {/* Goal & Why */}
+                <div className="flex flex-col gap-3 text-xs leading-relaxed bg-white/[0.02] p-3 rounded-xl border border-white/5">
+                  <div>
+                    <span className="font-bold text-orange-400 uppercase tracking-wider text-[10px] font-mono">Chakra Goal</span>
+                    <p className="text-white mt-1 font-medium">{selectedNode.goal}</p>
+                  </div>
+                  <div className="pt-2 border-t border-white/5">
+                    <span className="font-bold text-purple-400 uppercase tracking-wider text-[10px] font-mono">Why this scroll matters</span>
+                    <p className="text-gray-300 mt-1 italic">"{selectedNode.why}"</p>
+                  </div>
+                </div>
+
+                {/* What to do Checklist */}
+                <div className="border-t border-white/10 pt-4 flex flex-col gap-2.5">
+                  <span className="font-bold text-orange-400 uppercase tracking-wider text-[10px] block font-mono">🔥 Mission Objectives Checklist:</span>
+                  <div className="flex flex-col gap-2 text-xs">
+                    {selectedNode.whatToDo.map((task, idx) => {
+                      const isChecked = checklistState[`${selectedNode.id}_${idx}`] || false;
+                      return (
+                        <div 
+                          key={idx}
+                          onClick={() => handleToggleChecklistItem(selectedNode.id, idx)}
+                          className="flex items-start gap-2.5 cursor-pointer bg-white/[0.02] hover:bg-white/[0.06] p-3 rounded-xl border border-white/10 transition"
+                        >
+                          {isChecked ? (
+                            <CheckSquare className="h-4.5 w-4.5 text-emerald-400 shrink-0 mt-0.5" />
+                          ) : (
+                            <Square className="h-4.5 w-4.5 text-orange-400/60 shrink-0 mt-0.5" />
+                          )}
+                          <span className={`leading-normal font-medium ${isChecked ? 'text-gray-500 line-through' : 'text-gray-200'}`}>
+                            {task}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Practice Target & Mini Boss */}
+                <div className="border-t border-white/10 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-white/[0.02] p-3 rounded-xl border border-white/5">
+                  <div>
+                    <span className="font-bold text-orange-400 uppercase tracking-wider text-[10px] block font-mono">Practice Target</span>
+                    <p className="text-white mt-1.5 font-bold font-mono">{selectedNode.practiceTarget}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-red-400 uppercase tracking-wider text-[10px] block font-mono">Mini Boss Challenge</span>
+                    <p className="text-red-300 mt-1.5 font-bold font-mono">{selectedNode.miniBoss}</p>
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              <Card className="p-10 text-center border border-orange-500/20 bg-black/60 backdrop-blur-md text-textSecondary text-xs">
+                <GitFork className="h-10 w-10 text-orange-400 mx-auto mb-3 animate-pulse" />
+                <span className="font-mono text-gray-300">Select any unlocked Hokage milestone scroll from the left tree map to inspect chakra goals, timed mini-boss objectives, and practice checklists.</span>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>

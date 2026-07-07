@@ -315,17 +315,290 @@ const fullLessons: Omit<GermanLessonData, 'locked' | 'completed' | 'notes' | 'la
   }
 ];
 
+const extraFullLessons: Omit<GermanLessonData, 'locked' | 'completed' | 'notes' | 'lastPracticed'>[] = [
+  {
+    id: 'german-1', // Will map dynamically below
+    order: 11,
+    title: 'German articles der/die/das',
+    level: 'A1 Beginner',
+    objective: 'Learn masculine, feminine, and neuter articles for common nouns.',
+    vocabulary: [
+      makeVocab('l11-v1', 'der Mann', 'the man', 'der mahn', 'Der Mann lernt Deutsch.', 'The man learns German.', 'Nouns'),
+      makeVocab('l11-v2', 'die Frau', 'the woman', 'dee frow', 'Die Frau lernt Java.', 'The woman learns Java.', 'Nouns'),
+      makeVocab('l11-v3', 'das Kind', 'the child', 'das kint', 'Das Kind schlaeft.', 'The child is sleeping.', 'Nouns')
+    ],
+    grammar: [
+      { title: 'Noun Gender', explanation: 'German nouns have three genders: masculine (der), feminine (die), and neuter (das). Learn the article with the noun!', examples: ['der Mann (masculine)', 'die Frau (feminine)', 'das Kind (neuter)'] }
+    ],
+    examples: [
+      { german: 'Der Mann ist ein Student.', english: 'The man is a student.', pronunciationHint: 'der mahn ist ine shtoo-dent' },
+      { german: 'Die Frau lernt jeden Tag.', english: 'The woman studies every day.', pronunciationHint: 'dee frow lairnt' }
+    ],
+    quiz: [
+      quiz('article_choice', 'Choose the article: ____ Frau', ['der', 'die', 'das'], 'die', 'Frau is feminine (die).'),
+      quiz('article_choice', 'Choose the article: ____ Mann', ['der', 'die', 'das'], 'der', 'Mann is masculine (der).')
+    ],
+    xpReward: 40,
+    estimatedMinutes: 18,
+    xp: 40,
+    vocabularyCount: 3,
+    quizScore: 0
+  },
+  {
+    id: 'german-2',
+    order: 12,
+    title: 'Nominative case intro',
+    level: 'A1 Beginner',
+    objective: 'Understand and use the subject case (Nominative) in simple sentences.',
+    vocabulary: [
+      makeVocab('l12-v1', 'wer', 'who', 'vair', 'Wer ist das Kind?', 'Who is the child?', 'Questions'),
+      makeVocab('l12-v2', 'was', 'what', 'vas', 'Was ist das?', 'What is that?', 'Questions'),
+      makeVocab('l12-v3', 'ein / eine', 'a / an', 'ine / eye-neh', 'Ein Mann und eine Frau.', 'A man and a woman.', 'Articles')
+    ],
+    grammar: [
+      { title: 'The Nominative Subject', explanation: 'Nominative represents the subject doing the action. Articles are: der/die/das (definite) and ein/eine/ein (indefinite).', examples: ['Ein Mann lernt.', 'Die Frau singt.', 'Das Kind spielt.'] }
+    ],
+    examples: [
+      { german: 'Wer lernt heute Java?', english: 'Who is learning Java today?', pronunciationHint: 'vair lairnt hoy-teh' },
+      { german: 'Das ist eine Pruefung.', english: 'That is an exam.', pronunciationHint: 'das ist eye-neh prue-fung' }
+    ],
+    quiz: [
+      quiz('fill_blank', '____ Mann ist hier.', ['Ein', 'Eine', 'Eines'], 'Ein', 'Mann is masculine, so use indefinite "ein".'),
+      quiz('german_to_english', 'What is the nominative case?', ['The direct object', 'The subject of the sentence', 'Prepositional object'], 'The subject of the sentence', 'Nominative is who/what is performing the action.')
+    ],
+    xpReward: 40,
+    estimatedMinutes: 20,
+    xp: 40,
+    vocabularyCount: 3,
+    quizScore: 0
+  },
+  {
+    id: 'german-3',
+    order: 13,
+    title: 'Common questions',
+    level: 'A1 Beginner',
+    objective: 'Ask simple questions using W-words.',
+    vocabulary: [
+      makeVocab('l13-v1', 'wie', 'how', 'vee', 'Wie heissen Sie?', 'What is your name? (formal)', 'Questions'),
+      makeVocab('l13-v2', 'wo', 'where', 'voh', 'Wo wohnen Sie?', 'Where do you live?', 'Questions'),
+      makeVocab('l13-v3', 'warum', 'why', 'vah-rum', 'Warum lernst du Deutsch?', 'Why are you learning German?', 'Questions')
+    ],
+    grammar: [
+      { title: 'W-Questions structure', explanation: 'In W-questions, the question word goes first, followed immediately by the verb in position 2.', examples: ['Wie geht es dir?', 'Wo ist der Bahnhof?', 'Was machst du?'] }
+    ],
+    examples: [
+      { german: 'Wo wohnst du, Sanju?', english: 'Where do you live, Sanju?', pronunciationHint: 'voh vohnst doo' },
+      { german: 'Wie heisst deine Hochschule?', english: 'What is the name of your college?', pronunciationHint: 'vee heisst' }
+    ],
+    quiz: [
+      quiz('fill_blank', '____ alt bist du?', ['Wie', 'Wo', 'Was'], 'Wie', 'Wie alt bist du? means How old are you?'),
+      quiz('fill_blank', '____ wohnst du?', ['Wo', 'Wie', 'Wer'], 'Wo', 'Wo means where.')
+    ],
+    xpReward: 40,
+    estimatedMinutes: 16,
+    xp: 40,
+    vocabularyCount: 3,
+    quizScore: 0
+  },
+  {
+    id: 'german-4',
+    order: 14,
+    title: 'Daily routine',
+    level: 'A1 Beginner',
+    objective: 'Describe your daily routine in simple German.',
+    vocabulary: [
+      makeVocab('l14-v1', 'aufstehen', 'to stand up / wake up', 'owf-shtayn', 'Ich stehe um sieben Uhr auf.', 'I wake up at seven o clock.', 'Daily Life'),
+      makeVocab('l14-v2', 'schlafen', 'to sleep', 'shlah-fen', 'Ich schlafe gut.', 'I sleep well.', 'Daily Life'),
+      makeVocab('l14-v3', 'arbeiten', 'to work', 'ahr-bye-ten', 'Ich arbeite heute.', 'I am working today.', 'Daily Life')
+    ],
+    grammar: [
+      { title: 'Separable Verbs Intro', explanation: 'Verbs like aufstehen split up: "auf" goes to the very end of the sentence while the base verb conjugations stay in position 2.', examples: ['Ich stehe auf.', 'Er steht um acht Uhr auf.'] }
+    ],
+    examples: [
+      { german: 'Am Montag arbeite ich viel.', english: 'On Monday I work a lot.', pronunciationHint: 'ahr-bye-teh' },
+      { german: 'Wann stehst du auf?', english: 'When do you wake up?', pronunciationHint: 'owf' }
+    ],
+    quiz: [
+      quiz('fill_blank', 'Ich stehe um sechs Uhr ____.', ['auf', 'an', 'zu'], 'auf', 'Aufstehen splits; auf goes to the end.'),
+      quiz('german_to_english', 'What does "arbeiten" mean?', ['to play', 'to sleep', 'to work'], 'to work', 'Arbeiten means to work.')
+    ],
+    xpReward: 40,
+    estimatedMinutes: 18,
+    xp: 40,
+    vocabularyCount: 3,
+    quizScore: 0
+  },
+  {
+    id: 'german-5',
+    order: 15,
+    title: 'Simple present tense',
+    level: 'A1 Beginner',
+    objective: 'Conjugate regular verbs in present tense.',
+    vocabulary: [
+      makeVocab('l15-v1', 'gehen', 'to go', 'gayn', 'Ich gehe zum College.', 'I am going to college.', 'Verbs'),
+      makeVocab('l15-v2', 'kommen', 'to come', 'kom-men', 'Ich komme aus Indien.', 'I come from India.', 'Verbs'),
+      makeVocab('l15-v3', 'machen', 'to do / make', 'makh-en', 'Ich mache Java DSA.', 'I am doing Java DSA.', 'Verbs')
+    ],
+    grammar: [
+      { title: 'Regular Verb Conjugation', explanation: 'Conjugation endings for regular verbs: ich (-e), du (-st), er/sie/es (-t), wir (-en), ihr (-t), sie/Sie (-en).', examples: ['ich lerne, du lernst, er lernt', 'wir lernen, ihr lernt, sie lernen'] }
+    ],
+    examples: [
+      { german: 'Du gehst nach Hause.', english: 'You are going home.', pronunciationHint: 'gayst' },
+      { german: 'Wir machen ein Projekt.', english: 'We are doing a project.', pronunciationHint: 'makh-en' }
+    ],
+    quiz: [
+      quiz('fill_blank', 'Du ____ Deutsch.', ['lernst', 'lerne', 'lernt'], 'lernst', 'Use -st ending for du.'),
+      quiz('fill_blank', 'Wir ____ Kaffee.', ['trinken', 'trinkst', 'trinkt'], 'trinken', 'Use -en ending for wir.')
+    ],
+    xpReward: 40,
+    estimatedMinutes: 18,
+    xp: 40,
+    vocabularyCount: 3,
+    quizScore: 0
+  },
+  {
+    id: 'german-6',
+    order: 16,
+    title: 'Modal verbs intro',
+    level: 'A1 Strong',
+    objective: 'Express ability (können) and necessity (müssen) in simple sentences.',
+    vocabulary: [
+      makeVocab('l16-v1', 'koennen', 'can / to be able to', 'koen-nen', 'Ich kann Deutsch sprechen.', 'I can speak German.', 'Verbs'),
+      makeVocab('l16-v2', 'muessen', 'must / to have to', 'mues-sen', 'Ich muss heute lernen.', 'I have to study today.', 'Verbs'),
+      makeVocab('l16-v3', 'wollen', 'to want', 'vol-len', 'Ich will das machen.', 'I want to do that.', 'Verbs')
+    ],
+    grammar: [
+      { title: 'Modal Verbs Structure', explanation: 'Modal verb is conjugated in position 2, and the secondary verb (in infinitive form) is pushed to the very end of the sentence.', examples: ['Ich kann Java codieren.', 'Du musst die Pruefung schreiben.'] }
+    ],
+    examples: [
+      { german: 'Ich kann heute nicht kommen.', english: 'I cannot come today.', pronunciationHint: 'kahn' },
+      { german: 'Sanju muss eine Aufgabe machen.', english: 'Sanju has to complete a task.', pronunciationHint: 'moost' }
+    ],
+    quiz: [
+      quiz('fill_blank', 'Ich ____ Deutsch sprechen.', ['kann', 'kannst', 'koennen'], 'kann', 'Ich form of koennen is irregular: kann.'),
+      quiz('german_to_english', 'Where does the main verb go when using a modal verb?', ['At the beginning', 'Immediately after the modal verb', 'At the very end of the sentence'], 'At the very end of the sentence', 'Secondary verb goes in infinitive format at the end.')
+    ],
+    xpReward: 40,
+    estimatedMinutes: 20,
+    xp: 40,
+    vocabularyCount: 3,
+    quizScore: 0
+  },
+  {
+    id: 'german-7',
+    order: 17,
+    title: 'Pronouns',
+    level: 'A1 Strong',
+    objective: 'Understand personal pronouns for addressing individuals and groups.',
+    vocabulary: [
+      makeVocab('l17-v1', 'wir', 'we', 'veer', 'Wir lernen gemeinsam.', 'We study together.', 'Pronouns'),
+      makeVocab('l17-v2', 'ihr', 'y all / you (plural)', 'eer', 'Ihr lernt Java.', 'Y all are learning Java.', 'Pronouns'),
+      makeVocab('l17-v3', 'Sie', 'you (formal)', 'zee', 'Wie heissen Sie?', 'What is your name? (formal)', 'Pronouns')
+    ],
+    grammar: [
+      { title: 'Addressing groups', explanation: 'Use "ihr" for multiple friends/peers. Use capitalized "Sie" for formal addresses (professors, strangers).', examples: ['Wie geht es euch? (informal plural)', 'Wie geht es Ihnen? (formal)'] }
+    ],
+    examples: [
+      { german: 'Wir sind bereit.', english: 'We are ready.', pronunciationHint: 'veer zint' },
+      { german: 'Woher kommen Sie?', english: 'Where do you come from? (formal)', pronunciationHint: 'zee' }
+    ],
+    quiz: [
+      quiz('fill_blank', '____ sind bereit.', ['Wir', 'Ihr', 'Du'], 'Wir', 'Wir matches sind.'),
+      quiz('german_to_english', 'Which pronoun is used for formal polite address?', ['du', 'ihr', 'Sie'], 'Sie', 'Sie (always capitalized) is formal you.')
+    ],
+    xpReward: 40,
+    estimatedMinutes: 15,
+    xp: 40,
+    vocabularyCount: 3,
+    quizScore: 0
+  },
+  {
+    id: 'german-8',
+    order: 18,
+    title: 'Common adjectives',
+    level: 'A1 Strong',
+    objective: 'Describe things and tasks using common adjectives.',
+    vocabulary: [
+      makeVocab('l18-v1', 'gross', 'big / tall', 'groas', 'Die Aufgabe ist gross.', 'The task is big.', 'Adjectives'),
+      makeVocab('l18-v2', 'klein', 'small', 'kline', 'Das Zimmer ist klein.', 'The room is small.', 'Adjectives'),
+      makeVocab('l18-v3', 'gut', 'good', 'goot', 'Das ist gut.', 'That is good.', 'Adjectives')
+    ],
+    grammar: [
+      { title: 'Adjectives after sein', explanation: 'Adjectives do not change their endings when placed after the verb "sein" (ist / sind).', examples: ['Der Kurs ist schwer.', 'Die Aufgaben sind leicht.'] }
+    ],
+    examples: [
+      { german: 'Das Projekt ist gross.', english: 'The project is big.' },
+      { german: 'Mein Laptop ist gut.', english: 'My laptop is good.' }
+    ],
+    quiz: [
+      quiz('german_to_english', 'What is the opposite of "gross"?', ['klein', 'gut', 'schwer'], 'klein', 'Klein means small, opposite of gross.'),
+      quiz('german_to_english', 'What does "gut" mean?', ['bad', 'good', 'tall'], 'good', 'Gut means good.')
+    ],
+    xpReward: 40,
+    estimatedMinutes: 15,
+    xp: 40,
+    vocabularyCount: 3,
+    quizScore: 0
+  },
+  {
+    id: 'german-9',
+    order: 19,
+    title: 'Places in city',
+    level: 'A2 Beginner',
+    objective: 'Identify common buildings and places in a town.',
+    vocabulary: [
+      makeVocab('l19-v1', 'der Supermarkt', 'the supermarket', 'der zoo-per-markt', 'Wo ist der Supermarkt?', 'Where is the supermarket?', 'Town'),
+      makeVocab('l19-v2', 'der Park', 'the park', 'der park', 'Der Park ist gross.', 'The park is big.', 'Town'),
+      makeVocab('l19-v3', 'die Apotheke', 'the pharmacy', 'dee ah-po-tay-keh', 'Die Apotheke ist links.', 'The pharmacy is on the left.', 'Town')
+    ],
+    grammar: [
+      { title: 'Location direction', explanation: 'Use "in" for "in/inside" or "zu" for "to". In + Dative is used for location: "im Park" (in the park).', examples: ['Ich bin im Park.', 'Ich gehe zum Supermarkt.'] }
+    ],
+    examples: [
+      { german: 'Wo ist der Supermarkt?', english: 'Where is the supermarket?' },
+      { german: 'Ich muss zur Apotheke.', english: 'I have to go to the pharmacy.' }
+    ],
+    quiz: [
+      quiz('german_to_english', 'What does "Supermarkt" mean?', ['supermarket', 'school', 'hospital'], 'supermarket', 'Supermarkt is supermarket.'),
+      quiz('article_choice', 'Choose the article: ____ Apotheke', ['der', 'die', 'das'], 'die', 'Apotheke is feminine (die).')
+    ],
+    xpReward: 40,
+    estimatedMinutes: 20,
+    xp: 40,
+    vocabularyCount: 3,
+    quizScore: 0
+  },
+  {
+    id: 'german-10', // Will map dynamically below
+    order: 20,
+    title: 'Directions',
+    level: 'A2 Beginner',
+    objective: 'Navigate through a city using simple direction cues.',
+    vocabulary: [
+      makeVocab('l20-v1', 'geradeaus', 'straight ahead', 'geh-rah-deh-ows', 'Gehen Sie geradeaus.', 'Go straight ahead.', 'Travel'),
+      makeVocab('l20-v2', 'rechts', 'right', 'rekhts', 'Der Park ist rechts.', 'The park is on the right.', 'Travel'),
+      makeVocab('l20-v3', 'links', 'left', 'links', 'Die Apotheke ist links.', 'The pharmacy is on the left.', 'Travel')
+    ],
+    grammar: [
+      { title: 'Biegen Sie ... ab', explanation: 'To command a turn: use "Biegen Sie [direction] ab" (from the separable verb abbiegen).', examples: ['Biegen Sie links ab.', 'Gehen Sie geradeaus.'] }
+    ],
+    examples: [
+      { german: 'Gehen Sie geradeaus und dann rechts.', english: 'Go straight ahead and then right.' },
+      { german: 'Wo ist links?', english: 'Where is left?' }
+    ],
+    quiz: [
+      quiz('german_to_english', 'What does "geradeaus" mean?', ['left', 'right', 'straight ahead'], 'straight ahead', 'Geradeaus means straight ahead.'),
+      quiz('fill_blank', 'Biegen Sie ____ ab.', ['links', 'geradeaus', 'unter'], 'links', 'Use links for left (or rechts for right) before ab.')
+    ],
+    xpReward: 40,
+    estimatedMinutes: 20,
+    xp: 40,
+    vocabularyCount: 3,
+    quizScore: 0
+  }
+];
+
 const placeholderTitles = [
-  'German articles der/die/das',
-  'Nominative case intro',
-  'Common questions',
-  'Daily routine',
-  'Simple present tense',
-  'Modal verbs intro',
-  'Pronouns',
-  'Common adjectives',
-  'Places in city',
-  'Directions',
   'Tech vocabulary',
   'Career vocabulary',
   'Study vocabulary',
@@ -339,8 +612,8 @@ const placeholderTitles = [
 ];
 
 const makePlaceholderLesson = (index: number): Omit<GermanLessonData, 'locked' | 'completed' | 'notes' | 'lastPracticed'> => {
-  const order = index + 11;
-  const level: GermanLevel = order <= 18 ? 'A2 Beginner' : 'A2 Strong';
+  const order = index + 21;
+  const level: GermanLevel = order <= 25 ? 'A2 Beginner' : 'A2 Strong';
   const title = placeholderTitles[index] || `German lesson ${order}`;
   return {
     id: `german-${order}`,
@@ -365,9 +638,9 @@ const makePlaceholderLesson = (index: number): Omit<GermanLessonData, 'locked' |
       quiz('fill_blank', 'Ich ____ Deutsch.', ['lerne', 'bist', 'sind'], 'lerne', 'Use lerne with ich.')
     ],
     cultureTip: 'In A2 conversations, simple correct sentences are stronger than memorized long lines.',
-    xpReward: order <= 18 ? 40 : 45,
+    xpReward: order <= 25 ? 40 : 45,
     estimatedMinutes: 20,
-    xp: order <= 18 ? 40 : 45,
+    xp: order <= 25 ? 40 : 45,
     vocabularyCount: 3,
     quizScore: 0
   };
@@ -375,9 +648,11 @@ const makePlaceholderLesson = (index: number): Omit<GermanLessonData, 'locked' |
 
 export const GERMAN_LESSONS: GermanLessonData[] = [
   ...fullLessons,
-  ...Array.from({ length: 20 }, (_, index) => makePlaceholderLesson(index))
+  ...extraFullLessons,
+  ...Array.from({ length: 10 }, (_, index) => makePlaceholderLesson(index))
 ].map((lesson, index) => ({
   ...lesson,
+  id: `german-${index + 1}`,
   locked: index > 0,
   completed: false,
   notes: '',

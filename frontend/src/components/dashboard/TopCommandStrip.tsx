@@ -5,10 +5,14 @@ import { LevelRing } from '../progression/LevelRing';
 import { UserModeBadge } from '../personalization/UserModeBadge';
 import { Compass } from 'lucide-react';
 
+import { getAnimeRankInfo } from '../../utils/animeLevelUtils';
+
 export const TopCommandStrip: React.FC = () => {
   const { profile } = usePersonalization();
   const xp = useCareerStore((s) => s.xp);
   const level = useCareerStore((s) => s.level);
+
+  const anime = getAnimeRankInfo(level);
 
   const getGreeting = () => {
     const hours = new Date().getHours();
@@ -26,8 +30,14 @@ export const TopCommandStrip: React.FC = () => {
         <LevelRing currentXp={xp} level={level} size={48} strokeWidth={3.5} />
         <div className="flex flex-col">
           <span className="text-[10px] text-textMuted font-black uppercase tracking-widest">{getGreeting()}</span>
-          <h2 className="text-lg font-black text-textPrimary tracking-tight mt-0.5">
-            Commander <span className="text-accentPrimary">{profile.name}</span>
+          <h2 className="text-lg font-black text-textPrimary tracking-tight mt-0.5 flex flex-wrap items-center gap-2">
+            <span className="text-accentPrimary">{profile.name || 'Local user'}</span>
+            <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded border border-white/5 bg-white/5" style={{ color: anime.narutoColor }}>
+              {anime.narutoRank}
+            </span>
+            <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded border border-white/5 bg-white/5" style={{ color: anime.demonSlayerColor }}>
+              {anime.demonSlayerBreathing}
+            </span>
           </h2>
         </div>
       </div>

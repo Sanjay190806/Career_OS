@@ -3,21 +3,35 @@ import { ACHIEVEMENT_CATALOG } from '../data/achievementCatalog';
 
 const STORAGE_KEY = 'sanzz_os_achievements_v1';
 
+const emptyState = (): AchievementState => ({
+  unlockedIds: [],
+  claimedIds: [],
+  progress: {}
+});
+
+const normalizeState = (value: Partial<AchievementState> | null | undefined): AchievementState => ({
+  unlockedIds: Array.isArray(value?.unlockedIds) ? value.unlockedIds : [],
+  claimedIds: Array.isArray(value?.claimedIds) ? value.claimedIds : [],
+  progress: value?.progress && typeof value.progress === 'object' ? value.progress : {}
+});
+
+const toList = <T = any>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (value && typeof value === 'object') return Object.values(value as Record<string, T>);
+  return [];
+};
+
 export const achievementService = {
   getState(): AchievementState {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored) as AchievementState;
+        return normalizeState(JSON.parse(stored) as Partial<AchievementState>);
       }
     } catch (e) {
       console.warn('Failed parsing achievements state:', e);
     }
-    return {
-      unlockedIds: [],
-      claimedIds: [],
-      progress: {}
-    };
+    return emptyState();
   },
 
   saveState(state: AchievementState): void {
@@ -94,7 +108,7 @@ export const achievementService = {
     const deListeningMinutes = careerState.germanListeningMinutes || 0;
 
     // Projects OS
-    const projectsList = careerState.projects || [];
+    const projectsList = toList(careerState.projects);
     const bugCount = projectsList.reduce((acc: number, p: any) => acc + (p.bugs?.filter((b: any) => b.status === 'fixed')?.length || 0), 0);
     const releaseCount = projectsList.reduce((acc: number, p: any) => acc + (p.releases?.length || 0), 0);
     const flagshipProject = projectsList[0];
@@ -107,14 +121,14 @@ export const achievementService = {
     const resumeChecklistPercent = Math.round((checklistChecked / checklistTotal) * 100);
 
     // Placement OS
-    const targetCompanies = careerState.companies || [];
+    const targetCompanies = toList(careerState.companies || careerState.companyTargets || careerState.applications);
     const activeApplications = targetCompanies.filter((c: any) => c.status && c.status !== 'wishlist').length;
     const oaApplications = targetCompanies.filter((c: any) => c.status?.toLowerCase() === 'oa' || c.status?.toLowerCase()?.includes('test')).length;
     const interviewApplications = targetCompanies.filter((c: any) => c.status?.toLowerCase() === 'interview').length;
     const placementReadiness = careerState.readinessScore || 0;
 
     // Interview coach behaviors
-    const behaviorStories = careerState.stories || [];
+    const behaviorStories = toList(careerState.stories);
 
     // Run trigger checks
     setProgress('daily_1', totalDays >= 1 ? 1 : 0);

@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { OverviewMetrics } from '../components/overview/OverviewMetrics';
 import { WeeklyTrend } from '../components/overview/WeeklyTrend';
 import { JourneyHeatmap } from '../components/overview/JourneyHeatmap';
 import { ReadinessPanel } from '../components/overview/ReadinessPanel';
 import { MilestoneList } from '../components/overview/MilestoneList';
 import { ShaylaAdviceCard } from '../components/overview/ShaylaAdviceCard';
+import { DeathNoteMotivationCard } from '../components/overview/DeathNoteMotivationCard';
+import { SpiderManCodePatrolCard } from '../components/overview/SpiderManCodePatrolCard';
+import { BatmanDisciplineCard } from '../components/overview/BatmanDisciplineCard';
+import { JokerWildcardCard } from '../components/overview/JokerWildcardCard';
 import { useCareerStore } from '../app/store/useCareerStore';
 import { useAISettingsStore } from '../app/store/useAISettingsStore';
 import { useShaylaAgentStore } from '../app/store/useShaylaAgentStore';
@@ -12,9 +16,33 @@ import { buildAgentContext } from '../utils/agentContextUtils';
 import { generateDailyBriefing } from '../services/agentService';
 import { DailyBriefingPanel } from '../components/shayla-agent/DailyBriefingPanel';
 import { ShaylaBriefingResult } from '../types/shaylaAgent';
-
 import { AdaptiveDashboard } from '../components/dashboard/AdaptiveDashboard';
 import { AccountSyncWidget } from '../components/dashboard/AccountSyncWidget';
+import { DailyMotivationStoryCard } from '../components/overview/DailyMotivationStoryCard';
+import { WeeklyReviewDashboard } from '../components/overview/WeeklyReviewDashboard';
+
+// ─── Cinematic Section Divider ─────────────────────────────────────────────
+const SectionDivider: React.FC<{
+  emoji: string;
+  title: string;
+  subtitle: string;
+  gradientFrom: string;
+  gradientTo: string;
+  accentColor: string;
+}> = ({ emoji, title, subtitle, gradientFrom, gradientTo, accentColor }) => (
+  <div className="flex items-center gap-3 mb-1">
+    <div className="flex items-center gap-2 shrink-0">
+      <span className="text-lg">{emoji}</span>
+      <div className="flex flex-col">
+        <h2 className={`text-xs font-black uppercase tracking-widest bg-gradient-to-r ${gradientFrom} ${gradientTo} bg-clip-text text-transparent`}>
+          {title}
+        </h2>
+        <span className="text-[8px] text-white/25 font-mono uppercase tracking-wider">{subtitle}</span>
+      </div>
+    </div>
+    <div className={`flex-1 h-px bg-gradient-to-r ${accentColor} to-transparent`} />
+  </div>
+);
 
 export const OverviewPage: React.FC = () => {
   const careerState = useCareerStore((s) => s);
@@ -22,6 +50,51 @@ export const OverviewPage: React.FC = () => {
   const agentStore = useShaylaAgentStore((s) => s);
   const [briefing, setBriefing] = useState<ShaylaBriefingResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Ambient particle canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animId: number;
+    const parent = canvas.parentElement;
+    let w = (canvas.width = parent?.offsetWidth || window.innerWidth);
+    let h = (canvas.height = parent?.offsetHeight || window.innerHeight);
+    const onResize = () => {
+      if (!canvas || !canvas.parentElement) return;
+      w = canvas.width = canvas.parentElement.offsetWidth;
+      h = canvas.height = canvas.parentElement.offsetHeight;
+    };
+    window.addEventListener('resize', onResize);
+
+    const colors = ['#DC2626', '#3B82F6', '#EAB308', '#A855F7', '#22C55E', '#F97316'];
+    const particles = Array.from({ length: 25 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+      size: Math.random() * 1.5 + 0.4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: Math.random() * 0.12 + 0.03
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        ctx.globalAlpha = p.alpha;
+        ctx.shadowBlur = 5; ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      animId = requestAnimationFrame(render);
+    };
+    render();
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(animId); };
+  }, []);
 
   const handleGenerateMorning = async () => {
     setLoading(true);
@@ -72,32 +145,114 @@ export const OverviewPage: React.FC = () => {
   };
 
   return (
-    <div className="workspace-page flex flex-col gap-6 pb-12 md:pb-8">
-      {/* Redesigned Adaptive Command Center layout */}
-      <AdaptiveDashboard />
-
-      <AccountSyncWidget />
-
-      {/* Daily AI Briefing Logs */}
-      <DailyBriefingPanel
-        briefing={briefing}
-        history={agentStore.briefingHistory}
-        loading={loading}
-        onGenerateMorning={handleGenerateMorning}
-        onGenerateRecovery={handleGenerateRecovery}
+    <div className="workspace-page flex flex-col gap-6 pb-12 md:pb-8 relative">
+      {/* Ambient canvas background */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none z-0"
+        style={{ opacity: 0.5 }}
       />
-      
-      <OverviewMetrics />
-      
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_0.95fr]">
-        <JourneyHeatmap />
-        <WeeklyTrend />
-      </div>
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_0.9fr]">
-        <ReadinessPanel />
-        <div className="grid gap-6">
-          <MilestoneList />
-          <ShaylaAdviceCard />
+
+      <div className="relative z-10 flex flex-col gap-6">
+        {/* Adaptive Command Center */}
+        <AdaptiveDashboard />
+        <AccountSyncWidget />
+        <DailyMotivationStoryCard />
+        <WeeklyReviewDashboard />
+
+        {/* Daily AI Briefing */}
+        <DailyBriefingPanel
+          briefing={briefing}
+          history={agentStore.briefingHistory}
+          loading={loading}
+          onGenerateMorning={handleGenerateMorning}
+          onGenerateRecovery={handleGenerateRecovery}
+        />
+
+        {/* ── Spider-Sense Metrics ── */}
+        <div>
+          <OverviewMetrics />
+        </div>
+
+        {/* ── Gotham Calendar + Chaos Wave ── */}
+        <div>
+          <SectionDivider
+            emoji="🦇"
+            title="Gotham Calendar"
+            subtitle="Journey Heatmap — 180 day mission grid"
+            gradientFrom="from-yellow-400"
+            gradientTo="to-yellow-200"
+            accentColor="from-yellow-500/30"
+          />
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_0.95fr]">
+            <div className="rounded-2xl border border-yellow-900/15 overflow-hidden">
+              <JourneyHeatmap />
+            </div>
+            <div className="flex flex-col gap-2">
+              <SectionDivider
+                emoji="🃏"
+                title="Chaos Wave"
+                subtitle="Weekly trend analysis"
+                gradientFrom="from-purple-400"
+                gradientTo="to-green-400"
+                accentColor="from-purple-500/25"
+              />
+              <div className="rounded-2xl border border-purple-900/15 overflow-hidden flex-1">
+                <WeeklyTrend />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Shinobi Readiness + Corps Achievements ── */}
+        <div>
+          <SectionDivider
+            emoji="🍥"
+            title="Shinobi Readiness"
+            subtitle="Interview readiness panel + milestones"
+            gradientFrom="from-orange-400"
+            gradientTo="to-yellow-300"
+            accentColor="from-orange-500/25"
+          />
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_0.9fr]">
+            <div className="rounded-2xl border border-orange-900/12 overflow-hidden">
+              <ReadinessPanel />
+            </div>
+            <div className="grid gap-4">
+              <div>
+                <SectionDivider
+                  emoji="🌊"
+                  title="Corps Log"
+                  subtitle="Slayer corps milestones"
+                  gradientFrom="from-blue-400"
+                  gradientTo="to-cyan-300"
+                  accentColor="from-blue-500/25"
+                />
+                <div className="rounded-2xl border border-blue-900/12 overflow-hidden">
+                  <MilestoneList />
+                </div>
+              </div>
+              <DeathNoteMotivationCard />
+              <ShaylaAdviceCard />
+            </div>
+          </div>
+        </div>
+
+        {/* ── DC Hero/Villain Command Cards ── */}
+        <div>
+          <SectionDivider
+            emoji="🦸"
+            title="Hero · Villain · Shinobi Command"
+            subtitle="Spider-Man · Batman · Joker tracker cards"
+            gradientFrom="from-red-400"
+            gradientTo="to-purple-400"
+            accentColor="from-red-500/25 via-blue-500/15"
+          />
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <SpiderManCodePatrolCard />
+            <BatmanDisciplineCard />
+            <JokerWildcardCard />
+          </div>
         </div>
       </div>
     </div>

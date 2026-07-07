@@ -23,13 +23,10 @@ export const useCompanyIntelligenceStore = create<CompanyIntelligenceState>()(
       companies: DEFAULT_COMPANY_PROFILES,
       prepPlans: {},
       strategy: {
-        priorityCompanies: ['c-zoho', 'c-fractal'],
-        readySoon: ['c-accenture'],
+        priorityCompanies: [],
+        readySoon: [],
         longTermTargets: [],
-        activePipelines: {
-          'c-zoho': 'oa_pending',
-          'c-fractal': 'applied',
-        },
+        activePipelines: {},
       },
       addCompanyProfile: (p) =>
         set((state) => ({
@@ -67,7 +64,7 @@ export const useCompanyIntelligenceStore = create<CompanyIntelligenceState>()(
               codingTask: d % 2 === 0 ? 'Solve 1 Medium DSA problem' : 'Complete 5 SkillRack challenges',
               aptitudeTask: `Practice quantitative aptitude pattern - day ${d}`,
               sqlTask: d % 3 === 0 ? 'Solve 2 SQL Joins queries' : 'Review database normal forms basics',
-              theoryTask: d % 4 === 0 ? 'Explain CareSync AI conceptually' : 'Review Java collections API methods',
+              theoryTask: d % 4 === 0 ? `Prepare one truthful ${companyName} project walkthrough` : 'Review Java collections API methods',
               completed: false,
             });
           }
@@ -101,7 +98,7 @@ export const useCompanyIntelligenceStore = create<CompanyIntelligenceState>()(
             c.id === companyId
               ? {
                   ...c,
-                  readinessScore: Math.min(Math.max(completionRate, 25), 98), // maps completion to readiness range [25, 98]
+                  readinessScore: Math.min(Math.max(completionRate, 0), 98),
                   lastUpdated: new Date().toISOString(),
                 }
               : c
@@ -140,7 +137,7 @@ export const useCompanyIntelligenceStore = create<CompanyIntelligenceState>()(
     }),
     {
       name: 'sanzz_os_company_intelligence_v1',
-      version: 1,
+      version: 2,
       migrate: (persistedState, version) => runMigrationForStore('sanzz_os_company_intelligence_v1', persistedState, version),
     }
   )

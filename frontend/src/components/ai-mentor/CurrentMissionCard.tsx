@@ -1,25 +1,19 @@
 import React from 'react';
 import { useAIMentorStore } from '../../app/store/useAIMentorStore';
 import { useCareerStore } from '../../app/store/useCareerStore';
-import { getLevel } from '../../utils/xpUtils';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Sparkles, CheckCircle2 } from 'lucide-react';
 
 export const CurrentMissionCard: React.FC = () => {
   const { missions, toggleMission } = useAIMentorStore();
-  const xp = useCareerStore((s) => s.xp);
-  const setCareerState = useCareerStore.setState;
+  const awardXP = useCareerStore((s) => s.awardXP);
 
   const activeMission = missions.find((m) => !m.completed) || missions[0] || null;
 
   const handleToggle = (id: string, xpReward: number) => {
     toggleMission(id);
-    const newXP = xp + xpReward;
-    setCareerState({
-      xp: newXP,
-      level: getLevel(newXP).level,
-    });
+    awardXP(xpReward);
     alert(`Mission accomplished! Awarded +${xpReward} XP!`);
   };
 

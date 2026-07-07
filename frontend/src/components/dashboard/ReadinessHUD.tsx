@@ -6,10 +6,10 @@ import { usePlacementOS } from '../../hooks/usePlacementOS';
 export const ReadinessHUD: React.FC = () => {
   const careerState = useCareerStore((s) => s);
   const { readiness } = usePlacementOS();
-  const resumeScore = careerState.resume.atsScore;
+  const resumeScore = careerState.resume.atsScore || 0;
 
-  // Simple DSA calculations
-  const totalDsa = Object.values(careerState.problemLogs).length;
+  const totalDsa = Object.values(careerState.problemLogs).filter((log) => log.solved).length;
+  const hasPlacementData = readiness.score > 0;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
@@ -19,11 +19,11 @@ export const ReadinessHUD: React.FC = () => {
           <span className="text-[10px] text-textSecondary font-bold uppercase tracking-wider">Placement Readiness</span>
           <TrendingUp className="h-4 w-4 text-accentBlue" />
         </div>
-        <span className="text-2xl font-black text-textPrimary">{readiness?.score ?? 0}%</span>
+        <span className="text-2xl font-black text-textPrimary">{hasPlacementData ? `${readiness.score}%` : '0%'}</span>
         <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden mt-1">
           <div className="h-full bg-accentBlue rounded-full" style={{ width: `${readiness?.score ?? 0}%` }} />
         </div>
-        <p className="text-[9px] text-textMuted mt-1 leading-normal">Score based on target companies and preparation logs.</p>
+        <p className="text-[9px] text-textMuted mt-1 leading-normal">{hasPlacementData ? 'Score based on target companies and preparation logs.' : 'Not enough real placement data yet.'}</p>
       </div>
 
       {/* 2. ATS Resume Score */}
@@ -36,7 +36,7 @@ export const ReadinessHUD: React.FC = () => {
         <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden mt-1">
           <div className="h-full bg-accentPurple rounded-full" style={{ width: `${resumeScore}%` }} />
         </div>
-        <p className="text-[9px] text-textMuted mt-1 leading-normal">Latest ATS compliance scanning result score.</p>
+        <p className="text-[9px] text-textMuted mt-1 leading-normal">{resumeScore > 0 ? 'Latest ATS compliance scanning result score.' : 'No resume analysis has been logged yet.'}</p>
       </div>
 
       {/* 3. DSA Coding Mastery */}

@@ -27,7 +27,7 @@ export const ProjectResumePriorityPanel: React.FC = () => {
 
       <div className="flex flex-col gap-3">
         {/* Flagship Project Card */}
-        {flagship && (
+        {flagship ? (
           <div className="rounded-xl border border-white/5 bg-black/45 p-3 flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -43,6 +43,16 @@ export const ProjectResumePriorityPanel: React.FC = () => {
             
             <p className="text-[9px] text-textSecondary leading-normal leading-relaxed">
               Flagship project README target is {flagship.progress?.docs || 0}% complete. Focus on documentation sync.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-white/5 bg-black/45 p-3">
+            <div className="flex items-center gap-2">
+              <Code2 className="h-4 w-4 text-textMuted" />
+              <span className="text-xs font-bold text-textPrimary">No project tracked yet</span>
+            </div>
+            <p className="mt-2 text-[9px] text-textSecondary leading-relaxed">
+              Add a real project before project priority targets appear here.
             </p>
           </div>
         )}
@@ -62,7 +72,12 @@ export const ProjectResumePriorityPanel: React.FC = () => {
           </div>
 
           <div className="flex items-start gap-1.5 text-[8.5px] text-textSecondary mt-0.5 leading-snug">
-            {resumeAts < 75 ? (
+            {resumeAts <= 0 ? (
+              <>
+                <AlertTriangle className="h-3.5 w-3.5 text-textMuted shrink-0" />
+                <span>No resume analysis has been logged yet.</span>
+              </>
+            ) : resumeAts < 75 ? (
               <>
                 <AlertTriangle className="h-3.5 w-3.5 text-accentYellow shrink-0" />
                 <span>Optimize project bullet templates to raise rating over 75% target threshold.</span>

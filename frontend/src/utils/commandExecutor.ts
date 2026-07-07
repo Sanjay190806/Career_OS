@@ -15,6 +15,8 @@ import { backupService } from '../services/sync/backupService';
 import { storagePerformance } from './storagePerformance';
 import { portfolioService } from '../services/portfolioService';
 import { automationEngine } from '../services/automationEngine';
+import { createTimelineEvent, getNextAction, normalizeApplicationStatus } from './applicationCrmUtils';
+import { ApplicationPriority, ApplicationSource } from '../types';
 
 export function executeCommand(cmd: ParsedCommand): boolean {
   try {
@@ -22,17 +24,10 @@ export function executeCommand(cmd: ParsedCommand): boolean {
 
     switch (cmd.type) {
       case 'addApplication': {
-        const { company, role, status } = cmd.payload;
-        
-        let normalizedStatus: 'Wishlist' | 'Applied' | 'OA' | 'Interview' | 'HR' | 'Offer' | 'Rejected' | 'Ghosted' = 'Applied';
-        const st = (status || '').toLowerCase();
-        if (st.includes('wish') || st.includes('want')) normalizedStatus = 'Wishlist';
-        else if (st.includes('oa') || st.includes('test')) normalizedStatus = 'OA';
-        else if (st.includes('interview') || st.includes('round')) normalizedStatus = 'Interview';
-        else if (st.includes('hr')) normalizedStatus = 'HR';
-        else if (st.includes('offer')) normalizedStatus = 'Offer';
-        else if (st.includes('reject')) normalizedStatus = 'Rejected';
-        else if (st.includes('ghost')) normalizedStatus = 'Ghosted';
+        const { company, role, status, source, priority } = cmd.payload;
+        const normalizedStatus = normalizeApplicationStatus(status || 'Applied');
+        const normalizedPriority = ['Low', 'Medium', 'High', 'Dream'].includes(priority) ? priority as ApplicationPriority : 'Medium';
+        const normalizedSource = ['Company Site', 'LinkedIn', 'Referral', 'Naukri', 'Indeed', 'Campus', 'Email', 'Other'].includes(source) ? source as ApplicationSource : 'Other';
 
         store.addApplication({
           id: `app-${Date.now()}`,
@@ -40,7 +35,16 @@ export function executeCommand(cmd: ParsedCommand): boolean {
           role,
           status: normalizedStatus,
           date: new Date().toISOString().split('T')[0],
-          salary: ''
+          salary: '',
+          source: normalizedSource,
+          priority: normalizedPriority,
+          workMode: '',
+          jdKeywords: [],
+          rounds: [],
+          notes: '',
+          risk: normalizedPriority === 'Dream' ? 'Medium' : 'Low',
+          timeline: [createTimelineEvent(normalizedStatus, `${normalizedStatus} - ${company}`, role)],
+          lastUpdatedAt: new Date().toISOString()
         });
         return true;
       }
@@ -262,6 +266,24 @@ export function executeCommand(cmd: ParsedCommand): boolean {
       case 'showPortfolioReadiness': {
         const stats = portfolioService.calculateReadiness();
         alert(`Portfolio Readiness overall score: ${stats.overall}% (${stats.band})`);
+        return true;
+      }
+
+      case 'showApplicationFollowUps':
+      case 'showStaleApplications': {
+        const applications = useCareerStore.getState().applications;
+        const actionable = applications.filter((app) => {
+          const action = getNextAction(app);
+          if (cmd.type === 'showStaleApplications') {
+            return action.label.toLowerCase().includes('ghost') || action.reason.toLowerCase().includes('days ago');
+          }
+          return action.urgency !== 'low';
+        });
+        const summary = actionable.slice(0, 5).map((app) => `${app.company}: ${getNextAction(app).label}`).join('\n');
+        alert(summary || 'No urgent application follow-ups found.');
+        useUIStore.getState().setActiveSection('applications');
+        window.history.pushState({}, '', '/applications');
+        window.dispatchEvent(new PopStateEvent('popstate'));
         return true;
       }
 

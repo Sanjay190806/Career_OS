@@ -6,6 +6,7 @@ import {
   BackupSnapshotV2,
   RestoreResultV2,
 } from '../backup/backupRegistry';
+import { markBackupExported } from '../../utils/applicationCrmUtils';
 
 export const backupService = {
   exportData(): void {
@@ -17,6 +18,7 @@ export const backupService = {
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+    markBackupExported();
   },
 
   validateBackup(json: unknown) {

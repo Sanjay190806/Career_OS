@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { Card } from '../components/ui/Card';
 import { ShaylaPromptButton } from '../components/ai/ShaylaPromptButton';
@@ -114,28 +114,80 @@ export const ResumePage: React.FC = () => {
     }
   }, [activeTab, latestAnalysis, studioContext, suggestions]);
 
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Ambient particle canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animId: number;
+    const parent = canvas.parentElement;
+    let w = (canvas.width = parent?.offsetWidth || window.innerWidth);
+    let h = (canvas.height = parent?.offsetHeight || window.innerHeight);
+    const onResize = () => {
+      if (!canvas || !canvas.parentElement) return;
+      w = canvas.width = canvas.parentElement.offsetWidth;
+      h = canvas.height = canvas.parentElement.offsetHeight;
+    };
+    window.addEventListener('resize', onResize);
+
+    const colors = ['#00f0ff', '#eab308', '#a855f7', '#3b82f6'];
+    const particles = Array.from({ length: 25 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+      size: Math.random() * 1.5 + 0.4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: Math.random() * 0.12 + 0.03
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        ctx.globalAlpha = p.alpha;
+        ctx.shadowBlur = 5; ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      animId = requestAnimationFrame(render);
+    };
+    render();
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(animId); };
+  }, []);
+
   return (
-    <div className="flex flex-col gap-6 fade-in pb-10">
-      <SectionHeader
-        title="ATS Resume Builder Studio"
-        subtitle="Analyze job descriptions, rewrite bullets, tailor versions, and track score history"
-      />
+    <div className="flex flex-col gap-6 fade-in pb-10 select-none relative overflow-hidden">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-60" />
 
-      <Card className="flex flex-wrap items-center justify-between gap-3 border-accentPurple/20 bg-accentPurple/10 p-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-accentPurple">Shayla AI Mentor</p>
-          <h3 className="mt-1 text-base font-semibold text-textPrimary">Resume readiness coach</h3>
+      <div className="relative z-10 flex flex-col gap-6 w-full">
+        <SectionHeader
+          title="🦇 Gotham ATS Intelligence Matrix"
+          subtitle="Analyze job descriptions, optimize high-impact bullet points, tailor resume variants, and monitor ATS match telemetry"
+        />
+
+        <Card className="flex flex-wrap items-center justify-between gap-3 p-5 bg-black/80 border border-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.15)] backdrop-blur-md" style={{ border: '1px solid rgba(0,240,255,0.3)', background: 'rgba(10,12,18,0.9)' }}>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-400 font-mono">BATCOMPUTER / Shayla AI Mentor</p>
+            <h3 className="mt-1 text-base font-black text-white">Executive ATS Readiness Verification</h3>
+          </div>
+          <ShaylaPromptButton
+            prompt={`Review my resume readiness using current tracker context. Selected version: ${resumeStore.selectedResumeVersion}. ATS score: ${studioContext.atsScore}%. Current target company: ${studioContext.currentTargetCompany}. Missing keywords: ${studioContext.missingKeywords.join(', ') || 'none'}.`}
+          >
+            ⚡ Inspect Resume Telemetry
+          </ShaylaPromptButton>
+        </Card>
+
+        <ResumeStudioTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+        <div className="bg-black/40 p-4 rounded-2xl border border-white/5 backdrop-blur-sm">
+          {content}
         </div>
-        <ShaylaPromptButton
-          prompt={`Review my resume readiness using current tracker context. Selected version: ${resumeStore.selectedResumeVersion}. ATS score: ${studioContext.atsScore}%. Current target company: ${studioContext.currentTargetCompany}. Missing keywords: ${studioContext.missingKeywords.join(', ') || 'none'}.`}
-        >
-          Review resume readiness
-        </ShaylaPromptButton>
-      </Card>
-
-      <ResumeStudioTabs activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {content}
+      </div>
     </div>
   );
 };

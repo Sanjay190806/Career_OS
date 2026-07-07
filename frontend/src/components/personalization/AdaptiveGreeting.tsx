@@ -13,7 +13,7 @@ export const AdaptiveGreeting: React.FC = () => {
 
     switch (profile.focusMode) {
       case 'placement_sprint':
-        return `${timeGreeting}, Commander. Target locks are set for placement preparation.`;
+        return `${timeGreeting}. Target locks are set for placement preparation.`;
       case 'project_builder':
         return `${timeGreeting}, Builder. Ready to commit codebase improvements?`;
       case 'learning_day':

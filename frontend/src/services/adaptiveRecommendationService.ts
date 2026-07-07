@@ -17,7 +17,7 @@ export const adaptiveRecommendationService = {
   getRecommendations(
     focusMode: UserFocusMode,
     energyMode: UserEnergyMode,
-    progressLogs: { dsaSolved: number; sqlSolved: number; aptitudeSolved: number; germanStreak: number; resumeScore: number }
+    progressLogs: { dsaSolved: number; sqlSolved: number; aptitudeSolved: number; germanStreak: number; resumeScore: number; projectCount?: number; hasAnyProgress?: boolean }
   ): AdaptiveRecommendation[] {
     const list: AdaptiveRecommendation[] = [];
 
@@ -51,6 +51,10 @@ export const adaptiveRecommendationService = {
         '/today',
         40
       );
+      return list;
+    }
+
+    if (!progressLogs.hasAnyProgress) {
       return list;
     }
 
@@ -102,30 +106,32 @@ export const adaptiveRecommendationService = {
         break;
 
       case 'project_builder':
-        addRec(
-          'project_readme',
-          'Improve CareSync AI README Documentation',
-          'Flagship project documentation score is low. Bulletproof READMEs win interviews.',
-          'projects',
-          'high',
-          25,
-          'easy',
-          'Edit Projects',
-          '/project-os',
-          40
-        );
-        addRec(
-          'project_commits',
-          'Push 1 feature commit to SmartEdu AI',
-          'Keep your GitHub contribution grid green to impress recruiters.',
-          'projects',
-          'medium',
-          40,
-          'medium',
-          'Open Project OS',
-          '/project-os',
-          50
-        );
+        if ((progressLogs.projectCount || 0) > 0) {
+          addRec(
+            'project_docs',
+            'Improve one project README',
+            'A real project exists in your tracker. Tighten documentation before interviews.',
+            'projects',
+            'high',
+            25,
+            'easy',
+            'Edit Projects',
+            '/projects',
+            40
+          );
+          addRec(
+            'project_update',
+            'Log one project improvement',
+            'Keep your project tracker current with real progress only.',
+            'projects',
+            'medium',
+            40,
+            'medium',
+            'Open Projects',
+            '/projects',
+            50
+          );
+        }
         break;
 
       case 'resume_polish':

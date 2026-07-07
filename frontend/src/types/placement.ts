@@ -94,6 +94,12 @@ export interface PlacementApplication {
   status: ApplicationStatus;
   updatedAt: string;
   nextAction: string;
+  deadline?: string;
+  oaDate?: string;
+  interviewDate?: string;
+  followUpDate?: string;
+  resumeVersion?: string;
+  notes?: string;
 }
 
 export interface PlacementRound {
@@ -127,5 +133,11 @@ export interface PlacementOSReadiness {
   companyPrepScore: number;
   interviewScore: number;
   oaScore: number;
+  dsaReadiness: number;
+  csCoreReadiness: number;
+  aptitudeReadiness: number;
+  projectReadiness: number;
+  communicationReadiness: number;
+  applicationMomentum: number;
   nextAction: string;
 }

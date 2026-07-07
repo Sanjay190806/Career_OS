@@ -10,8 +10,8 @@ export const AdaptiveRecommendationPanel: React.FC = () => {
     return (
       <div className="rounded-2xl border border-white/5 bg-white/[0.01] p-5 text-center select-none">
         <Sparkles className="h-5 w-5 text-accentBlue mx-auto opacity-40 mb-2" />
-        <span className="text-[10px] text-textSecondary uppercase tracking-wider font-bold">All actions complete</span>
-        <p className="text-[9px] text-textMuted mt-1">Excellent work! Check back later for fresh targets.</p>
+        <span className="text-[10px] text-textSecondary uppercase tracking-wider font-bold">Not enough data</span>
+        <p className="text-[9px] text-textMuted mt-1">Log real tasks, projects, resume checks, or applications to generate study targets.</p>
       </div>
     );
   }

@@ -44,6 +44,8 @@ export interface ParsedCommand {
     | 'showStorageHealth'
     | 'showPortfolioOS'
     | 'showPortfolioReadiness'
+    | 'showApplicationFollowUps'
+    | 'showStaleApplications'
     | 'showAIMentor'
     | 'generateWeeklyReview'
     | 'runAutomationCheck'
@@ -61,6 +63,12 @@ export function parseCommandOffline(text: string): ParsedCommand | null {
   if (t.includes('portfolio readiness') || t.includes('portfolio score')) {
     return { type: 'showPortfolioReadiness', payload: {}, summary: 'Calculate and display portfolio readiness score details.' };
   }
+  if (t.includes('application follow') || t.includes('follow up') || t.includes('follow-up')) {
+    return { type: 'showApplicationFollowUps', payload: {}, summary: 'Show applications that need follow-up or next action review.' };
+  }
+  if (t.includes('stale application') || t.includes('ghost risk') || t.includes('no reply')) {
+    return { type: 'showStaleApplications', payload: {}, summary: 'Show stale applications that may need follow-up or closure.' };
+  }
   if (t.includes('show AI mentor') || t.includes('ai mentor')) {
     return { type: 'showAIMentor', payload: {}, summary: 'Navigate to AI Mentor 3.0 Workspace.' };
   }
@@ -71,10 +79,10 @@ export function parseCommandOffline(text: string): ParsedCommand | null {
     return { type: 'runAutomationCheck', payload: {}, summary: 'Run local automation rules check.' };
   }
 
-  if ((t.includes('generate') || t.includes('create')) && t.includes('plan') && (t.includes('today') || t.includes('daily'))) {
+  if ((t.includes('generate') || t.includes('create')) && t.includes('plan') && (t.includes('today') || t.includes('daily') || t.includes('low energy') || t.includes('low-energy') || t.includes('hour'))) {
     return {
       type: 'generateTodayPlan',
-      payload: { mode: t.includes('busy') ? 'busy' : t.includes('low energy') ? 'low_energy' : t.includes('sprint') ? 'placement_sprint' : 'normal' },
+      payload: { mode: t.includes('busy') ? 'busy' : (t.includes('low energy') || t.includes('low-energy')) ? 'low_energy' : t.includes('sprint') ? 'placement_sprint' : 'normal' },
       summary: 'Generate a smart plan for today. This creates a preview and should be saved only after confirmation.'
     };
   }
@@ -186,10 +194,13 @@ export function parseCommandOffline(text: string): ParsedCommand | null {
   // 1. Add Application
   // e.g., "add application Google for Software Engineer status Applied"
   // or "add company Apple"
-  if (t.includes('add application') || t.includes('add company')) {
-    const companyMatch = text.match(/(?:company|application)\s+([a-zA-Z0-9\s]+?)(?:\s+for|\s+status|\s+role|$)/i);
+  if (t.includes('add application') || t.includes('add company') || (t.includes('add') && t.includes('application'))) {
+    const companyMatch = text.match(/(?:company|application)\s+([a-zA-Z0-9\s]+?)(?:\s+for|\s+status|\s+role|$)/i)
+      || text.match(/add\s+([a-zA-Z0-9\s]+?)\s+application/i);
     const roleMatch = text.match(/for\s+([a-zA-Z0-9\s]+?)(?:\s+status|$)/i);
     const statusMatch = text.match(/status\s+([a-zA-Z0-9\s]+)/i);
+    const sourceMatch = text.match(/source\s+([a-zA-Z0-9\s]+)/i);
+    const priorityMatch = text.match(/priority\s+([a-zA-Z0-9\s]+)/i);
 
     const company = companyMatch ? companyMatch[1].trim() : 'Unknown Company';
     const role = roleMatch ? roleMatch[1].trim() : 'Software Engineer';
@@ -197,7 +208,7 @@ export function parseCommandOffline(text: string): ParsedCommand | null {
 
     return {
       type: 'addApplication',
-      payload: { company, role, status },
+      payload: { company, role, status, source: sourceMatch?.[1]?.trim(), priority: priorityMatch?.[1]?.trim() },
       summary: `Add application: "${company}" for "${role}" (Status: ${status})`
     };
   }
@@ -229,8 +240,8 @@ export function parseCommandOffline(text: string): ParsedCommand | null {
 
   // 4. Mark task as done
   // e.g. "complete daily task solve two sum"
-  if (t.includes('complete') || t.includes('mark task') || t.includes('finish task')) {
-    const taskName = text.replace(/complete|daily task|mark task|as done|finish/gi, '').trim();
+  if (t.includes('complete') || t.includes('completed') || t.includes('mark task') || t.includes('finish task')) {
+    const taskName = text.replace(/complete|completed|daily task|mark task|mark|as done|finish/gi, '').trim();
     if (taskName) {
       return {
         type: 'completeDailyTask',

@@ -68,6 +68,8 @@ export interface GermanVocabularyProgress {
   correctCount?: number;
   wrongCount?: number;
   lastReviewed?: string | null;
+  easeFactor?: number;
+  intervalDays?: number;
 }
 
 export interface GermanPhraseOfTheDay {

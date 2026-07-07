@@ -36,12 +36,12 @@ export const mockInterviewService = {
     const savedAnswersList = Object.values(answers);
     const avgConfidenceAnswers = savedAnswersList.length > 0
       ? savedAnswersList.reduce((sum, a) => sum + a.confidenceRating, 0) / savedAnswersList.length
-      : 3.0;
+      : 0;
 
     // Average communication practice score out of 100%
     const avgCommunicationScore = logs.length > 0
       ? logs.reduce((sum, l) => sum + l.overallScore, 0) / logs.length
-      : 70; // baseline
+      : 0;
 
     // Identify weak areas by looking at questions with confidence < 3 in session summaries
     const categoryMismatches: Record<string, number> = {};

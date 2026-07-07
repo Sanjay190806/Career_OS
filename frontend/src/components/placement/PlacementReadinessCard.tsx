@@ -17,6 +17,17 @@ export const PlacementReadinessCard: React.FC<{ readiness: PlacementOSReadiness 
       <Metric label="Interviews" value={readiness.interviewScore} />
       <Metric label="OA" value={readiness.oaScore} />
     </div>
+    <div className="mt-5">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-textMuted">Readiness breakdown</p>
+      <div className="grid gap-2">
+        <Breakdown label="DSA readiness" value={readiness.dsaReadiness} />
+        <Breakdown label="CS core readiness" value={readiness.csCoreReadiness} />
+        <Breakdown label="Aptitude readiness" value={readiness.aptitudeReadiness} />
+        <Breakdown label="Project readiness" value={readiness.projectReadiness} />
+        <Breakdown label="Communication readiness" value={readiness.communicationReadiness} />
+        <Breakdown label="Application momentum" value={readiness.applicationMomentum} />
+      </div>
+    </div>
   </Card>
 );
 
@@ -24,5 +35,15 @@ const Metric: React.FC<{ label: string; value: number }> = ({ label, value }) =>
   <div className="rounded-2xl border border-border-subtle bg-white/[0.03] p-3">
     <p className="text-xs text-textMuted">{label}</p>
     <p className="text-lg font-semibold text-textPrimary">{value}%</p>
+  </div>
+);
+
+const Breakdown: React.FC<{ label: string; value: number }> = ({ label, value }) => (
+  <div>
+    <div className="mb-1 flex items-center justify-between gap-3 text-xs">
+      <span className="text-textSecondary">{label}</span>
+      <span className="font-semibold text-textPrimary">{value}%</span>
+    </div>
+    <ProgressBar value={value} />
   </div>
 );

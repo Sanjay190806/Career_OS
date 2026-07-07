@@ -28,7 +28,7 @@ export const agendaGenerator = {
       tasks.push(
         { id: 'proj-1', text: 'Write project backend endpoints / models', completed: false, source: 'project' },
         { id: 'proj-2', text: 'Update UI components and verify state flow', completed: false, source: 'project' },
-        { id: 'project-pitch-1', text: 'Practice CareSync AI 60-second elevator technical pitch', completed: false, source: 'project' }
+        { id: 'project-pitch-1', text: 'Practice a 60-second pitch for one real tracked project', completed: false, source: 'project' }
       );
     } else if (focusMode === 'german_practice') {
       focusTopic = 'German Vocabulary & Grammar';

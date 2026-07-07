@@ -97,11 +97,11 @@ export function generateSmartPlan(summary: AIBrainSummary, mode: PlannerMode = '
     });
   }
 
-  if (mode === 'project_build' || summary.projectPortfolioStrength < 70) {
+  if (summary.projects.length > 0 && (mode === 'project_build' || summary.projectPortfolioStrength < 70)) {
     tasks.push({
       title: 'Ship one project portfolio improvement',
       category: 'project',
-      description: 'Improve CareSync AI, SmartEdu AI, or Career OS with one visible proof point.',
+      description: 'Improve one real tracked project with a visible proof point.',
       estimatedMinutes: mode === 'project_build' ? 75 : 40,
       difficulty: 'medium',
       priority: 'high',
@@ -179,7 +179,14 @@ export function saveSmartPlan(plan: SmartPlan): void {
 export function loadSmartPlan(): SmartPlan | null {
   try {
     const raw = localStorage.getItem(SMART_PLANNER_STORAGE_KEY);
-    return raw ? JSON.parse(raw) as SmartPlan : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SmartPlan;
+    const hasSeededProjectTask = parsed.tasks?.some((item) => /CareSync AI|SmartEdu AI/i.test(`${item.title} ${item.description}`));
+    if (hasSeededProjectTask) {
+      localStorage.removeItem(SMART_PLANNER_STORAGE_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }

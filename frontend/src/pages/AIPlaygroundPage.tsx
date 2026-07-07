@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { SectionHeader } from '../components/ui/SectionHeader';
@@ -120,14 +120,63 @@ export const AIPlaygroundPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <div className="flex flex-col gap-6 fade-in pb-10">
-      <SectionHeader
-        title="AI Playground & Lab"
-        subtitle="Compare response quality, latencies, tokens, and model costs side-by-side."
-      />
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+  // Ambient particle canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animId: number;
+    const parent = canvas.parentElement;
+    let w = (canvas.width = parent?.offsetWidth || window.innerWidth);
+    let h = (canvas.height = parent?.offsetHeight || window.innerHeight);
+    const onResize = () => {
+      if (!canvas || !canvas.parentElement) return;
+      w = canvas.width = canvas.parentElement.offsetWidth;
+      h = canvas.height = canvas.parentElement.offsetHeight;
+    };
+    window.addEventListener('resize', onResize);
+
+    const colors = ['#22c55e', '#a855f7', '#eab308', '#ec4899'];
+    const particles = Array.from({ length: 25 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+      size: Math.random() * 1.5 + 0.4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: Math.random() * 0.12 + 0.03
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        ctx.globalAlpha = p.alpha;
+        ctx.shadowBlur = 5; ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      animId = requestAnimationFrame(render);
+    };
+    render();
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(animId); };
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-6 fade-in pb-10 select-none relative overflow-hidden">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-60" />
+
+      <div className="relative z-10 flex flex-col gap-6 w-full">
+        <SectionHeader
+          title="🃏 Joker Arkham AI Chaos Arena // Multi-Model Battleground"
+          subtitle="Pit LLM neural networks against each other! Compare response madness, latencies, tokens, and model costs side-by-side in real-time."
+        />
+
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Settings Panel */}
         <div className="xl:col-span-1 flex flex-col gap-6">
           <Card className="flex flex-col gap-4">
@@ -343,6 +392,7 @@ export const AIPlaygroundPage: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

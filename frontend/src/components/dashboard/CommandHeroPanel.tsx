@@ -17,9 +17,9 @@ export const CommandHeroPanel: React.FC<CommandHeroPanelProps> = ({
 
   const getGreeting = () => {
     const hr = new Date().getHours();
-    if (hr < 12) return 'Good Morning, Commander';
-    if (hr < 18) return 'Good Afternoon, Commander';
-    return 'Good Evening, Commander';
+    if (hr < 12) return 'Good Morning';
+    if (hr < 18) return 'Good Afternoon';
+    return 'Good Evening';
   };
 
   return (
@@ -33,7 +33,7 @@ export const CommandHeroPanel: React.FC<CommandHeroPanelProps> = ({
           <span className="text-[10px] font-bold uppercase tracking-wider">Tactical Career OS</span>
         </div>
         <h2 className="text-2xl md:text-3xl font-black text-textPrimary tracking-tight">
-          {getGreeting()}, <span className="text-accentPrimary">{name}</span>
+          {getGreeting()}, <span className="text-accentPrimary">{name || 'Local user'}</span>
         </h2>
         <p className="text-xs text-textSecondary leading-relaxed mt-1">
           {recommendedAction}
