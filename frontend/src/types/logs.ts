@@ -1,5 +1,6 @@
 export interface ActivityCounts {
   leetcode: number;
+  codechefJava?: number;
   skillrack: number;
   aptitude: number;
   sql: number;
@@ -12,6 +13,30 @@ export interface ActivityCounts {
   mockHR?: number;
   mockCoding?: number;
   mockProject?: number;
+}
+
+export type DailyCodingTaskId = 'codechef_java_daily' | 'skillrack_daily' | 'leetcode_daily';
+
+export interface DailyCodingTaskState {
+  id: DailyCodingTaskId;
+  label: string;
+  target: number;
+  count: number;
+  completed: boolean;
+  xpAwarded: boolean;
+  xp: number;
+  active: boolean;
+  startsAt?: string;
+}
+
+export interface DailyCodingState {
+  date: string;
+  tasks: Record<DailyCodingTaskId, DailyCodingTaskState>;
+  dailyCodingBonusAwarded: boolean;
+  dailyCodingBonusXp: number;
+  activeDsaXp: number;
+  officialDsaStreakActive: boolean;
+  migratedAt?: string;
 }
 
 export interface DailyLog {
@@ -29,6 +54,8 @@ export interface DailyLog {
   freezeReason?: string;
   completionType?: 'missed' | 'partial' | 'minimum' | 'perfect' | 'freeze';
   rescueCompleted?: boolean;
+  questsClaimed?: string[];
+  dailyCoding?: DailyCodingState;
 }
 
 export interface ProblemLog {

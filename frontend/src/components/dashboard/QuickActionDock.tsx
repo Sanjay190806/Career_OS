@@ -7,23 +7,31 @@ export const QuickActionDock: React.FC = () => {
   const currentDay = useUIStore((s) => s.currentDay);
   const careerState = useCareerStore((s) => s);
   const updateDailyLog = useCareerStore((s) => s.updateDailyLog);
+  const updateDailyCodingTask = useCareerStore((s) => s.updateDailyCodingTask);
 
   const todayLog = careerState.dailyLogs[currentDay] || {
     counts: { leetcode: 0, skillrack: 0, aptitude: 0, sql: 0, cscore: 0, german: 0, project: 0, resume: 0 }
   };
 
   const handleIncrement = (key: string) => {
+    if (key === 'codechef_java_daily') {
+      updateDailyCodingTask(currentDay, 'codechef_java_daily', {
+        count: ((todayLog.counts as any).codechefJava || 0) + 1
+      });
+      return;
+    }
+
     const prevVal = (todayLog.counts as any)[key] || 0;
     const nextCounts = { ...todayLog.counts, [key]: prevVal + 1 };
     updateDailyLog(currentDay, { counts: nextCounts });
     
     // Log progression events
-    const award = key === 'leetcode' ? 20 : (key === 'sql' ? 15 : 10);
+    const award = key === 'sql' ? 15 : 10;
     careerState.awardXP(award);
   };
 
   const actions = [
-    { key: 'leetcode', label: 'DSA Solved', icon: Target, color: 'hover:text-accentOrange hover:bg-accentOrange/5' },
+    { key: 'codechef_java_daily', label: 'CodeChef Java', icon: Target, color: 'hover:text-accentOrange hover:bg-accentOrange/5' },
     { key: 'sql', label: 'SQL query', icon: Zap, color: 'hover:text-accentYellow hover:bg-accentYellow/5' },
     { key: 'german', label: 'German Vocab', icon: Languages, color: 'hover:text-cyan-400 hover:bg-cyan-400/5' },
     { key: 'cscore', label: 'CS Revise', icon: GraduationCap, color: 'hover:text-accentPurple hover:bg-accentPurple/5' },

@@ -1,4 +1,95 @@
 import { logMigration } from '../../utils/stateMigrationUtils';
+import { normalizeDailyCodingState, toLocalDateKey } from '../../utils/dailyCodingUtils';
+import { getDateForDay } from '../../utils/dateUtils';
+
+function resetSeededCareerDefaults(state: any) {
+  const seededProjectNames = ['CareSync AI', 'SmartEdu AI', 'Sanju Career OS'];
+  const projects = state.projects && typeof state.projects === 'object' ? state.projects : {};
+  const projectNames = Object.values(projects).map((project: any) => project?.name);
+  const hasOnlySeededProjects = projectNames.length > 0 && projectNames.every((name) => seededProjectNames.includes(String(name)));
+
+  const next = { ...state };
+  const hasSeededResumeScore = next.resume?.atsScore === 70;
+
+  if (hasOnlySeededProjects) {
+    next.projects = {};
+  }
+
+  if (hasSeededResumeScore) {
+    next.resume = {
+      ...next.resume,
+      atsScore: 0,
+      targetRole: '',
+      sections: {
+        contact: 0,
+        education: 0,
+        skills: 0,
+        projects: 0,
+        achievements: 0,
+        formatting: 0,
+      },
+    };
+  }
+
+  if (hasOnlySeededProjects || hasSeededResumeScore) {
+    next.dailyLogs = {};
+    next.problemLogs = {};
+    next.sqlProgress = {};
+    next.aptitudeProgress = {};
+    next.csCoreProgress = {};
+    next.skillRackStats = { totalSolved: 0, easyCount: 0, mediumCount: 0, hardCount: 0, categories: {} };
+    next.dsaPatternMastery = {};
+    next.xp = 0;
+    next.level = 1;
+    next.badges = [];
+    next.unlockedBadges = {};
+  } else if (Number(next.xp || 0) > 0 && Object.keys(next.dailyLogs || {}).length === 0) {
+    next.xp = 0;
+    next.level = 1;
+    next.badges = [];
+    next.unlockedBadges = {};
+  }
+
+  return next;
+}
+
+function migrateDailyCodingState(state: any) {
+  const next = { ...state };
+  const dailyLogs = next.dailyLogs && typeof next.dailyLogs === 'object' ? next.dailyLogs : {};
+  const startDate = next.userProfile?.startDate || '2026-07-01';
+
+  next.dailyLogs = Object.entries(dailyLogs).reduce((acc: Record<string, any>, [dayKey, rawLog]) => {
+    const day = Number(dayKey);
+    const dateKey = Number.isFinite(day) ? toLocalDateKey(getDateForDay(day, startDate)) : toLocalDateKey(new Date());
+    const log = rawLog && typeof rawLog === 'object' ? rawLog as any : {};
+    const dailyCoding = normalizeDailyCodingState(log, dateKey);
+    const nextCounts = {
+      leetcode: 0,
+      skillrack: 0,
+      aptitude: 0,
+      sql: 0,
+      cscore: 0,
+      german: 0,
+      project: 0,
+      resume: 0,
+      ...(log.counts || {})
+    };
+
+    acc[dayKey] = {
+      ...log,
+      counts: {
+        ...nextCounts,
+        codechefJava: dailyCoding.tasks.codechef_java_daily.count,
+        skillrack: dailyCoding.tasks.skillrack_daily.count,
+        leetcode: dailyCoding.tasks.leetcode_daily.count
+      },
+      dailyCoding
+    };
+    return acc;
+  }, {});
+
+  return next;
+}
 
 export function runMigrationForStore(storeName: string, state: any, version: number | undefined): any {
   try {
@@ -17,6 +108,7 @@ export function runMigrationForStore(storeName: string, state: any, version: num
       };
       notes = 'Merged Shayla layout defaults';
     } else if (storeName === 'sanju-ai-settings-persist-v3') {
+      const oldPrompt = typeof migrated.systemPrompt === 'string' ? migrated.systemPrompt : '';
       migrated = {
         activeProvider: 'groq',
         activeModel: 'openai/gpt-oss-20b',
@@ -30,7 +122,10 @@ export function runMigrationForStore(storeName: string, state: any, version: num
         contextWindowMode: 'full',
         ...migrated
       };
-      notes = 'Merged AI settings defaults';
+      if (oldPrompt.includes('You are not romantic.') || oldPrompt.includes('Warm, direct, calm, practical.')) {
+        delete migrated.systemPrompt;
+      }
+      notes = 'Merged AI settings defaults and refreshed Shayla bestie tone when old default was detected';
     } else if (storeName === 'sanju-shayla-agent-persist-v1') {
       migrated = {
         agentModeEnabled: true,
@@ -70,7 +165,9 @@ export function runMigrationForStore(storeName: string, state: any, version: num
         dsaPatternMastery: {},
         ...migrated
       };
-      notes = 'Merged placement execution targets defaults';
+      migrated = resetSeededCareerDefaults(migrated);
+      migrated = migrateDailyCodingState(migrated);
+      notes = 'Merged placement execution targets defaults, removed seeded demo career data, and normalized daily coding tasks';
     } else if (storeName === 'sanzz_os_calendar_events_v1') {
       migrated = {
         events: [],
@@ -123,13 +220,26 @@ export function runMigrationForStore(storeName: string, state: any, version: num
       };
       notes = 'Merged communication practice defaults';
     } else if (storeName === 'sanzz_os_company_intelligence_v1') {
+      const seededCompanyIds = new Set(['c-zoho', 'c-fractal', 'c-accenture']);
+      const looksSeededCompanyIntel = Array.isArray(migrated.companies)
+        && migrated.companies.length > 0
+        && migrated.companies.every((company: any) => seededCompanyIds.has(company?.id))
+        && Object.keys(migrated.prepPlans || {}).length === 0;
       migrated = {
         companies: [],
         prepPlans: {},
         strategy: { priorityCompanies: [], readySoon: [], longTermTargets: [], activePipelines: {} },
         ...migrated
       };
-      notes = 'Merged company intelligence defaults';
+      if (looksSeededCompanyIntel) {
+        migrated.companies = (migrated.companies || []).map((company: any) => ({
+          ...company,
+          readinessScore: 0,
+          notes: '',
+        }));
+        migrated.strategy = { priorityCompanies: [], readySoon: [], longTermTargets: [], activePipelines: {} };
+      }
+      notes = 'Merged company intelligence defaults and cleared seeded readiness/pipeline data';
     } else if (storeName === 'sanzz_os_oa_attempts_v1') {
       migrated = {
         attempts: [],

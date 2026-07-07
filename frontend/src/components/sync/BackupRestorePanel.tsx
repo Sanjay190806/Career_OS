@@ -58,10 +58,9 @@ export const BackupRestorePanel: React.FC = () => {
         if (res.success) {
           const warningText = res.warnings?.length ? ` Warnings: ${res.warnings.join(' ')}` : '';
           setSuccess(
-            `Backup restored. ${res.restoredKeys.length} keys restored.${res.preRestoreSaved ? ' Pre-restore snapshot saved locally.' : ''}${warningText}`
+            `Backup restored. ${res.restoredKeys.length} keys restored.${res.rehydrated ? ' Dashboard updated immediately.' : ''}${res.preRestoreSaved ? ' Pre-restore snapshot saved locally.' : ''}${warningText}`
           );
           setError(null);
-          setTimeout(() => window.location.reload(), 2000);
         } else {
           setError(res.error || 'Invalid backup structure');
           setSuccess(null);

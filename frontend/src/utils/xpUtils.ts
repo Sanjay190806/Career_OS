@@ -3,6 +3,7 @@ import { XP_RULES } from '../data/constants';
 import { ROADMAP } from '../data/roadmap';
 import { LEVELS } from '../data/achievements';
 import { calculateStreakWithFreezes } from './streakFreezeUtils';
+import { getDailyCodingAwardedXp } from './dailyCodingUtils';
 
 export function getLevel(xp: number): XPThreshold {
   let lvl = LEVELS[0];
@@ -166,8 +167,12 @@ export function awardXPForLog(day: number, log: DailyLog): number {
   });
 
   const c = log.counts || {};
-  xp += (c.leetcode || 0) * 10;
-  xp += (c.skillrack || 0) * XP_RULES.skillrack;
+  if (log.dailyCoding) {
+    xp += getDailyCodingAwardedXp(log.dailyCoding);
+  } else {
+    xp += (c.leetcode || 0) * 10;
+    xp += (c.skillrack || 0) * XP_RULES.skillrack;
+  }
   xp += (c.aptitude || 0) * XP_RULES.aptitude;
   if ((c.sql || 0) > 0) xp += XP_RULES.sql_session;
   if ((c.cscore || 0) > 0) xp += XP_RULES.cscore_session;

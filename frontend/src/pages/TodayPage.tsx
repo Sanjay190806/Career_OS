@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDailyLogStore } from '../app/store/useDailyLogStore';
 import { useCareerStore } from '../app/store/useCareerStore';
 import { WeekStrip } from '../components/today/WeekStrip';
@@ -7,8 +7,10 @@ import { LeetCodeTaskCard } from '../components/today/LeetCodeTaskCard';
 import { DailyActivityCounter } from '../components/today/DailyActivityCounter';
 import { MoodEnergyPanel } from '../components/today/MoodEnergyPanel';
 import { DailyReflection } from '../components/today/DailyReflection';
-import { FocusTimer } from '../components/today/FocusTimer';
 import { SaveDayButton } from '../components/today/SaveDayButton';
+import { DailyCodingTargetPanel } from '../components/today/DailyCodingTargetPanel';
+import { PomodoroTimer } from '../components/timer/PomodoroTimer';
+import { DailyQuestsCard } from '../components/today/DailyQuestsCard';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -17,11 +19,18 @@ import { useUIStore } from '../app/store/useUIStore';
 import { ROADMAP } from '../data/roadmap';
 import { CS_SUBJECTS } from '../data/csSubjects';
 import { DailyLog, ProblemLog, ActivityCounts } from '../types';
-import { BookOpen, HelpCircle, Zap, Activity } from 'lucide-react';
+import { BookOpen, BriefcaseBusiness, HelpCircle } from 'lucide-react';
 import { MobileQuickCheckIn } from '../components/mobile/MobileQuickCheckIn';
 import { MobileShaylaDock } from '../components/mobile/MobileShaylaDock';
+import { MobileApplicationDock } from '../components/mobile/MobileApplicationDock';
 import { MiniStreakStrip } from '../components/ui/MiniStreakStrip';
 import { TodayCommandCenter } from '../components/today/TodayCommandCenter';
+import { getNextAction } from '../utils/applicationCrmUtils';
+import { getStreak } from '../utils/xpUtils';
+import { getDateForDay } from '../utils/dateUtils';
+import { normalizeDailyCodingState, toLocalDateKey } from '../utils/dailyCodingUtils';
+import { launchConfetti } from '../utils/confetti';
+import { playAchievementFanfare, playXPDing } from '../utils/timerSounds';
 
 const DEFAULT_COUNTS: ActivityCounts = {
   leetcode: 0,
@@ -64,56 +73,74 @@ const DEFAULT_PROB_LOG: ProblemLog = {
   revisitFlag: false
 };
 
-const triggerConfetti = () => {
-  const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.inset = '0';
-  container.style.pointerEvents = 'none';
-  container.style.zIndex = '9999';
-  container.style.overflow = 'hidden';
-  document.body.appendChild(container);
-
-  const colors = ['#58cc02', '#ffd43b', '#ff9f1c', '#38bdf8', '#a78bfa'];
-  for (let i = 0; i < 90; i++) {
-    const p = document.createElement('div');
-    p.style.position = 'absolute';
-    p.style.top = '-20px';
-    p.style.left = Math.random() * 100 + 'vw';
-    p.style.width = Math.random() * 8 + 6 + 'px';
-    p.style.height = Math.random() * 12 + 8 + 'px';
-    p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-    p.style.borderRadius = '3px';
-    p.style.opacity = (Math.random() * 0.4 + 0.6).toString();
-    p.style.transform = `rotate(${Math.random() * 360}deg)`;
-    
-    const duration = Math.random() * 1.5 + 1.5;
-    p.style.transition = `transform ${duration}s linear, top ${duration}s linear, opacity ${duration}s linear`;
-    container.appendChild(p);
-
-    setTimeout(() => {
-      p.style.top = '105vh';
-      p.style.transform = `rotate(${Math.random() * 720}deg) translateX(${Math.random() * 100 - 50}px)`;
-      p.style.opacity = '0';
-    }, 50);
+const triggerConfetti = (completionType?: string) => {
+  // Use our canvas confetti for better visuals
+  if (completionType === 'perfect') {
+    launchConfetti(160);
+    playAchievementFanfare(0.6);
+  } else {
+    launchConfetti(80);
+    playXPDing(0.5);
   }
+};
 
-  setTimeout(() => container.remove(), 4000);
+const isDayComplete = (log?: DailyLog) => {
+  if (!log) return false;
+  return log.status === 'completed' || log.completionType === 'minimum' || log.completionType === 'perfect' || log.freezeUsed === true;
+};
+
+const getNextOpenDay = (dailyLogs: Record<string, DailyLog>) => {
+  let day = 1;
+  while (day <= 180 && isDayComplete(dailyLogs[day])) {
+    day += 1;
+  }
+  return Math.min(day, 180);
 };
 
 export const TodayPage: React.FC = () => {
   const selectedDay = useDailyLogStore((s) => s.selectedDay);
+  const setSelectedDay = useDailyLogStore((s) => s.setSelectedDay);
   const dailyLogs = useCareerStore((s) => s.dailyLogs);
   const problemLogs = useCareerStore((s) => s.problemLogs);
+  const applications = useCareerStore((s) => s.applications);
+  const userProfile = useCareerStore((s) => s.userProfile);
   const csCoreProgress = useCareerStore((s) => s.csCoreProgress || {});
   const updateDailyLog = useCareerStore((s) => s.updateDailyLog);
+  const updateDailyCodingTask = useCareerStore((s) => s.updateDailyCodingTask);
   const updateProblemLog = useCareerStore((s) => s.updateProblemLog);
   const updateCSCoreTopic = useCareerStore((s) => s.updateCSCoreTopic);
   const queuePrompt = useAIStore((s) => s.queuePrompt);
   const setActiveSection = useUIStore((s) => s.setActiveSection);
+  const setCurrentDay = useUIStore((s) => s.setCurrentDay);
+
+
+  // On mount: default to the next incomplete day if the stored selection is already finished
+  useEffect(() => {
+    const nextOpen = getNextOpenDay(useCareerStore.getState().dailyLogs);
+    const currentSel = useDailyLogStore.getState().selectedDay;
+    if (nextOpen > currentSel && isDayComplete(useCareerStore.getState().dailyLogs[currentSel])) {
+      setSelectedDay(nextOpen);
+      setCurrentDay(nextOpen);
+    }
+  }, [setSelectedDay, setCurrentDay]);
+
+  // Keep UI store's day in sync with selectedDay
+  useEffect(() => {
+    setCurrentDay(selectedDay);
+  }, [selectedDay, setCurrentDay]);
 
   const currentLog = dailyLogs[selectedDay] || { ...DEFAULT_LOG, savedAt: new Date().toISOString() };
   const currentCounts = currentLog.counts || DEFAULT_COUNTS;
+  const selectedDateKey = toLocalDateKey(getDateForDay(selectedDay, userProfile.startDate));
+  const dailyCoding = normalizeDailyCodingState(currentLog, selectedDateKey);
+  const leetcodeActive = dailyCoding.tasks.leetcode_daily.active;
   const currentProblems = ROADMAP[String(selectedDay)] || [];
+  const applicationAction = applications
+    .map((app) => ({ app, action: getNextAction(app) }))
+    .sort((a, b) => {
+      const rank = { high: 0, medium: 1, low: 2 };
+      return rank[a.action.urgency] - rank[b.action.urgency];
+    })[0];
 
   const [activeTab, setActiveTab] = useState<'command' | 'activities'>('command');
   const [germanTrackOpen, setGermanTrackOpen] = useState(false);
@@ -167,6 +194,10 @@ export const TodayPage: React.FC = () => {
         leetcode: newLeetcodeCount
       }
     });
+
+    if (leetcodeActive) {
+      updateDailyCodingTask(selectedDay, 'leetcode_daily', { count: newLeetcodeCount });
+    }
   };
 
   const handleConfidenceChange = (probIdx: number, val: number) => {
@@ -214,44 +245,173 @@ export const TodayPage: React.FC = () => {
     }
   };
 
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Ambient particle canvas for TodayPage
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animId: number;
+    let w = (canvas.width = canvas.offsetWidth);
+    let h = (canvas.height = canvas.offsetHeight);
+    const onResize = () => { if (!canvas) return; w = canvas.width = canvas.offsetWidth; h = canvas.height = canvas.offsetHeight; };
+    window.addEventListener('resize', onResize);
+
+    const colors = ['#DC2626', '#3B82F6', '#EAB308', '#A855F7', '#F97316'];
+    const particles = Array.from({ length: 30 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25,
+      size: Math.random() * 1.8 + 0.5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: Math.random() * 0.25 + 0.05
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        ctx.globalAlpha = p.alpha;
+        ctx.shadowBlur = 6; ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      animId = requestAnimationFrame(render);
+    };
+    render();
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(animId); };
+  }, []);
+
+  const careerState = useCareerStore((s) => s);
+  const streak = getStreak(careerState);
+  const xp = useCareerStore((s) => s.xp);
+  const todayLC = currentLog.lcStatus?.length || 0;
+  const todayMood = currentLog.mood || 3;
+  const getMoodLabel = (m: number) => m >= 8 ? { text: 'MANIACAL 🃏', color: 'text-green-400' } : m >= 6 ? { text: 'FOCUSED 🕷️', color: 'text-blue-400' } : m >= 4 ? { text: 'STEADY 🦇', color: 'text-yellow-400' } : { text: 'GRIM 📓', color: 'text-red-400' };
+  const moodInfo = getMoodLabel(todayMood);
+
   return (
-    <div className="flex flex-col gap-6 fade-in pb-10 relative">
+    <div className="flex flex-col gap-5 fade-in pb-10 relative">
+      {/* Ambient canvas bg */}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-60" />
+
+      <div className="relative z-10 flex flex-col gap-5">
       <WeekStrip />
       <TodayHeader />
       <MiniStreakStrip />
       <MobileQuickCheckIn />
+      <MobileApplicationDock />
       <MobileShaylaDock />
 
-      {/* Tabs navigation panel */}
-      <div className="flex bg-white/5 border border-white/5 rounded-2xl p-1 text-xs font-black uppercase tracking-wider self-start select-none">
+      {/* ── Mission Status Pill Strip ── */}
+      <div className="flex flex-wrap items-center gap-2 px-4 py-3 rounded-2xl border border-white/5 bg-black/50 backdrop-blur-md overflow-x-auto scrollbar-none">
+        <span className="text-[8px] font-black uppercase tracking-widest text-white/25 font-mono shrink-0 hidden sm:block">Mission Status</span>
+        <div className="flex-1 h-px bg-white/5 hidden sm:block" />
+        <div className="flex items-center gap-1.5 shrink-0 bg-red-950/30 border border-red-900/30 px-3 py-1 rounded-full">
+          <span className="text-[10px]">🕷️</span>
+          <span className="text-[9px] font-black text-red-400 font-mono">Web Shots: {todayLC}</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0 bg-yellow-950/30 border border-yellow-900/30 px-3 py-1 rounded-full">
+          <span className="text-[10px]">🦇</span>
+          <span className="text-[9px] font-black text-yellow-400 font-mono">Streak: {streak}d</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0 bg-purple-950/30 border border-purple-900/30 px-3 py-1 rounded-full">
+          <span className="text-[10px]">🃏</span>
+          <span className={`text-[9px] font-black font-mono ${moodInfo.color}`}>Mood: {moodInfo.text}</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0 bg-orange-950/30 border border-orange-900/30 px-3 py-1 rounded-full">
+          <span className="text-[10px]">🍥</span>
+          <span className="text-[9px] font-black text-orange-400 font-mono">XP: {xp}</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0 bg-blue-950/30 border border-blue-900/30 px-3 py-1 rounded-full">
+          <span className="text-[10px]">📓</span>
+          <span className="text-[9px] font-black text-blue-300 font-mono">Day {selectedDay}/180</span>
+        </div>
+      </div>
+
+      {/* ── Cinematic Hero Tabs ── */}
+      <div className="relative flex border border-white/5 rounded-2xl p-1 text-xs font-black uppercase tracking-wider self-start select-none bg-black/60 backdrop-blur-md overflow-hidden">
+        {/* Tab background glow */}
+        <div className={`absolute inset-0 transition-all duration-500 rounded-2xl pointer-events-none ${
+          activeTab === 'command' ? 'bg-gradient-to-r from-red-950/30 via-blue-950/20 to-transparent' : 'bg-gradient-to-l from-yellow-950/20 via-purple-950/15 to-transparent'
+        }`} />
         <button
           onClick={() => setActiveTab('command')}
-          className={`flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl transition ${
-            activeTab === 'command' ? 'bg-accentBlue text-white shadow-glow-blue/10' : 'text-textSecondary hover:bg-white/5'
+          className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300 ${
+            activeTab === 'command'
+              ? 'bg-gradient-to-r from-red-700/40 to-blue-700/30 text-white shadow-[0_0_14px_rgba(220,38,38,0.25),0_0_6px_rgba(59,130,246,0.15)] border border-red-600/20'
+              : 'text-white/40 hover:text-white/70 hover:bg-white/5'
           }`}
         >
-          <Zap className="h-4 w-4" />
+          <span className="text-sm">🕷️</span>
           <span>Command Center</span>
         </button>
         <button
           onClick={() => setActiveTab('activities')}
-          className={`flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl transition ${
-            activeTab === 'activities' ? 'bg-accentBlue text-white shadow-glow-blue/10' : 'text-textSecondary hover:bg-white/5'
+          className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300 ${
+            activeTab === 'activities'
+              ? 'bg-gradient-to-r from-yellow-700/30 to-yellow-600/20 text-yellow-300 shadow-[0_0_14px_rgba(234,179,8,0.2)] border border-yellow-600/20'
+              : 'text-white/40 hover:text-white/70 hover:bg-white/5'
           }`}
         >
-          <Activity className="h-4 w-4" />
+          <span className="text-sm">🦇</span>
           <span>Activity Loggers</span>
         </button>
       </div>
 
       {activeTab === 'command' ? (
-        <TodayCommandCenter />
+        <div className="flex flex-col gap-4">
+          {applicationAction && (
+            <Card className="border-accentBlue/20 bg-accentBlue/5">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-accentBlue/10 p-2 text-accentBlue">
+                    <BriefcaseBusiness className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-textSecondary">Application Action</p>
+                    <h3 className="mt-1 text-sm font-semibold text-textPrimary">{applicationAction.app.company} - {applicationAction.action.label}</h3>
+                    <p className="mt-1 max-w-2xl text-xs text-textSecondary">{applicationAction.action.reason}</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setActiveSection('applications');
+                    window.history.pushState({}, '', '/applications');
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
+                >
+                  Open CRM
+                </Button>
+              </div>
+            </Card>
+          )}
+          <TodayCommandCenter />
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
           {/* LeetCode task checklist */}
           <div className="lg:col-span-2 flex flex-col gap-4">
-            <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1">LeetCode Challenges</h3>
-            {currentProblems.length === 0 ? (
+            <DailyCodingTargetPanel />
+
+            <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1 mt-4">LeetCode Challenges</h3>
+            {!leetcodeActive ? (
+              <Card className="border-white/5 bg-white/[0.01] p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wider text-textMuted">Scheduled from Aug 1, 2026</p>
+                    <h4 className="mt-1 text-sm font-semibold text-textPrimary">LeetCode starts Aug 1</h4>
+                  </div>
+                  <Badge variant="neutral">Inactive Today</Badge>
+                </div>
+              </Card>
+            ) : currentProblems.length === 0 ? (
               <div className="glass-card p-6 text-center text-textSecondary text-xs">
                 No specific LeetCode problems scheduled for Day {selectedDay}. Rest/recovery focus study day.
               </div>
@@ -370,16 +530,6 @@ export const TodayPage: React.FC = () => {
             {/* Activity counters grid */}
             <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1 mt-4">Placement Prep Schedules</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
-              <DailyActivityCounter
-                label="SkillRack"
-                emoji="⚡"
-                value={currentCounts.skillrack || 0}
-                target={10}
-                unit="problems"
-                color="#3B82F6"
-                onIncrement={() => updateCount('skillrack', 'inc')}
-                onDecrement={() => updateCount('skillrack', 'dec')}
-              />
               <DailyActivityCounter
                 label="Aptitude"
                 emoji="🧮"
@@ -505,8 +655,12 @@ export const TodayPage: React.FC = () => {
 
           {/* Right Sidebar panels */}
           <div className="flex flex-col gap-6">
-            <FocusTimer onSessionComplete={(minutes) => updateDailyLog(selectedDay, { focusMinutes: (currentLog.focusMinutes || 0) + minutes })} />
-            
+            {/* ⏱️ Cinematic Pomodoro Timer */}
+            <PomodoroTimer onWorkSessionComplete={(minutes) => updateDailyLog(selectedDay, { focusMinutes: (currentLog.focusMinutes || 0) + minutes })} />
+
+            {/* 🏆 Daily Quests Dashboard */}
+            <DailyQuestsCard />
+
             <MoodEnergyPanel
               mood={currentLog.mood}
               energy={currentLog.energy}
@@ -521,10 +675,11 @@ export const TodayPage: React.FC = () => {
               onNoteChange={(val) => updateDailyLog(selectedDay, { note: val })}
             />
 
-            <SaveDayButton onSave={() => triggerConfetti()} />
+            <SaveDayButton onSave={() => triggerConfetti(currentLog.completionType)} />
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

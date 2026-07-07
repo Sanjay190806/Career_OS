@@ -1,4 +1,8 @@
 import { storagePerformance } from '../../utils/storagePerformance';
+import { useCareerStore } from '../../app/store/useCareerStore';
+import { getLevel } from '../../utils/xpUtils';
+import { awardXPForLog } from '../../utils/xpUtils';
+import { getStreak } from '../../utils/xpUtils';
 
 export const APP_NAME = 'Sanju Career OS';
 export const BACKUP_VERSION = '1.7.2';
@@ -86,6 +90,23 @@ export interface BackupSnapshotV2 {
   keysIncluded: string[];
   keysMissing: string[];
   data: Record<string, string>;
+  userProfile?: unknown;
+  settings?: unknown;
+  xpState?: {
+    totalXp: number;
+    level: number;
+  };
+  streakState?: {
+    currentStreak: number;
+  };
+  dailyTaskState?: unknown;
+  activityLogs?: unknown;
+  completedTasks?: unknown;
+  dailyLogs?: unknown;
+  careerProgress?: unknown;
+  skillProgress?: unknown;
+  projectProgress?: unknown;
+  dashboardStats?: unknown;
 }
 
 export interface BackupValidationResult {
@@ -106,6 +127,7 @@ export interface RestoreResultV2 {
   warnings: string[];
   error?: string;
   preRestoreSaved: boolean;
+  rehydrated: boolean;
 }
 
 export function getBackupRegistry(): BackupRegistryEntry[] {
@@ -130,6 +152,107 @@ function readStorageValue(key: string, isJson: boolean): string | null {
     console.warn(`Skipping corrupted backup key: ${key}`);
     return null;
   }
+}
+
+function parseJsonValue(value: string | null): any | null {
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function getPersistedCareerState(raw: string | null): any | null {
+  const parsed = parseJsonValue(raw);
+  if (!parsed || typeof parsed !== 'object') return null;
+  return parsed.state && typeof parsed.state === 'object' ? parsed.state : parsed;
+}
+
+function sumImportedLogXp(dailyLogs: Record<string, any>): number {
+  return Object.entries(dailyLogs || {}).reduce((sum, [dayKey, log]) => {
+    const stored = Number(log?.xpEarned || 0);
+    if (stored > 0) return sum + stored;
+    const day = Number(dayKey);
+    if (!Number.isFinite(day)) return sum;
+    try {
+      return sum + awardXPForLog(day, log);
+    } catch {
+      return sum;
+    }
+  }, 0);
+}
+
+function normalizeCareerStateForRestore(input: any): any {
+  const state = input && typeof input === 'object' ? { ...input } : {};
+  const legacyTotalXp = Number(state.totalXP ?? state.totalXp ?? state.globalXp ?? state.careerXp ?? 0);
+  const existingXp = Number(state.xp || 0);
+  const derivedXp = sumImportedLogXp(state.dailyLogs || {});
+  const restoredXp = existingXp > 0 ? existingXp : Math.max(legacyTotalXp, derivedXp, 0);
+
+  state.xp = restoredXp;
+  state.level = getLevel(restoredXp).level;
+
+  if (!state.dailyLogs || typeof state.dailyLogs !== 'object') {
+    state.dailyLogs = {};
+  }
+
+  if (!state.problemLogs || typeof state.problemLogs !== 'object') {
+    state.problemLogs = {};
+  }
+
+  return state;
+}
+
+function serializeCareerPersistedState(state: any, version = 143): string {
+  return JSON.stringify({
+    state: normalizeCareerStateForRestore(state),
+    version
+  });
+}
+
+function buildSnapshotSummary(data: Record<string, string>) {
+  const careerState = getPersistedCareerState(data['sanju-career-os-persist']) || getPersistedCareerState(data['sanju-career-os-v1']);
+  if (!careerState) return {};
+
+  const restoredCareer = normalizeCareerStateForRestore(careerState);
+  const currentStreak = getStreak({
+    userProfile: restoredCareer.userProfile,
+    dailyLogs: restoredCareer.dailyLogs
+  } as any);
+
+  return {
+    userProfile: restoredCareer.userProfile,
+    xpState: {
+      totalXp: restoredCareer.xp || 0,
+      level: restoredCareer.level || getLevel(restoredCareer.xp || 0).level
+    },
+    streakState: {
+      currentStreak
+    },
+    dailyTaskState: Object.values(restoredCareer.dailyLogs || {}).map((log: any) => log.dailyCoding).filter(Boolean),
+    activityLogs: restoredCareer.dailyLogs || {},
+    completedTasks: Object.values(restoredCareer.dailyLogs || {}).filter((log: any) => log?.status === 'completed' || log?.completionType === 'minimum' || log?.completionType === 'perfect'),
+    dailyLogs: restoredCareer.dailyLogs || {},
+    careerProgress: {
+      xp: restoredCareer.xp || 0,
+      level: restoredCareer.level || 1,
+      badges: restoredCareer.badges || [],
+      unlockedBadges: restoredCareer.unlockedBadges || {}
+    },
+    skillProgress: {
+      sqlProgress: restoredCareer.sqlProgress || {},
+      aptitudeProgress: restoredCareer.aptitudeProgress || {},
+      csCoreProgress: restoredCareer.csCoreProgress || {},
+      skillRackStats: restoredCareer.skillRackStats || {},
+      dsaPatternMastery: restoredCareer.dsaPatternMastery || {}
+    },
+    projectProgress: restoredCareer.projects || {},
+    dashboardStats: {
+      totalXp: restoredCareer.xp || 0,
+      currentStreak
+    }
+  };
 }
 
 export function collectBackupData(): BackupSnapshotV2 {
@@ -158,6 +281,8 @@ export function collectBackupData(): BackupSnapshotV2 {
     }
   }
 
+  const summary = buildSnapshotSummary(data);
+
   return {
     appName: APP_NAME,
     version: BACKUP_VERSION,
@@ -167,6 +292,7 @@ export function collectBackupData(): BackupSnapshotV2 {
     keysIncluded,
     keysMissing,
     data,
+    ...summary,
   };
 }
 
@@ -210,6 +336,27 @@ function normalizeIncomingBackup(raw: unknown): BackupSnapshotV2 | null {
   if (!raw || typeof raw !== 'object') return null;
   const input = raw as Record<string, unknown>;
 
+  if (input.appName !== APP_NAME && ('userProfile' in input || 'dailyLogs' in input || 'totalXP' in input || 'totalXp' in input)) {
+    const legacyState = normalizeCareerStateForRestore({
+      ...input,
+      xp: (input as any).xp ?? (input as any).totalXP ?? (input as any).totalXp ?? (input as any).globalXp
+    });
+    const data = {
+      'sanju-career-os-persist': serializeCareerPersistedState(legacyState)
+    };
+    return {
+      appName: APP_NAME,
+      version: 'legacy',
+      schemaVersion: 1,
+      createdAt: new Date().toISOString(),
+      mode: 'local_backup',
+      keysIncluded: Object.keys(data),
+      keysMissing: [],
+      data,
+      ...buildSnapshotSummary(data),
+    };
+  }
+
   if (input.appName !== APP_NAME) return null;
   if (!input.data || typeof input.data !== 'object') return null;
 
@@ -224,6 +371,8 @@ function normalizeIncomingBackup(raw: unknown): BackupSnapshotV2 | null {
     }
   }
 
+  const summary = buildSnapshotSummary(normalized);
+
   return {
     appName: APP_NAME,
     version: typeof input.version === 'string' ? input.version : 'unknown',
@@ -233,7 +382,47 @@ function normalizeIncomingBackup(raw: unknown): BackupSnapshotV2 | null {
     keysIncluded: Object.keys(normalized),
     keysMissing: [],
     data: normalized,
+    ...summary,
   };
+}
+
+function prepareRestoreData(snapshot: BackupSnapshotV2): Record<string, string> {
+  const data = { ...snapshot.data };
+  const currentCareer = getPersistedCareerState(data['sanju-career-os-persist']);
+  const legacyCareer = getPersistedCareerState(data['sanju-career-os-v1']);
+  const careerState = currentCareer || legacyCareer;
+
+  if (careerState) {
+    data['sanju-career-os-persist'] = serializeCareerPersistedState(careerState);
+  }
+
+  return data;
+}
+
+export function rehydrateAppStateFromStorage(): boolean {
+  try {
+    const careerRaw = localStorage.getItem('sanju-career-os-persist');
+    const careerState = getPersistedCareerState(careerRaw);
+    if (careerState) {
+      const restored = normalizeCareerStateForRestore(careerState);
+      useCareerStore.setState({
+        ...restored,
+        level: getLevel(restored.xp || 0).level
+      });
+    }
+
+    const persistApi = (useCareerStore as any).persist;
+    if (persistApi?.rehydrate) {
+      persistApi.rehydrate();
+    }
+
+    window.dispatchEvent(new Event('career_state_rehydrated'));
+    window.dispatchEvent(new Event('dashboard_state_synced'));
+    return Boolean(careerState);
+  } catch (error) {
+    console.warn('Failed to rehydrate app state after restore:', error);
+    return false;
+  }
 }
 
 export function validateBackupData(raw: unknown, options?: { forRestore?: boolean }): BackupValidationResult {
@@ -368,6 +557,7 @@ export function restoreBackupData(raw: unknown): RestoreResultV2 {
       warnings: validation.warnings,
       error: validation.error,
       preRestoreSaved: false,
+      rehydrated: false,
     };
   }
 
@@ -380,6 +570,7 @@ export function restoreBackupData(raw: unknown): RestoreResultV2 {
       warnings: validation.warnings,
       error: 'Unable to parse backup payload.',
       preRestoreSaved: false,
+      rehydrated: false,
     };
   }
 
@@ -387,8 +578,9 @@ export function restoreBackupData(raw: unknown): RestoreResultV2 {
   const restoredKeys: string[] = [];
   const skippedKeys: string[] = [];
   const knownKeys = new Set(getRegistryStorageKeys());
+  const restoreData = prepareRestoreData(snapshot);
 
-  for (const [key, value] of Object.entries(snapshot.data)) {
+  for (const [key, value] of Object.entries(restoreData)) {
     if (!knownKeys.has(key) || key === PRE_RESTORE_BACKUP_KEY) {
       skippedKeys.push(key);
       continue;
@@ -412,6 +604,7 @@ export function restoreBackupData(raw: unknown): RestoreResultV2 {
   window.dispatchEvent(new Event('ui_preferences_changed'));
   window.dispatchEvent(new Event('performance_settings_changed'));
   window.dispatchEvent(new Event('sync_config_changed'));
+  const rehydrated = rehydrateAppStateFromStorage();
 
   return {
     success: restoredKeys.length > 0,
@@ -420,6 +613,7 @@ export function restoreBackupData(raw: unknown): RestoreResultV2 {
     warnings: validation.warnings,
     error: restoredKeys.length > 0 ? undefined : 'No keys were restored.',
     preRestoreSaved,
+    rehydrated,
   };
 }
 

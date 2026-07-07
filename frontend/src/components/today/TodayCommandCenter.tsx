@@ -7,9 +7,11 @@ import { DailyLog } from '../../types';
 import { getDateForDay } from '../../utils/dateUtils';
 import { canUseFreeze, getFreezesLeftForWeek } from '../../utils/streakFreezeUtils';
 import { awardXPForLog, getLevel, getStreak } from '../../utils/xpUtils';
+import { getDailyCodingCompletion, normalizeDailyCodingState, toLocalDateKey } from '../../utils/dailyCodingUtils';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
+import { DailyCodingTargetPanel } from './DailyCodingTargetPanel';
 import {
   Flame,
   Snowflake,
@@ -19,6 +21,8 @@ import {
   BookOpen,
   Calendar,
   BookOpenCheck,
+  X,
+  Sparkles
 } from 'lucide-react';
 
 import { agendaGenerator } from '../../utils/agendaGenerator';
@@ -27,6 +31,7 @@ export const TodayCommandCenter: React.FC = () => {
   const selectedDay = useDailyLogStore((s) => s.selectedDay);
   const dailyLogs = useCareerStore((s) => s.dailyLogs);
   const updateDailyLog = useCareerStore((s) => s.updateDailyLog);
+  const updateDailyCodingTask = useCareerStore((s) => s.updateDailyCodingTask);
   const useStreakFreeze = useCareerStore((s) => s.useStreakFreeze);
   const weeklyFreezeUsage = useCareerStore((s) => s.weeklyFreezeUsage || {});
   const xp = useCareerStore((s) => s.xp);
@@ -56,6 +61,11 @@ export const TodayCommandCenter: React.FC = () => {
   const [reflectionText, setReflectionText] = useState(currentLog.note || '');
   const [freezeReasonText, setFreezeReasonText] = useState(currentLog.freezeReason || '');
 
+  const [showFreezeModal, setShowFreezeModal] = useState(false);
+  const [freezeConfirmText, setFreezeConfirmText] = useState('');
+  const [showCelebrationModal, setShowCelebrationModal] = useState(false);
+  const [celebrationDetails, setCelebrationDetails] = useState<{ type: string; xp: number } | null>(null);
+
   // Generate and save agenda for selectedDay if it doesn't exist
   useEffect(() => {
     if (!notificationStore.agendas[selectedDay]) {
@@ -72,8 +82,9 @@ export const TodayCommandCenter: React.FC = () => {
   // 1. Filter scheduled events for today
   const todayDateStr = useMemo(() => {
     const d = getDateForDay(selectedDay, userProfile.startDate);
-    return d.toISOString().substring(0, 10);
+    return toLocalDateKey(d);
   }, [selectedDay, userProfile.startDate]);
+  const dailyCoding = useMemo(() => normalizeDailyCodingState(currentLog, todayDateStr), [currentLog, todayDateStr]);
 
   const todayEvents = useMemo(() => {
     return calendarEvents.filter((evt) => evt.start.substring(0, 10) === todayDateStr);
@@ -124,30 +135,84 @@ export const TodayCommandCenter: React.FC = () => {
     }
   };
 
+  const getAgendaCountUpdate = (task: { id: string; text: string; source: string }) => {
+    const text = task.text.toLowerCase();
+
+    if (task.id.startsWith('codechef-java') || text.includes('codechef')) {
+      return { key: 'codechefJava' as const, value: 5 };
+    }
+
+    if (task.id.startsWith('skillrack') || text.includes('skillrack')) {
+      return { key: 'skillrack' as const, value: 5 };
+    }
+
+    if (task.id.startsWith('apt') || text.includes('aptitude')) {
+      return { key: 'aptitude' as const, value: 30 };
+    }
+
+    if (task.id.startsWith('proj') || text.includes('project')) {
+      return { key: 'project' as const, value: 60 };
+    }
+
+    if (task.id.startsWith('german') || text.includes('german') || text.includes('vocabulary')) {
+      return { key: 'german' as const, value: text.includes('vocabulary') ? 15 : 20 };
+    }
+
+    if (task.id.startsWith('resume') || text.includes('resume') || text.includes('linkedin')) {
+      return { key: 'resume' as const, value: 1 };
+    }
+
+    return null;
+  };
+
+  const handleAgendaTaskToggle = (task: { id: string; text: string; completed: boolean; source: string }) => {
+    notificationStore.toggleAgendaTask(selectedDay, task.id);
+
+    if (task.completed) return;
+
+    const countUpdate = getAgendaCountUpdate(task);
+    if (!countUpdate) return;
+
+    if (countUpdate.key === 'codechefJava') {
+      updateDailyCodingTask(selectedDay, 'codechef_java_daily', { completed: true });
+      return;
+    }
+
+    if (countUpdate.key === 'skillrack') {
+      updateDailyCodingTask(selectedDay, 'skillrack_daily', { completed: true });
+      return;
+    }
+
+    const latestLog = useCareerStore.getState().dailyLogs[selectedDay] || currentLog;
+    const latestCounts = latestLog.counts || currentCounts;
+    updateDailyLog(selectedDay, {
+      counts: {
+        ...latestCounts,
+        [countUpdate.key]: Math.max(latestCounts[countUpdate.key] || 0, countUpdate.value),
+      },
+    });
+  };
+
   // 4. Checklists & completions
   const minDayQualified = useMemo(() => {
-    const lcSolved = currentLog.lcStatus?.length || 0;
-    const skillrack = currentCounts.skillrack || 0;
     const aptitude = currentCounts.aptitude || 0;
     const sql = currentCounts.sql || 0;
     const cs = currentCounts.cscore || 0;
 
-    const hasCoding = skillrack >= 5 || lcSolved >= 1 || (currentCounts.leetcode || 0) >= 1;
+    const hasCoding = getDailyCodingCompletion(dailyCoding);
     const hasApt = aptitude >= 20;
     const hasSqlOrCs = sql >= 1 || cs >= 1;
 
     return hasCoding && hasApt && hasSqlOrCs;
-  }, [currentLog, currentCounts]);
+  }, [dailyCoding, currentCounts]);
 
   const perfectDayQualified = useMemo(() => {
-    const lcSolved = currentLog.lcStatus?.length || 0;
-    const skillrack = currentCounts.skillrack || 0;
     const aptitude = currentCounts.aptitude || 0;
     const sql = currentCounts.sql || 0;
     const cs = currentCounts.cscore || 0;
 
-    return lcSolved >= 2 && skillrack >= 10 && aptitude >= 30 && sql >= 5 && cs >= 1;
-  }, [currentLog, currentCounts]);
+    return getDailyCodingCompletion(dailyCoding) && aptitude >= 30 && sql >= 5 && cs >= 1;
+  }, [dailyCoding, currentCounts]);
 
   // XP goal tracking
   const currentXPProgress = currentLog.xpEarned || 0;
@@ -157,6 +222,8 @@ export const TodayCommandCenter: React.FC = () => {
   const handleRescueComplete = () => {
     // Complete rescue: set logs status to completed minimum and award XP
     const calculatedXP = 50; // Special streak protection reward XP
+    const previousXPForDay = currentLog.xpEarned || 0;
+    const xpDelta = calculatedXP - previousXPForDay;
     updateDailyLog(selectedDay, {
       status: 'completed',
       completionType: 'minimum',
@@ -166,11 +233,15 @@ export const TodayCommandCenter: React.FC = () => {
       savedAt: new Date().toISOString(),
     });
 
-    const newCumulativeXP = xp + calculatedXP;
-    setCareerState({
-      xp: newCumulativeXP,
-      level: getLevel(newCumulativeXP).level,
-    });
+    if (xpDelta !== 0) {
+      setCareerState((state) => {
+        const newCumulativeXP = Math.max(0, (state.xp || 0) + xpDelta);
+        return {
+          xp: newCumulativeXP,
+          level: getLevel(newCumulativeXP).level,
+        };
+      });
+    }
 
     notificationStore.addNotification({
       type: 'success',
@@ -189,6 +260,13 @@ export const TodayCommandCenter: React.FC = () => {
       return;
     }
 
+    setShowFreezeModal(true);
+    setFreezeConfirmText('');
+  };
+
+  const confirmApplyFreeze = () => {
+    if (freezeConfirmText.toUpperCase() !== 'FREEZE') return;
+
     useStreakFreeze(selectedDay, freezeReasonText);
     notificationStore.addNotification({
       type: 'warning',
@@ -196,6 +274,8 @@ export const TodayCommandCenter: React.FC = () => {
       message: `Day ${selectedDay} protected by Streak Freeze. Reason: ${freezeReasonText || 'None specified'}.`,
       priority: 'medium',
     });
+
+    setShowFreezeModal(false);
   };
 
   const handleSave = () => {
@@ -218,6 +298,8 @@ export const TodayCommandCenter: React.FC = () => {
 
     const testLog: DailyLog = { ...currentLog, completionType: type, status: newStatus };
     const calculatedXP = awardXPForLog(selectedDay, testLog);
+    const previousXPForDay = currentLog.xpEarned || 0;
+    const xpDelta = calculatedXP - previousXPForDay;
 
     updateDailyLog(selectedDay, {
       status: newStatus,
@@ -227,13 +309,28 @@ export const TodayCommandCenter: React.FC = () => {
       savedAt: new Date().toISOString(),
     });
 
-    const newCumulativeXP = xp + calculatedXP;
-    setCareerState({
-      xp: newCumulativeXP,
-      level: getLevel(newCumulativeXP).level,
-    });
+    if (xpDelta !== 0) {
+      setCareerState((state) => {
+        const newCumulativeXP = Math.max(0, (state.xp || 0) + xpDelta);
+        return {
+          xp: newCumulativeXP,
+          level: getLevel(newCumulativeXP).level,
+        };
+      });
+    }
 
-    alert(`Day quest compiled! Type: ${type.toUpperCase()}. Earned +${calculatedXP} XP.`);
+    // Launch Confetti and sound fanfare
+    if (type === 'perfect') {
+      import('../../utils/confetti').then(m => m.launchConfetti(180));
+      import('../../utils/timerSounds').then(m => m.playAchievementFanfare(0.65));
+    } else if (type === 'minimum' || type === 'partial') {
+      import('../../utils/confetti').then(m => m.launchConfetti(80));
+      import('../../utils/timerSounds').then(m => m.playXPDing(0.55));
+    }
+
+    // Set celebration details and show modal
+    setCelebrationDetails({ type, xp: Math.max(0, xpDelta) });
+    setShowCelebrationModal(true);
   };
 
   const streakVal = getStreak(useCareerStore.getState());
@@ -304,7 +401,7 @@ export const TodayCommandCenter: React.FC = () => {
                         <input
                           type="checkbox"
                           checked={task.completed}
-                          onChange={() => notificationStore.toggleAgendaTask(selectedDay, task.id)}
+                          onChange={() => handleAgendaTaskToggle(task)}
                           className="rounded bg-black/45 border-white/5 text-accentBlue focus:ring-0 cursor-pointer"
                         />
                         <span className={`text-xs text-textSecondary ${task.completed ? 'line-through opacity-55 font-normal' : 'font-semibold text-textPrimary'}`}>
@@ -449,6 +546,8 @@ export const TodayCommandCenter: React.FC = () => {
         {/* Right Column: Daily Target Checklists, Focus controls, Reflections, and Save Day */}
         <div className="flex flex-col gap-6">
           {/* Target checklist qualifications */}
+          <DailyCodingTargetPanel compact />
+
           <Card className="p-4 border-white/5 bg-[#0a0a1a] flex flex-col gap-3">
             <h4 className="text-xs font-black text-textPrimary uppercase tracking-wider border-b border-white/5 pb-2">Daily Quests Status</h4>
             <div className="flex flex-col gap-1.5 border-b border-white/5 pb-2 mb-1">
@@ -520,6 +619,163 @@ export const TodayCommandCenter: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* ── STREAK FREEZE DRAMATIC MODAL ── */}
+      {showFreezeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn">
+          {/* Faint drifting snowflakes */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+            {['❄️', '❄️', '❄️', '❄️', '❄️'].map((s, i) => (
+              <div
+                key={i}
+                className="absolute text-3xl animate-bounce"
+                style={{
+                  left: `${15 + i * 20}%`,
+                  top: `${10 + (i % 2) * 50}%`,
+                  animationDuration: `${3 + i}s`,
+                }}
+              >
+                {s}
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="relative w-full max-w-md mx-4 p-6 rounded-3xl border border-cyan-500/30 bg-[#020b12] text-center shadow-[0_0_50px_rgba(6,182,212,0.25)]"
+            style={{ backgroundImage: 'radial-gradient(circle at top, rgba(6,182,212,0.1), transparent 70%)' }}
+          >
+            <button
+              onClick={() => setShowFreezeModal(false)}
+              className="absolute top-4 right-4 text-white/40 hover:text-white transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mx-auto h-14 w-14 rounded-full bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center mb-4 text-cyan-400">
+              <Snowflake className="h-7 w-7 animate-spin" style={{ animationDuration: '6s' }} />
+            </div>
+
+            <h3 className="text-lg font-black text-white uppercase tracking-wider font-mono">
+              Streak Freeze Chamber
+            </h3>
+            <p className="text-xs text-textSecondary leading-relaxed mt-2.5">
+              Warning: You are about to freeze Day {selectedDay}. Streak freezes are limited to 2 per week. Only use this if you are unable to log study hours today.
+            </p>
+
+            <div className="mt-5 flex flex-col gap-3">
+              <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest text-left font-mono">
+                Type "FREEZE" to confirm:
+              </span>
+              <input
+                type="text"
+                value={freezeConfirmText}
+                onChange={(e) => setFreezeConfirmText(e.target.value)}
+                placeholder="FREEZE"
+                className="h-10 text-center rounded-xl border border-cyan-500/25 bg-black/60 font-mono text-sm tracking-widest text-white uppercase focus:outline-none focus:border-cyan-500/60"
+              />
+
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFreezeModal(false)}
+                  className="rounded-xl border-white/5 text-xs h-10"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  disabled={freezeConfirmText.toUpperCase() !== 'FREEZE'}
+                  onClick={confirmApplyFreeze}
+                  className="rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase tracking-wider text-[10px] h-10 shadow-[0_0_15px_rgba(6,182,212,0.3)] disabled:opacity-30 disabled:shadow-none"
+                >
+                  Freeze Day
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DAY COMPLETE CELEBRATION MODAL ── */}
+      {showCelebrationModal && celebrationDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md animate-fadeIn">
+          {/* Gold sparks overlay */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+            {['⭐', '✨', '⭐', '✨'].map((s, i) => (
+              <div
+                key={i}
+                className="absolute text-2xl animate-pulse"
+                style={{
+                  left: `${20 + i * 20}%`,
+                  top: `${15 + (i % 2) * 50}%`,
+                  animationDuration: `${2 + i}s`,
+                }}
+              >
+                {s}
+              </div>
+            ))}
+          </div>
+
+          <div
+            className={`relative w-full max-w-sm mx-4 p-6 rounded-3xl text-center shadow-2xl border ${
+              celebrationDetails.type === 'perfect'
+                ? 'border-yellow-500/30 bg-[#0f0a00] shadow-[0_0_40px_rgba(234,179,8,0.25)]'
+                : 'border-accentBlue/30 bg-[#020b12] shadow-[0_0_40px_rgba(59,130,246,0.25)]'
+            }`}
+            style={{
+              backgroundImage:
+                celebrationDetails.type === 'perfect'
+                  ? 'radial-gradient(circle at top, rgba(234,179,8,0.1), transparent 75%)'
+                  : 'radial-gradient(circle at top, rgba(59,130,246,0.1), transparent 75%)',
+            }}
+          >
+            <div className="mx-auto h-16 w-16 rounded-full flex items-center justify-center mb-4 border bg-black/45">
+              {celebrationDetails.type === 'perfect' ? (
+                <Sparkles className="h-8 w-8 text-yellow-400 animate-pulse" />
+              ) : (
+                <ShieldCheck className="h-8 w-8 text-accentBlue" />
+              )}
+            </div>
+
+            <span className="text-[9px] font-black uppercase tracking-[0.25em] text-textMuted font-mono">
+              Day quest compiled
+            </span>
+
+            <h3
+              className={`text-xl font-black uppercase tracking-wider mt-1.5 ${
+                celebrationDetails.type === 'perfect' ? 'text-yellow-400' : 'text-white'
+              }`}
+            >
+              {celebrationDetails.type === 'perfect' ? '⭐ Perfect Day! ⭐' : '🔥 Consistency Gained'}
+            </h3>
+
+            <p className="text-xs text-textSecondary leading-relaxed mt-2.5 px-2">
+              Outstanding work, Sanju! Your consistency streak is secure. Let's keep this momentum going for tomorrow's objectives.
+            </p>
+
+            <div className="my-6 p-4 rounded-2xl bg-black/60 border border-white/5 inline-flex flex-col gap-1 min-w-[120px] font-mono">
+              <span className="text-[10px] text-textMuted font-bold uppercase">Reward</span>
+              <span
+                className={`text-xl font-black ${
+                  celebrationDetails.type === 'perfect' ? 'text-yellow-400' : 'text-accentBlue'
+                }`}
+              >
+                +{celebrationDetails.xp} XP
+              </span>
+            </div>
+
+            <Button
+              onClick={() => setShowCelebrationModal(false)}
+              className={`w-full rounded-2xl font-black uppercase tracking-widest text-xs h-11 ${
+                celebrationDetails.type === 'perfect'
+                  ? 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_15px_rgba(234,179,8,0.3)]'
+                  : 'bg-accentBlue hover:bg-accentBlue/90 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+              }`}
+            >
+              Back to Command Center
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

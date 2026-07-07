@@ -16,10 +16,10 @@ export const agendaGenerator = {
 
     // 1. Build tasks based on Focus Mode
     if (focusMode === 'placement_sprint') {
-      focusTopic = 'DSA & LeetCode Practice';
+      focusTopic = 'Daily Coding Practice';
       tasks.push(
-        { id: 'dsa-1', text: 'Solve today\'s primary LeetCode challenge', completed: false, source: 'placement' },
-        { id: 'skillrack-1', text: 'Solve 10 SkillRack problems', completed: false, source: 'placement' },
+        { id: 'codechef-java-1', text: 'Solve 5 CodeChef Java problems', completed: false, source: 'placement' },
+        { id: 'skillrack-1', text: 'Solve 5 SkillRack problems', completed: false, source: 'placement' },
         { id: 'apt-1', text: 'Complete 30 minutes of quantitative aptitude practice', completed: false, source: 'placement' },
         { id: 'mock-session-1', text: 'Run 15-minute mock interview session in Mock Interview OS', completed: false, source: 'placement' }
       );
@@ -64,7 +64,7 @@ export const agendaGenerator = {
     } else {
       // Normal / High Energy
       timeSlots.push(
-        { time: '09:00', activity: 'Focused DSA Session', duration: 60 },
+        { time: '09:00', activity: 'CodeChef Java + SkillRack', duration: 60 },
         { time: '11:00', activity: 'Aptitude Practice Block', duration: 30 },
         { time: '14:00', activity: 'Core Subject Syllabus Review', duration: 45 },
         { time: '16:00', activity: 'Project Build Sprint', duration: 60 }

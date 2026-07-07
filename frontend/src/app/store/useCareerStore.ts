@@ -1,12 +1,20 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { runMigrationForStore } from './migrations';
-import { DailyLog, ProblemLog, Project, ResumeProfile, CareerApplication, CompanyTarget, WeeklyReview, SavedChatSession } from '../../types';
+import { DailyCodingTaskId, DailyLog, ProblemLog, Project, ResumeProfile, CareerApplication, CompanyTarget, WeeklyReview, SavedChatSession } from '../../types';
 import { GermanDailyLog, GermanLessonProgress, GermanQuizHistoryItem, GermanVocabularyProgress, GermanLevel } from '../../types/german';
 import { runAchievementEngine } from '../../utils/achievementEngine';
 import { useUIStore } from './useUIStore';
 import { getTodayDay, getDateForDay } from '../../utils/dateUtils';
 import { evaluateCompletion } from '../../utils/dailyCompletionUtils';
+import { getLevel } from '../../utils/xpUtils';
+import {
+  DAILY_CODING_ACTIVE_TASK_IDS,
+  DAILY_CODING_BONUS_XP,
+  getDailyCodingCompletion,
+  normalizeDailyCodingState,
+  toLocalDateKey
+} from '../../utils/dailyCodingUtils';
 import { TARGET_COMPANIES_DATA } from '../../data/companies';
 import { SKILL_TREE_DATA } from '../../data/skillTree';
 
@@ -49,6 +57,7 @@ export interface CareerState {
   germanVocabularyReviewedToday: number;
   
   updateDailyLog: (day: number, log: Partial<DailyLog>) => void;
+  updateDailyCodingTask: (day: number, taskId: DailyCodingTaskId, updates: { count?: number; completed?: boolean }) => void;
   updateProblemLog: (key: string, log: Partial<ProblemLog>) => void;
   updateProject: (key: string, project: Partial<Project>) => void;
   updateResume: (resume: Partial<ResumeProfile>) => void;
@@ -68,7 +77,7 @@ export interface CareerState {
   markWordWeak: (wordId: string) => void;
   completeGermanQuiz: (lessonId: string, score: number, total: number, quizType?: string) => void;
   updateGermanMinutes: (minutes: number, lessonId?: string, phrase?: string) => void;
-  submitWordReview: (wordId: string, correct: boolean) => void;
+  submitWordReview: (wordId: string, correct: boolean, rating?: number) => void;
   repairStreak: () => void;
   resetGermanProgress: () => void;
   logGermanSpeakingSession: (minutes?: number) => void;
@@ -249,53 +258,13 @@ export const useCareerStore = create<CareerState>()(
       chatHistory: [],
       dailyLogs: {},
       problemLogs: {},
-      projects: {
-        caresync: {
-          name: 'CareSync AI',
-          status: 'building',
-          stack: ['React', 'TypeScript', 'FastAPI', 'PyTorch'],
-          github: 'https://github.com/sanju/caresync-ai',
-          demo: 'https://caresync.sanzzdream.com',
-          progress: { backend: 60, frontend: 50, ai: 70, testing: 30, docs: 40, deploy: 20 },
-          bullets: [
-            'Architected a HIPAA-compliant medical routing coordinator using React and FastAPI.',
-            'Integrated PyTorch clinical entity resolution model to parse physician notes.'
-          ],
-          description: 'AI-powered clinical coordinator & routing assistant for healthcare centers.'
-        },
-        smartedu: {
-          name: 'SmartEdu AI',
-          status: 'building',
-          stack: ['React', 'Python', 'XGBoost', 'SHAP'],
-          github: 'https://github.com/sanju/smartedu-ai',
-          demo: 'https://smartedu.sanzzdream.com',
-          progress: { backend: 70, frontend: 60, ai: 80, testing: 40, docs: 50, deploy: 30 },
-          bullets: [
-            'Built predictive student success engine utilizing XGBoost with SHAP explanations.',
-            'Published and presented methodology at the ICGTETA 26 conference.'
-          ],
-          description: 'XGBoost + SHAP visual educational forecasting helper and analytics portal.'
-        },
-        career_os: {
-          name: 'Sanju Career OS',
-          status: 'building',
-          stack: ['React', 'TypeScript', 'Tailwind', 'Zustand', 'Prisma'],
-          github: 'https://github.com/sanju/career-os',
-          demo: 'https://career-os.sanzzdream.com',
-          progress: { backend: 80, frontend: 90, ai: 85, testing: 60, docs: 70, deploy: 50 },
-          bullets: [
-            'Designed a premium AI placement prep operating system with real-time analytics.',
-            'Implemented Zustand state persist slices and custom schemas with automatic migrations.'
-          ],
-          description: 'AI placement preparation operating system tracking DSA, German, SQL, and CS Core.'
-        }
-      },
+      projects: {},
       resume: {
-        version: '1.0',
-        atsScore: 70,
+        version: '',
+        atsScore: 0,
         lastUpdated: null,
-        targetRole: 'SWE / AI Engineer',
-        sections: { contact: 80, education: 90, skills: 70, projects: 60, achievements: 50, formatting: 90 }
+        targetRole: '',
+        sections: { contact: 0, education: 0, skills: 0, projects: 0, achievements: 0, formatting: 0 }
       },
       applications: [],
       xp: 0,
@@ -348,6 +317,79 @@ export const useCareerStore = create<CareerState>()(
         const nextState = { ...state, dailyLogs: nextLogs };
         runAchievementEngine(nextState, set, (badge) => useUIStore.getState().setActiveBadge(badge));
         return { dailyLogs: nextLogs };
+      }),
+      updateDailyCodingTask: (day, taskId, updates) => set((state) => {
+        const existingLog = state.dailyLogs[day] || {
+          counts: { leetcode: 0, skillrack: 0, aptitude: 0, sql: 0, cscore: 0, german: 0, project: 0, resume: 0 },
+          lcStatus: [],
+          note: '',
+          mood: 3,
+          energy: 3,
+          distractions: 0,
+          focusMinutes: 0,
+          status: 'not_started',
+          savedAt: '',
+          xpEarned: 0
+        };
+        const dateKey = toLocalDateKey(getDateForDay(day, state.userProfile.startDate));
+        const dailyCoding = normalizeDailyCodingState(existingLog, dateKey);
+        const task = dailyCoding.tasks[taskId];
+        const requestedCount = updates.count ?? task.count;
+        const nextCount = Math.max(0, Math.min(task.target, Math.floor(requestedCount || 0)));
+        const nextCompleted = Boolean(updates.completed) || task.completed || nextCount >= task.target;
+        const finalCount = nextCompleted ? Math.max(nextCount, task.target) : nextCount;
+
+        dailyCoding.tasks[taskId] = {
+          ...task,
+          count: finalCount,
+          completed: nextCompleted
+        };
+
+        let xpDelta = 0;
+        if (dailyCoding.tasks[taskId].completed && !dailyCoding.tasks[taskId].xpAwarded) {
+          dailyCoding.tasks[taskId].xpAwarded = true;
+          xpDelta += dailyCoding.tasks[taskId].xp;
+        }
+
+        if (!dailyCoding.dailyCodingBonusAwarded && DAILY_CODING_ACTIVE_TASK_IDS.every((id) => dailyCoding.tasks[id].completed)) {
+          dailyCoding.dailyCodingBonusAwarded = true;
+          xpDelta += DAILY_CODING_BONUS_XP;
+        }
+
+        dailyCoding.activeDsaXp = dailyCoding.officialDsaStreakActive
+          ? Object.values(dailyCoding.tasks).reduce((sum, item) => sum + (item.xpAwarded ? item.xp : 0), 0) + (dailyCoding.dailyCodingBonusAwarded ? dailyCoding.dailyCodingBonusXp : 0)
+          : 0;
+
+        const nextCounts = {
+          ...existingLog.counts,
+          codechefJava: dailyCoding.tasks.codechef_java_daily.count,
+          skillrack: dailyCoding.tasks.skillrack_daily.count,
+          leetcode: dailyCoding.tasks.leetcode_daily.count
+        };
+
+        const updatedLog: DailyLog = {
+          ...existingLog,
+          counts: nextCounts,
+          dailyCoding,
+          xpEarned: (existingLog.xpEarned || 0) + xpDelta,
+          status: getDailyCodingCompletion(dailyCoding) ? 'completed' : existingLog.status,
+          savedAt: new Date().toISOString()
+        };
+        updatedLog.completionType = evaluateCompletion(updatedLog);
+
+        const nextXP = (state.xp || 0) + xpDelta;
+        const nextLogs = {
+          ...state.dailyLogs,
+          [day]: updatedLog
+        };
+        const nextState = { ...state, dailyLogs: nextLogs, xp: nextXP, level: getLevel(nextXP).level };
+        runAchievementEngine(nextState, set, (badge) => useUIStore.getState().setActiveBadge(badge));
+
+        return {
+          dailyLogs: nextLogs,
+          xp: nextXP,
+          level: getLevel(nextXP).level
+        };
       }),
       updateProblemLog: (key, log) => set((state) => {
         const nextLogs = {
@@ -643,7 +685,7 @@ export const useCareerStore = create<CareerState>()(
           german7DayStreakRewarded: state.german7DayStreakRewarded || streakState.current >= 7
         };
       }),
-      submitWordReview: (wordId, correct) => set((state) => {
+      submitWordReview: (wordId, correct, rating) => set((state) => {
         const vocab = state.vocabulary || {};
         const progress = vocab[wordId] || {
           status: 'learning',
@@ -653,27 +695,61 @@ export const useCareerStore = create<CareerState>()(
           nextReviewDate: null,
           correctCount: 0,
           wrongCount: 0,
-          lastReviewed: null
+          lastReviewed: null,
+          easeFactor: 2.5,
+          intervalDays: 0
         };
 
-        const stage = progress.reviewStage || 0;
-        const nextStage = correct ? Math.min(stage + 1, 5) : Math.max(stage - 1, 0);
+        // Map correct/rating to SM-2 quality rating (0-5)
+        // rating: 1 (Again), 2 (Hard), 3 (Good), 4 (Easy)
+        let q = correct ? 4 : 1;
+        if (rating !== undefined) {
+          if (rating === 1) q = 1;
+          else if (rating === 2) q = 3;
+          else if (rating === 3) q = 4;
+          else if (rating === 4) q = 5;
+        }
 
-        const intervals = [0, 1, 3, 7, 14, 30];
-        const nextIntervalDays = intervals[nextStage];
+        const isCorrect = q >= 3;
+        const currentEF = progress.easeFactor !== undefined ? progress.easeFactor : 2.5;
+        const currentInterval = progress.intervalDays !== undefined ? progress.intervalDays : 0;
+        const currentReps = progress.reviewStage !== undefined ? progress.reviewStage : 0;
+
+        let nextEF = currentEF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+        if (nextEF < 1.3) nextEF = 1.3;
+
+        let nextInterval = 1;
+        let nextReps = 0;
+
+        if (q >= 3) {
+          if (currentReps === 0) {
+            nextInterval = 1;
+          } else if (currentReps === 1) {
+            nextInterval = 6;
+          } else {
+            nextInterval = Math.round(currentInterval * currentEF);
+          }
+          nextReps = currentReps + 1;
+        } else {
+          nextInterval = 1;
+          nextReps = 0;
+        }
+
         const nextReview = new Date();
-        nextReview.setDate(nextReview.getDate() + nextIntervalDays);
+        nextReview.setDate(nextReview.getDate() + nextInterval);
 
         const updatedWord: GermanVocabularyProgress = {
           ...progress,
-          status: nextStage >= 4 ? 'known' : (nextStage === 0 ? 'review' : 'learning'),
+          status: q >= 4 ? 'known' : (q === 1 ? 'review' : 'learning'),
           reviewCount: (progress.reviewCount || 0) + 1,
           lastReviewedAt: new Date().toISOString(),
           lastReviewed: new Date().toISOString(),
-          reviewStage: nextStage,
+          reviewStage: nextReps,
+          easeFactor: nextEF,
+          intervalDays: nextInterval,
           nextReviewDate: nextReview.toISOString(),
-          correctCount: (progress.correctCount || 0) + (correct ? 1 : 0),
-          wrongCount: (progress.wrongCount || 0) + (correct ? 0 : 1)
+          correctCount: (progress.correctCount || 0) + (isCorrect ? 1 : 0),
+          wrongCount: (progress.wrongCount || 0) + (isCorrect ? 0 : 1)
         };
 
         const nextVocab = {
@@ -682,16 +758,18 @@ export const useCareerStore = create<CareerState>()(
         };
 
         let nextWeak = state.weakWords || [];
-        if (!correct) {
+        if (!isCorrect) {
           nextWeak = Array.from(new Set([...nextWeak, wordId]));
-        } else if (nextStage >= 4) {
+        } else if (q >= 4) {
           nextWeak = nextWeak.filter((w) => w !== wordId);
         }
+
+        const xpAdd = rating === 4 ? 8 : (isCorrect ? 5 : 2);
 
         return {
           vocabulary: nextVocab,
           weakWords: nextWeak,
-          germanXP: state.germanXP + (correct ? 5 : 2)
+          germanXP: state.germanXP + xpAdd
         };
       }),
       repairStreak: () => set((state) => {
@@ -842,7 +920,7 @@ export const useCareerStore = create<CareerState>()(
       }),
       awardXP: (amount) => set((state) => {
         const nextXp = state.xp + amount;
-        const nextLevel = Math.floor(nextXp / 500) + 1;
+        const nextLevel = getLevel(nextXp).level;
         return {
           xp: nextXp,
           level: nextLevel
@@ -851,15 +929,17 @@ export const useCareerStore = create<CareerState>()(
     }),
     {
       name: 'sanju-career-os-persist',
-      version: 141,
+      version: 143,
       migrate: (persistedState, version) => runMigrationForStore('sanju-career-os-persist', persistedState, version),
       merge: (persisted, current) => {
         const saved = persisted as any;
         const normalizedGerman = normalizeGermanState(saved);
+        const savedXp = typeof saved?.xp === 'number' ? saved.xp : current.xp;
         return {
           ...current,
           ...saved,
-          ...normalizedGerman
+          ...normalizedGerman,
+          level: getLevel(savedXp).level
         };
       }
     }

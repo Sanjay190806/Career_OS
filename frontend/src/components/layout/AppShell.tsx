@@ -50,15 +50,17 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           xpEarned: 0
         };
         const earned = awardXPForLog(currentDay, currentLog);
+        const previousXPForDay = currentLog.xpEarned || 0;
+        const xpDelta = earned - previousXPForDay;
         store.updateDailyLog(currentDay, { xpEarned: earned, savedAt: new Date().toISOString() });
         
-        const newXP = store.xp + earned;
+        const newXP = Math.max(0, store.xp + xpDelta);
         useCareerStore.setState({ xp: newXP, level: getLevel(newXP).level });
         
         // Show a temporary alert or custom UI event
         const notifier = document.createElement('div');
         notifier.className = "fixed bottom-24 left-1/2 -translate-x-1/2 bg-accentEmerald border border-accentEmerald/20 px-4 py-2.5 rounded-xl text-xs font-bold text-white z-50 shadow-glow-emerald";
-        notifier.innerText = `✓ Saved Day ${currentDay}! Streak Protected. +${earned} XP`;
+        notifier.innerText = `Saved Day ${currentDay}! Streak Protected. +${Math.max(0, xpDelta)} XP`;
         document.body.appendChild(notifier);
         setTimeout(() => notifier.remove(), 2500);
       }
