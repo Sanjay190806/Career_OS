@@ -1,138 +1,177 @@
-# Sanju Career OS - v1.7.2
+# SanzzOS
 
-> **Release:** v1.7.2 Database + Auth Stability Repair - local-first mode remains available while account/cloud features report safe database diagnostics.
+<p align="center">
+  <img src="frontend/public/icons/icon-512.png" alt="SanzzOS logo" width="128" />
+</p>
 
-Local-first career and placement tracker with a React + TypeScript frontend, Express backend, Prisma, PostgreSQL, Zustand persistence, AI Brain, Smart Daily Planner, Placement OS, Learning OS, Analytics 2.0, German Academy, optional manual database snapshots, PWA shell, and offline fallback support.
+<h3 align="center">Sanju Career OS - a local-first career command center for placements, coding practice, learning, projects, and focused daily execution.</h3>
 
-## v1.7.2 Stability (current)
+<p align="center">
+  <a href="https://github.com/Sanjay190806/Career_OS"><img src="https://img.shields.io/badge/roadmap-v2.2_complete-16a34a?style=for-the-badge" alt="Roadmap v2.2 complete" /></a>
+  <a href="docs/LOCAL_MODE.md"><img src="https://img.shields.io/badge/local--first-enabled-2563eb?style=for-the-badge" alt="Local-first" /></a>
+  <a href="docs/OFFLINE_MODE.md"><img src="https://img.shields.io/badge/offline-ready-7c3aed?style=for-the-badge" alt="Offline ready" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0f766e?style=for-the-badge" alt="MIT license" /></a>
+</p>
 
-- Unified sync layer with honest UI labels (local-first + manual DB snapshot).
-- Added backend routes: `/api/sync/health`, `/api/sync/push`, `/api/sync/pull` (legacy `/api/sync` kept).
-- Full backup registry covering 30 localStorage module keys.
-- Safe restore with validation summary, pre-restore snapshot, and confirmation.
-- Mounted PWA install/update prompts; single canonical `manifest.webmanifest`.
-- Improved service worker shell caching; API responses not cached.
-- Root `npm run build` alias added.
+<p align="center">
+  <a href="https://react.dev"><img src="https://img.shields.io/badge/React-18-61dafb?style=flat-square&logo=react" alt="React" /></a>
+  <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript" alt="TypeScript" /></a>
+  <a href="https://vitejs.dev"><img src="https://img.shields.io/badge/Vite-5-646cff?style=flat-square&logo=vite" alt="Vite" /></a>
+  <a href="https://expressjs.com"><img src="https://img.shields.io/badge/Express-4-111827?style=flat-square&logo=express" alt="Express" /></a>
+  <a href="https://www.prisma.io"><img src="https://img.shields.io/badge/Prisma-5-2d3748?style=flat-square&logo=prisma" alt="Prisma" /></a>
+  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-15-4169e1?style=flat-square&logo=postgresql" alt="PostgreSQL" /></a>
+  <a href="https://github.com/pmndrs/zustand"><img src="https://img.shields.io/badge/Zustand-4-443e38?style=flat-square" alt="Zustand" /></a>
+</p>
 
-See `docs/SYNC.md`, `docs/BACKUP_RESTORE.md`, `docs/PWA.md`, `docs/OFFLINE_MODE.md`.
+---
 
-## Build
+## Snapshot
 
-```powershell
-npm run build          # frontend + backend
-npm run check:all      # typecheck + tests + build
-npm run icons:pwa      # regenerate PNG icons
+SanzzOS is a personal productivity and placement preparation system built around one idea: your career data should be useful every day without forcing you into a cloud account first. The app runs locally, stores core tracker data in the browser, and can optionally use the backend, PostgreSQL, and provider-backed AI features when you configure them.
+
+The project roadmap is now complete through **v2.2**, including the daily coding reset and backup import restore fixes.
+
+| Area | What it does |
+| --- | --- |
+| Today Workspace | Daily tasks, focus sessions, energy mode planning, streaks, XP, and quick execution loops. |
+| Daily Coding | CodeChef Java and SkillRack daily targets with shared Today state, XP rules, and LeetCode scheduling. |
+| Placement OS | Company tracking, applications, interviews, resumes, online assessments, and readiness views. |
+| Learning OS | Structured learning paths, skill progress, notes, milestones, and analytics. |
+| German Academy | Local German study workspace with lessons, vocabulary, practice, and review flow. |
+| Shayla AI | Optional AI mentor/chat layer through the backend when provider keys are configured. |
+| Backup System | Export/import support designed to restore XP, streaks, and coding state reliably. |
+| Portfolio Mode | Recruiter-safe public/demo surface that avoids exposing private local data. |
+
+---
+
+## v2.2 Milestone Board
+
+| Version | Status | Focus |
+| --- | --- | --- |
+| v2.2 | Complete | Daily coding reset, CodeChef/SkillRack Today state, LeetCode start-date logic, XP cap rules, and backup import XP/streak restore reliability. |
+| v2.1 | Complete | Backup/snapshot stability, local-first sync hardening, dashboard resilience, and safer restore behavior. |
+| v2.0 | Complete | Career OS workspace foundation: Today, Placement OS, Learning OS, German Academy, analytics, portfolio, and AI-assisted planning. |
+| v1.7.x | Stable base | Local-first fallback behavior, backend/database guardrails, and offline-ready shell. |
+
+### v2.2 Daily Coding Rules
+
+- CodeChef Java: 5 problems per day.
+- SkillRack: 5 problems per day.
+- LeetCode: scheduled to become active on August 1, 2026.
+- Active DSA XP: reset for the new plan and capped at 125 XP per active day.
+- Today Workspace: daily coding progress appears in the same daily execution surface.
+- Backup Import: restored backups rehydrate XP, streaks, and coding progress instead of only importing raw data.
+
+---
+
+## How SanzzOS Thinks
+
+```mermaid
+flowchart LR
+    User["You"] --> Today["Today Workspace"]
+    Today --> Coding["Daily Coding"]
+    Today --> Focus["Focus Timer"]
+    Today --> Tasks["Task Plan"]
+
+    Coding --> XP["XP + Streak Engine"]
+    Tasks --> XP
+    Focus --> XP
+
+    XP --> Analytics["Analytics + Readiness"]
+    Analytics --> Placement["Placement OS"]
+    Analytics --> Learning["Learning OS"]
+    Analytics --> German["German Academy"]
+
+    Today --> Backup["Backup Export / Import"]
+    Backup --> Restore["XP + Streak Restore"]
+
+    Backend["Optional Backend"] --> Database["PostgreSQL + Prisma"]
+    Backend --> AI["Provider-backed Shayla AI"]
+    Today -. optional sync .-> Backend
 ```
 
-Normal daily use: run `Start-Sanzz-OS.bat` or `npm run dev:all`. Prisma validate/migrate only needed when changing database schema or first-time DB setup — not required for every startup.
+The frontend is the main daily driver. The backend adds optional account/snapshot/database and AI proxy features. If the backend or database is not running, the local tracker can still be useful.
 
-## v1.6.1 Changelog (Learning OS + Analytics 2.0)
+---
 
-- Added Learning OS with default career learning paths, session logging, mastery tracking, revision queue, weak areas, milestones, and recommendations.
-- Added Analytics 2.0 with study hours, XP, skill breakdown, readiness, burnout, completion, and focus balance signals.
-- Integrated Learning OS signals into Smart Planner, AI Brain, dashboard widgets, and AI commands.
-- Kept persistence local-first with versioned keys: `sanzz_os_learning_os_v1`, `sanzz_os_learning_sessions_v1`, `sanzz_os_revision_items_v1`, and `sanzz_os_analytics_cache_v1`.
+## Tech Stack
 
-## v1.6.0 Changelog (AI Brain + Smart Planner + Placement OS)
+| Layer | Tools |
+| --- | --- |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS |
+| State | Zustand with persisted local stores |
+| Backend | Node.js, Express, TypeScript |
+| Database | PostgreSQL, Prisma |
+| Desktop/local tooling | Windows batch scripts, Docker Compose, npm workspaces |
+| Offline support | PWA manifest, service worker, local-first fallback docs |
+| AI | Backend-proxied provider support when configured; tracker remains usable without keys |
 
-- Added AI Brain career context summaries for Sanju's B.E. ECE placement path.
-- Added Smart Daily Planner with Normal, Busy, Low Energy, Placement Sprint, Project Build, and Revision modes.
-- Added Placement OS with target companies, application statuses, OA/interview surfaces, resume checklist, and readiness scoring.
-- Added dashboard intelligence widgets and AI command intents for the new systems.
-- Kept persistence local-first with versioned keys: `sanzz_os_ai_brain_v1`, `sanzz_os_smart_planner_v1`, and `sanzz_os_placement_os_v1`.
+---
 
-## v1.4.1 Changelog (Stabilization & UX Audit Release)
+## Quick Start
 
-- **Landing Page & Routing**: Rebuilt a custom state popstate router to synchronize pathname changes with UI store states. Public routes (`/`, `/landing`, `/portfolio`) load immediately without rendering the AppShell.
-- **Cinematic Landing Page**: Redesigned `LandingPage.tsx` with high-impact recruiter-ready sections (Hero, badge, problems, solutions, modules, tech stack, and portfolio CTA) without private details or sidebar.
-- **Premium Static Background**: Disabled childish mouse-aura canvas and particle grids. Implemented a static HSL dark gradient and subtle line-grid background inside `NeonAtmosphere.tsx`.
-- **Shayla AI Chat Stabilization**: Fixed height collapse bugs in chat viewport. Embedded model status details, dynamic token context usage indicators, and real-time response latency tracker under the Shayla topbar.
-- **XSS Sanitization & Security Hardening**: Implemented robust string and URL sanitizers inside `securityUtils.ts` to secure all Markdown rendering points.
-- **Global Toast Notification System**: Added global toast store and UI overlay for error/success notifications.
-- **State Versioning & Fallbacks**: Configured state version `141` on all local persisted stores with schema recovery fallbacks. Added a System Health Maintenance card to Settings.
-- **Lazy Loading**: Integrated React Suspense and dynamic imports for heavy subpages, decreasing bundle load footprint.
-- **Keyboard Navigation Shortcuts**: Built a global shortcut manager Hook (`useGlobalShortcuts.ts`) and modal dialog for quick keys (e.g. typing `g` then `d` to go to Dashboard).
-- **UX Refinements**: Collapsible Daily Briefing logs, optional German tracker hidden under expander card, compact mock interview counters, status legend on calendar, and categorized drawer tasks.
-
-## v1.1 Changelog
-
-- Stabilized the German module with 30 lessons, a lesson drawer, XP, streaks, notes, quizzes, and Shayla lesson help.
-- Added Shayla AI Mentor as the consistent AI identity across German, Roadmap, Today, Overview, Resume, Projects, Reports, and Settings.
-- Hardened Groq backend-only integration with status, test, chat, streaming, fallback, and friendly error handling.
-- Fixed Settings health checks and sync backup prototype false positives.
-- Polished Roadmap filtering so topic filters come from the actual 180-day / 360-problem roadmap.
-- Cleaned DSA Tracker and SkillRack labels for daily use.
-
-## Stack
-
-- Frontend: React, TypeScript, Vite, Tailwind CSS, Zustand
-- Backend: Node.js, Express, TypeScript
-- Database: PostgreSQL in Docker
-- ORM: Prisma
-- AI: Groq via backend proxy
-
-## Prerequisites
-
-1. Install WSL 2 on Windows.
-2. Install Ubuntu 24.04 in WSL.
-3. Install Docker Desktop.
-4. Enable Docker Desktop's WSL 2 backend.
-5. Verify the tools:
+### 1. Clone the repo
 
 ```powershell
-docker --version
-docker compose version
-wsl --list --verbose
+git clone https://github.com/Sanjay190806/Career_OS.git
+cd Career_OS
 ```
 
-## Local Setup
-
-### 1. Install dependencies
-
-From the project root:
+### 2. Install dependencies
 
 ```powershell
 npm install
 ```
 
-### 2. Start PostgreSQL
-
-From the project root:
+If PowerShell blocks npm scripts on Windows, use:
 
 ```powershell
-docker compose up -d
+cmd /c npm install
 ```
 
-The database runs with:
+### 3. Start the app
 
-- host: `localhost`
-- port: `5432`
-- database: `sanju_career_os`
-- username: `postgres`
-- password: `password`
-
-### 3. Create the backend env file
-
-From the `backend` directory:
+Fast path:
 
 ```powershell
-Copy-Item .env.example .env
+.\Start-Sanzz-OS.bat
 ```
 
-Edit `backend/.env` and add your real `GROQ_API_KEY`.
-The Groq key must stay in `backend/.env` and never be added to the frontend.
+Manual path:
 
-Correct:
-
-```env
-GROQ_API_KEY="gsk_xxxxxxxxx"
+```powershell
+cmd /c npm run dev:all
 ```
 
-Do not include `Bearer` in the env file.
+Typical local URLs:
 
-### 4. Prisma workflow
+| Service | URL |
+| --- | --- |
+| Frontend | `http://localhost:5173` |
+| Backend API | `http://localhost:3001` |
 
-Run Prisma commands from the `backend` directory so Prisma reads `backend/.env`:
+PostgreSQL/backend setup is mainly needed for account, cloud/snapshot, database, or backend AI features. For pure local tracking, the frontend can still carry the main workflow.
+
+---
+
+## Full Local Setup
+
+### Start PostgreSQL
+
+```powershell
+cmd /c npm run db:up
+```
+
+### Configure backend env
+
+```powershell
+cd backend
+copy .env.example .env
+```
+
+Update `backend/.env` only with your own local values. Keep real secrets out of git.
+
+### Initialize Prisma
 
 ```powershell
 cd backend
@@ -142,142 +181,127 @@ npx prisma migrate dev --name init
 npm run prisma:seed
 ```
 
-### 5. Run the app
+---
 
-From the project root:
+## Environment
 
-```powershell
-npm run dev:frontend
-```
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | For backend database features | PostgreSQL connection string used by Prisma. |
+| `JWT_SECRET` | For auth/session features | Use a strong local secret. |
+| `GROQ_API_KEY` or provider key | Optional | Enables provider-backed Shayla AI. |
+| Frontend API URL vars | Optional | Only needed when changing default local API routing. |
 
-In another terminal:
+Use the example files as templates:
 
-```powershell
-npm run dev:backend
-```
+- [backend/.env.example](backend/.env.example)
+- [frontend/.env.example](frontend/.env.example)
+
+---
 
 ## Useful Commands
 
-```powershell
-npm run build --workspace=frontend
-npm run build --workspace=backend
-npm run db:up
-npm run db:down
-npm run db:logs
-npm run db:restart
+| Command | Purpose |
+| --- | --- |
+| `cmd /c npm run dev:all` | Start frontend and backend together. |
+| `cmd /c npm run dev:frontend` | Start only the Vite frontend. |
+| `cmd /c npm run dev:backend` | Start only the Express backend. |
+| `cmd /c npm run build` | Build the project. |
+| `cmd /c npm run test` | Run test suites. |
+| `cmd /c npm run check:all` | Run broader validation checks. |
+| `cmd /c npm run prisma:validate` | Validate Prisma schema. |
+| `cmd /c npm run db:up` | Start local PostgreSQL through Docker Compose. |
+| `cmd /c npm run db:down` | Stop local PostgreSQL. |
+
+---
+
+## Project Map
+
+```text
+SanzzOS/
+|-- backend/                  Express API, Prisma, auth, sync, AI proxy
+|-- data/                     Shared datasets and roadmap content
+|-- docs/                     Setup, local mode, offline mode, architecture notes
+|-- electron/                 Desktop app wrapper work
+|-- frontend/                 React + Vite client
+|   |-- public/               PWA manifest, icons, offline shell
+|   `-- src/                  Components, stores, routing, feature modules
+|-- Start-Sanzz-OS.bat        Windows one-click starter
+|-- Stop-Sanzz-OS.bat         Windows helper to stop local processes
+|-- docker-compose.yml        Local PostgreSQL service
+`-- package.json              Workspace scripts
 ```
 
-## Health Checks
+---
 
-- Frontend: `http://localhost:5173`
-- Backend health: `http://localhost:5000/api/health`
-- AI status: `http://localhost:5000/api/ai/status`
+## Backup and Restore
 
-Use Settings to run:
+SanzzOS treats backups as more than a file download. A restored backup should bring back the daily operating state you care about:
 
-- Test Groq
-- Test Shayla
-- Clear AI history
+- XP totals
+- Streak state
+- Daily coding progress
+- Today Workspace progress
+- learning and placement data
+- local-first user settings
 
-## German Module
+The v2.2 restore work specifically protects against the bug where imported backup data existed but XP/streak state did not fully rehydrate in the live app session.
 
-Open the German route from the sidebar. Lesson 1 is unlocked by default, and each completed lesson unlocks the next one. Completed lessons remain reviewable. The lesson drawer includes vocabulary, grammar, examples, a mini quiz, notes, Ask Shayla, and Complete Lesson.
+---
 
-## Shayla AI Mentor
+## Privacy Model
 
-Shayla is the app's German learning companion, Java DSA guide, resume reviewer, project coach, and daily accountability partner. The frontend never stores Groq keys; all AI requests go through the backend `/api/ai/*` endpoints.
+- Local tracker data stays on your machine by default.
+- `.env` files are ignored and should never be committed.
+- Public/demo/portfolio surfaces should use safe sample data, not private application notes.
+- Provider-backed AI is optional and only works when configured through backend secrets.
+- The app remains useful without AI keys.
 
-## Troubleshooting
+---
 
-### Docker not recognized
+## Documentation
 
-Cause: Docker Desktop is not installed or not on PATH.
+| Guide | Link |
+| --- | --- |
+| Setup | [docs/SETUP.md](docs/SETUP.md) |
+| Local mode | [docs/LOCAL_MODE.md](docs/LOCAL_MODE.md) |
+| Offline mode | [docs/OFFLINE_MODE.md](docs/OFFLINE_MODE.md) |
+| Architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Testing | [docs/TESTING.md](docs/TESTING.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
 
-Fix:
+---
 
-1. Install Docker Desktop.
-2. Restart Windows.
-3. Open Docker Desktop.
-4. Verify `docker --version`.
+## Development Notes
 
-### WSL has no distributions
+This repo is optimized for direct local iteration:
 
-Fix:
+1. Run the app locally.
+2. Make a focused feature change.
+3. Verify the exact workflow in the browser.
+4. Run the relevant build/test command.
+5. Commit only the files related to that change.
 
-```powershell
-wsl --install -d Ubuntu-24.04
-```
+For Windows, `cmd /c npm ...` is often the most reliable way to avoid PowerShell execution policy friction.
 
-### `DATABASE_URL` not found
+---
 
-Fix:
+## Roadmap After v2.2
 
-```powershell
-cd backend
-Copy-Item .env.example .env
-```
+- Improve visual QA for mobile dashboards.
+- Add stronger backup diff previews before import.
+- Expand recruiter-safe portfolio exports.
+- Continue tightening AI command preview/apply flows.
+- Add more focused tests around daily XP, streaks, and import migrations.
 
-### Prisma EPERM on Windows
+---
 
-Fix:
+## License
 
-```powershell
-taskkill /F /IM node.exe
-Remove-Item -Recurse -Force .\node_modules.prisma
-cd backend
-npx prisma generate
-```
+This project is released under the [MIT License](LICENSE).
 
-### Frontend looks raw or unstyled
+---
 
-Check:
+## Credits
 
-1. `frontend/src/main.tsx` imports `./styles/globals.css`.
-2. `frontend/tailwind.config.js` includes `./src/**/*.{js,ts,jsx,tsx}`.
-3. `frontend/postcss.config.js` exists and loads Tailwind + Autoprefixer.
-
-### Groq is not working
-
-Fix:
-
-1. Add a real `GROQ_API_KEY` in `backend/.env`.
-2. Restart the backend.
-3. Check `http://localhost:5000/api/ai/status`.
-4. Use Settings to test Groq and Shayla.
-
-### German page compile error
-
-Ensure `frontend/src/data/germanLessons.ts` exists and exports `GERMAN_LESSONS`.
-
-### Settings page crash
-
-Ensure `frontend/src/services/syncService.ts` exports both `checkBackendHealth` and the compatibility health method used by Settings.
-
-### Sync rejects text containing prototype
-
-v1.1 scans dangerous object keys only. Text values like `prototype dashboard` are allowed. If sync still fails, inspect the JSON keys for `__proto__`, `constructor`, or `prototype`.
-
-### Groq rejected the API key
-
-Fix:
-
-1. Verify the key starts with `gsk_`.
-2. Do not include `Bearer` in the env file.
-3. Remove spaces or newlines around the key.
-4. Make sure you edited `backend/.env`, not `.env.example`.
-5. Restart the backend.
-6. Create a fresh Groq key if needed.
-7. Test again with `POST /api/ai/test`.
-
-### Port already in use
-
-Fix:
-
-1. Stop the process using the port.
-2. Or change `PORT` in `backend/.env`.
-
-## Notes
-
-- Do not commit `backend/.env`.
-- Keep Zustand persistence enabled.
-- Keep the Groq API key backend-only.
+Built by **Sanjay** as a personal career operating system: practical, local-first, privacy-aware, and designed around real daily progress.
