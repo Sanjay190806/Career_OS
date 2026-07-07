@@ -1,0 +1,11 @@
+{
+  "installCommand": "npm install",
+  "buildCommand": "npm run build --workspace=frontend",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    {
+      "source": "/((?!assets/|icons/|manifest.webmanifest|offline.html|sw.js).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
