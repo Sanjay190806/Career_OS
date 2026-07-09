@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # SanzzOS
 
 <p align="center">
@@ -172,15 +173,628 @@ copy .env.example .env
 Update `backend/.env` only with your own local values. Keep real secrets out of git.
 
 ### Initialize Prisma
+=======
+# Sanju Career OS
+
+![Version](https://img.shields.io/badge/version-1.7.2-blue)
+![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20TypeScript-61dafb)
+![Backend](https://img.shields.io/badge/backend-Express%20%2B%20Prisma-111827)
+![Storage](https://img.shields.io/badge/storage-local--first-16a34a)
+![Database](https://img.shields.io/badge/database-PostgreSQL-336791)
+![PWA](https://img.shields.io/badge/PWA-installable-f59e0b)
+![AI](https://img.shields.io/badge/AI-Shayla%20Mentor-a855f7)
+![License](https://img.shields.io/badge/license-MIT-informational)
+
+> A local-first career operating system for placement preparation, Java coding discipline, SkillRack practice, SQL, CS core, German learning, resume/project tracking, AI-assisted planning, analytics, backup restore, and recruiter-safe portfolio mode.
+
+Sanju Career OS is designed as a personal execution dashboard rather than a generic todo app. It keeps daily learning, coding practice, projects, resume improvements, interview preparation, and long-term placement readiness in one system. The app works locally by default, keeps sensitive AI keys out of the frontend, and supports manual backups so progress can move safely between browsers or devices.
+
+---
+
+## Visual Overview
+
+![React](https://img.shields.io/badge/React-18.3.1-61dafb?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?style=for-the-badge&logo=typescript)
+![Vite](https://img.shields.io/badge/Vite-5.x-646cff?style=for-the-badge&logo=vite)
+![Tailwind](https://img.shields.io/badge/Tailwind-3.x-38bdf8?style=for-the-badge&logo=tailwindcss)
+![Zustand](https://img.shields.io/badge/Zustand-State-111827?style=for-the-badge)
+![Node](https://img.shields.io/badge/Node.js-Backend-339933?style=for-the-badge&logo=nodedotjs)
+![Express](https://img.shields.io/badge/Express-API-000000?style=for-the-badge&logo=express)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2d3748?style=for-the-badge&logo=prisma)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169e1?style=for-the-badge&logo=postgresql)
+
+```mermaid
+flowchart LR
+  User["Sanju"] --> Today["Today Command Center"]
+  User --> Learning["Learning OS"]
+  User --> Placement["Placement OS"]
+  User --> German["German Academy"]
+  User --> Resume["Resume Studio"]
+  User --> Projects["Project Tracker"]
+  Today --> Store["Zustand Local State"]
+  Learning --> Store
+  Placement --> Store
+  German --> Store
+  Resume --> Store
+  Projects --> Store
+  Store --> Backup["Backup / Restore JSON"]
+  Store --> Analytics["Analytics + Readiness"]
+  Store --> Portfolio["Recruiter Safe Portfolio"]
+  Store --> Backend["Express API"]
+  Backend --> Prisma["Prisma"]
+  Prisma --> Postgres["PostgreSQL"]
+  Backend --> AI["Shayla AI Provider Router"]
+```
+
+---
+
+## What This App Solves
+
+Most career prep gets scattered across notebooks, spreadsheets, LeetCode, SkillRack, resume drafts, project folders, AI chats, and random reminders. Sanju Career OS turns that scattered work into a single daily command center.
+
+It helps answer:
+
+- What should I do today?
+- Did I complete my coding target?
+- Is my streak safe?
+- How much XP did I earn?
+- What progress is saved locally?
+- What should I revise next?
+- Which placement areas are weak?
+- What is ready to show recruiters?
+- Can I restore my progress in another browser?
+
+---
+
+## Current Release Snapshot
+
+| Area | Status |
+| --- | --- |
+| App version | `v1.7.2` |
+| Primary mode | Local-first personal tracker |
+| Frontend | React, TypeScript, Vite, Tailwind |
+| Backend | Express, TypeScript |
+| Database | PostgreSQL through Prisma |
+| AI | Backend-routed Shayla mentor with provider status |
+| Backup | Full localStorage backup registry with safe restore |
+| PWA | Installable shell with service worker |
+| Privacy posture | Secrets stay backend-only; portfolio uses safe/synthetic public data |
+
+---
+
+## Core Modules
+
+### 1. Today Command Center
+
+The Today page is the daily execution cockpit. It includes:
+
+- Daily Coding target
+- CodeChef Java Daily: `0/5` to `5/5`
+- SkillRack Daily: `0/5` to `5/5`
+- LeetCode scheduled from August 1, 2026
+- Daily agenda
+- Focus timer
+- Mood and energy tracking
+- Reflection notes
+- CS Core mission
+- Aptitude, SQL, project, and mock interview counters
+- Streak protection and no-zero-day rescue logic
+
+```mermaid
+flowchart TD
+  Start["Open Today"] --> Coding["Daily Coding Target"]
+  Coding --> CodeChef["CodeChef Java 5 Problems"]
+  Coding --> SkillRack["SkillRack 5 Problems"]
+  Coding --> LeetCode["LeetCode starts Aug 1, 2026"]
+  CodeChef --> SharedState["Shared Daily Coding State"]
+  SkillRack --> SharedState
+  SharedState --> XP["Award XP Once"]
+  SharedState --> Dashboard["Dashboard Updates"]
+  SharedState --> ActivityLogger["Activity Logger Sync"]
+  SharedState --> CommandCenter["Command Center Sync"]
+```
+
+### 2. DSA Restart System
+
+The official DSA journey is configured to restart cleanly on:
+
+```txt
+2026-08-01
+```
+
+Before that date:
+
+- CodeChef Java and SkillRack are active daily coding targets.
+- LeetCode remains visible but does not count toward official DSA streak.
+- Active DSA XP is reset to `0`.
+- General XP and unrelated progress are preserved.
+
+On and after that date:
+
+- LeetCode becomes active.
+- Official DSA streak can begin.
+- DSA-specific progress can start from the first program/problem.
+
+```mermaid
+stateDiagram-v2
+  [*] --> PreStart: before 2026-08-01
+  PreStart --> OfficialDSA: on 2026-08-01
+  PreStart: CodeChef Java active
+  PreStart: SkillRack active
+  PreStart: LeetCode scheduled
+  PreStart: activeDsaXp = 0
+  OfficialDSA: LeetCode active
+  OfficialDSA: official DSA streak active
+  OfficialDSA: DSA XP begins from restart
+```
+
+### 3. Learning OS
+
+Learning OS tracks structured learning paths, revision items, mastery, study sessions, weak areas, and recommendations.
+
+Useful for:
+
+- AI/ML learning
+- Product learning
+- CS fundamentals
+- Technical revision
+- Long-term skill consistency
+
+### 4. Placement OS
+
+Placement OS focuses on target companies, readiness, online assessments, interviews, resume work, company-specific preparation, and placement strategy.
+
+```mermaid
+flowchart LR
+  Companies["Target Companies"] --> Strategy["Placement Strategy"]
+  Strategy --> Prep["Daily Prep"]
+  Prep --> OA["OA Attempts"]
+  Prep --> Interviews["Mock Interviews"]
+  Prep --> Resume["Resume Readiness"]
+  Prep --> Projects["Project Proof"]
+  OA --> Readiness["Readiness Score"]
+  Interviews --> Readiness
+  Resume --> Readiness
+  Projects --> Readiness
+```
+
+### 5. German Academy
+
+The German module supports A1-B1 learning workflow:
+
+- Lessons
+- Vocabulary
+- Notes
+- Quizzes
+- Speaking/listening counters
+- German XP
+- German streaks
+- Shayla lesson help
+
+### 6. Shayla AI Mentor
+
+Shayla is the app's AI mentor identity for:
+
+- Daily planning
+- Java DSA guidance
+- German learning
+- Resume review
+- Project coaching
+- Interview prep
+- Recovery suggestions
+
+Important security rule:
+
+```txt
+The frontend never stores provider API keys.
+AI provider keys belong only in backend/.env.
+```
+
+### 7. Backup and Restore
+
+The app includes a full local backup system for moving progress between browsers.
+
+Backup export includes:
+
+- `userProfile`
+- `settings`
+- `xpState`
+- `streakState`
+- `dailyTaskState`
+- `activityLogs`
+- `completedTasks`
+- `dailyLogs`
+- `careerProgress`
+- `skillProgress`
+- `projectProgress`
+- `dashboardStats`
+- version metadata
+- export timestamp
+
+Backup import now:
+
+- validates the file
+- saves a pre-restore snapshot
+- imports recognized storage keys
+- restores global XP
+- restores or recalculates streak
+- restores daily logs and completed task history
+- refreshes live dashboard state immediately
+- keeps only DSA-specific active XP reset to `0`
+
+```mermaid
+sequenceDiagram
+  participant A as Browser A
+  participant File as Backup JSON
+  participant B as Browser B
+  participant Store as Zustand Store
+  participant UI as Dashboard
+
+  A->>File: Export local backup
+  File->>B: Import backup
+  B->>B: Validate schema
+  B->>B: Save pre-restore snapshot
+  B->>B: Restore localStorage keys
+  B->>B: Normalize career state
+  B->>Store: Rehydrate live app state
+  Store->>UI: Update XP, streak, tasks, logs
+  UI->>B: Shows restored progress immediately
+```
+
+---
+
+## Architecture
+
+### High-Level System Architecture
+
+```mermaid
+flowchart TB
+  subgraph Client["Frontend - React + TypeScript + Vite"]
+    Router["App Router"]
+    Pages["Pages and Modules"]
+    Components["UI Components"]
+    Stores["Zustand Stores"]
+    LocalStorage["Local Persistence"]
+    PWA["PWA Service Worker"]
+  end
+
+  subgraph Services["Frontend Services"]
+    Backup["Backup Registry"]
+    Sync["Sync Service"]
+    Analytics["Analytics Services"]
+    Planner["Smart Planner"]
+    Commands["Command Parser"]
+  end
+
+  subgraph Server["Backend - Express + TypeScript"]
+    Api["REST API"]
+    AiProxy["AI Provider Router"]
+    Auth["Auth + Account Routes"]
+    CloudSync["Cloud Snapshot Routes"]
+  end
+
+  subgraph Data["Data Layer"]
+    Prisma["Prisma ORM"]
+    Postgres["PostgreSQL"]
+    JsonBackup["Manual JSON Backups"]
+  end
+
+  Router --> Pages
+  Pages --> Components
+  Pages --> Stores
+  Components --> Stores
+  Stores --> LocalStorage
+  Stores --> Services
+  Services --> JsonBackup
+  Pages --> Api
+  Api --> AiProxy
+  Api --> Auth
+  Api --> CloudSync
+  Api --> Prisma
+  Prisma --> Postgres
+  PWA --> Client
+```
+
+### State Architecture
+
+```mermaid
+flowchart LR
+  CareerStore["useCareerStore"] --> DailyLogs["dailyLogs"]
+  CareerStore --> XP["xp / level"]
+  CareerStore --> DSA["dailyCodingByDate"]
+  CareerStore --> German["German state"]
+  CareerStore --> Resume["Resume state"]
+  CareerStore --> Projects["Project progress"]
+  CareerStore --> Skills["SQL / Aptitude / CS Core"]
+  CareerStore --> Backup["Backup Export"]
+  Backup --> Restore["Backup Import"]
+  Restore --> Rehydrate["Live Store Rehydration"]
+  Rehydrate --> Dashboard["Dashboard"]
+```
+
+### Daily Coding Shared State
+
+```mermaid
+erDiagram
+  DAILY_CODING_STATE ||--|| CODECHEF_JAVA_DAILY : contains
+  DAILY_CODING_STATE ||--|| SKILLRACK_DAILY : contains
+  DAILY_CODING_STATE ||--|| LEETCODE_DAILY : contains
+  DAILY_CODING_STATE ||--|| DAILY_CODING_BONUS : awards
+
+  DAILY_CODING_STATE {
+    string date
+    boolean dailyCodingBonusAwarded
+    number dailyCodingBonusXp
+    string officialDsaStartDate
+  }
+
+  CODECHEF_JAVA_DAILY {
+    string id
+    string label
+    number target
+    number count
+    boolean completed
+    boolean xpAwarded
+    number xp
+  }
+
+  SKILLRACK_DAILY {
+    string id
+    string label
+    number target
+    number count
+    boolean completed
+    boolean xpAwarded
+    number xp
+  }
+
+  LEETCODE_DAILY {
+    string id
+    string label
+    string startsAt
+    boolean active
+  }
+```
+
+### Backup Restore Architecture
+
+```mermaid
+flowchart TD
+  Import["Import Backup JSON"] --> Validate["Validate Backup"]
+  Validate --> Reject["Reject Invalid / Secret-Like Payload"]
+  Validate --> Snapshot["Save Pre-Restore Snapshot"]
+  Snapshot --> RestoreKeys["Restore Known Storage Keys"]
+  RestoreKeys --> Normalize["Normalize Career Store"]
+  Normalize --> XPDirect{"XP stored directly?"}
+  XPDirect -->|Yes| UseXP["Use imported XP"]
+  XPDirect -->|No| DeriveXP["Recalculate XP from daily logs"]
+  UseXP --> StreakDirect{"Streak stored directly?"}
+  DeriveXP --> StreakDirect
+  StreakDirect -->|Yes| UseStreak["Use imported streak"]
+  StreakDirect -->|No| DeriveStreak["Recalculate streak from completed logs"]
+  UseStreak --> DSAReset["Reset only active DSA XP/streak"]
+  DeriveStreak --> DSAReset
+  DSAReset --> Rehydrate["Rehydrate Zustand store"]
+  Rehydrate --> Dashboard["Dashboard updates immediately"]
+```
+
+---
+
+## Repository Structure
+
+```txt
+Sanju-Career-OS/
+  backend/
+    prisma/
+    src/
+      controllers/
+      routes/
+      services/
+      ai/
+      utils/
+    package.json
+  frontend/
+    public/
+    src/
+      app/store/
+      components/
+      data/
+      hooks/
+      pages/
+      routes/
+      services/
+      types/
+      utils/
+    tests/
+    package.json
+  docs/
+  electron/
+  scripts/
+  docker-compose.yml
+  package.json
+  README.md
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend framework | React 18 |
+| Language | TypeScript |
+| Build tool | Vite |
+| Styling | Tailwind CSS |
+| State | Zustand persist stores |
+| Charts/visuals | Recharts, custom components |
+| Icons | Lucide React |
+| Backend | Node.js, Express |
+| ORM | Prisma |
+| Database | PostgreSQL |
+| AI route | Backend proxy/provider router |
+| PWA | Manifest + service worker |
+| Tests | Node test runner |
+
+---
+
+## Local-First Data Model
+
+Sanju Career OS is intentionally local-first.
+
+```mermaid
+flowchart LR
+  UserAction["User action"] --> Store["Zustand Store"]
+  Store --> LocalStorage["Browser localStorage"]
+  LocalStorage --> UI["Dashboard / Today / Analytics"]
+  LocalStorage --> Backup["Export Backup JSON"]
+  Backup --> AnotherBrowser["Import into another browser"]
+  AnotherBrowser --> Rehydrate["Rehydrate live state"]
+```
+
+Most personal progress works without accounts or a database. Backend and PostgreSQL are needed for account/cloud snapshot features and API-backed AI/status routes.
+
+---
+
+## Setup Options
+
+### Option A: Fast Local Tracker Mode
+
+Use this when you only want to run the frontend tracker quickly.
+
+```powershell
+npm install
+npm run dev:frontend
+```
+
+Open:
+
+```txt
+http://localhost:5173
+```
+
+### Option B: Full Frontend + Backend
+
+Use this when you want backend routes, AI status, sync endpoints, and database-backed features.
+
+```powershell
+npm install
+npm run db:up
+npm run dev:all
+```
+
+Frontend:
+
+```txt
+http://localhost:5173
+```
+
+Backend health:
+
+```txt
+http://localhost:5000/api/health
+```
+
+### Option C: Windows Batch Startup
+
+You can also run:
+
+```powershell
+.\Start-Sanzz-OS.bat
+```
+
+---
+
+## Prerequisites
+
+Required for frontend-only mode:
+
+- Node.js
+- npm
+
+Required for full backend/database mode:
+
+- Docker Desktop
+- WSL 2 recommended on Windows
+- PostgreSQL container through `docker compose`
+
+Verify tools:
+
+```powershell
+node --version
+npm --version
+docker --version
+docker compose version
+wsl --list --verbose
+```
+
+---
+
+## Environment Setup
+
+Create backend environment file:
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
 ```powershell
 cd backend
-npx prisma validate
-npx prisma generate
-npx prisma migrate dev --name init
+Copy-Item .env.example .env
+```
+
+Add secrets only to:
+
+```txt
+backend/.env
+```
+
+Example:
+
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/sanju_career_os?schema=public"
+GROQ_API_KEY="gsk_xxxxxxxxx"
+PORT=5000
+```
+
+Security rules:
+
+- Do not commit `backend/.env`.
+- Do not put API keys in frontend env files.
+- Do not add `Bearer` before the Groq key.
+- Keep real provider keys local/private.
+
+---
+
+## Database and Prisma
+
+Start PostgreSQL:
+
+```powershell
+npm run db:up
+```
+
+Validate Prisma:
+
+```powershell
+npm run prisma:validate
+```
+
+Generate Prisma client:
+
+```powershell
+npm run prisma:generate
+```
+
+Run migration:
+
+```powershell
+npm run prisma:migrate -- --name init
+```
+
+Seed data:
+
+```powershell
 npm run prisma:seed
 ```
 
+<<<<<<< HEAD
 ---
 
 ## Environment
@@ -198,9 +812,46 @@ Use the example files as templates:
 - [frontend/.env.example](frontend/.env.example)
 
 ---
+=======
+Open Prisma Studio:
 
-## Useful Commands
+```powershell
+npm run prisma:studio
+```
 
+---
+
+## Development Commands
+
+```powershell
+npm install
+npm run dev:frontend
+npm run dev:backend
+npm run dev:all
+```
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
+
+Build commands:
+
+```powershell
+npm run build
+npm run build:frontend
+npm run build:backend
+npm run build:all
+```
+
+Validation commands:
+
+```powershell
+npm run lint
+npm run typecheck
+npm run test
+npm run check:all
+```
+
+Database commands:
+
+<<<<<<< HEAD
 | Command | Purpose |
 | --- | --- |
 | `cmd /c npm run dev:all` | Start frontend and backend together. |
@@ -256,9 +907,165 @@ The v2.2 restore work specifically protects against the bug where imported backu
 - Public/demo/portfolio surfaces should use safe sample data, not private application notes.
 - Provider-backed AI is optional and only works when configured through backend secrets.
 - The app remains useful without AI keys.
+=======
+```powershell
+npm run db:up
+npm run db:down
+npm run db:logs
+npm run db:restart
+npm run db:status
+npm run db:doctor
+```
+
+PWA icons:
+
+```powershell
+npm run icons:pwa
+```
 
 ---
 
+## Feature Matrix
+
+| Feature | Status | Data Location |
+| --- | --- | --- |
+| Today tracker | Active | Zustand + localStorage |
+| CodeChef Java daily | Active | Shared daily coding state |
+| SkillRack daily | Active | Shared daily coding state |
+| LeetCode | Scheduled from Aug 1, 2026 | Daily coding state + roadmap |
+| Global XP | Active | Career store |
+| Active DSA XP | Reset to 0 for restart | Career store |
+| Daily streak | Active | Daily logs + restored streak metadata |
+| German XP/streak | Active | Career store |
+| Backup export | Active | Backup registry |
+| Backup import | Active | Backup registry + live rehydration |
+| AI mentor | Optional provider-backed | Backend API |
+| PWA install | Active | Manifest + service worker |
+| Portfolio mode | Recruiter-safe | Synthetic/sanitized data |
+
+---
+
+## XP Rules
+
+Current daily coding XP:
+
+| Task | XP |
+| --- | ---: |
+| CodeChef Java Daily complete | 50 |
+| SkillRack Daily complete | 50 |
+| Full Daily Coding Target bonus | 25 |
+| Max before Aug 1, 2026 | 125 |
+
+XP is idempotent:
+
+- Completing the same task twice does not duplicate XP.
+- Completing in Command Center and Activity Logger does not duplicate XP.
+- Reaching `5/5` and then checking the checkbox does not duplicate XP.
+- Refreshing the browser does not duplicate XP.
+
+---
+
+## Backup Restore Guarantees
+
+When importing a backup into another browser:
+
+- Global XP should restore.
+- Streak should restore or recalculate.
+- Daily logs should restore.
+- Completed tasks should restore.
+- Dashboard should update immediately.
+- Refresh should preserve restored values.
+- Only DSA-specific active XP/streak should remain reset for the Aug 1 restart.
+
+---
+
+## Health Checks
+
+Frontend:
+
+```txt
+http://localhost:5173
+```
+
+Backend:
+
+```txt
+http://localhost:5000/api/health
+```
+
+AI status:
+
+```txt
+http://localhost:5000/api/ai/status
+```
+
+Sync health:
+
+```txt
+http://localhost:5000/api/sync/health
+```
+
+---
+
+## Testing
+
+Run all frontend tests:
+
+```powershell
+cd frontend
+cmd /c npm test
+```
+
+Run focused backup and DSA tests:
+
+```powershell
+cd frontend
+node --test tests/backupRehydration.test.mjs tests/dailyCodingTasks.test.mjs
+```
+
+Run production build:
+
+```powershell
+cd frontend
+cmd /c npm run build
+```
+
+Full project build:
+
+```powershell
+npm run build
+```
+
+---
+
+## Privacy and Security
+
+Sanju Career OS is built around a privacy-safe workflow:
+
+- Local-first tracking by default.
+- No frontend API key storage.
+- Backups skip secret-like keys and suspicious payloads.
+- Portfolio surfaces should not expose private tracker data.
+- `.env` files must stay private.
+- Public/demo views should use synthetic or sanitized data.
+
+```mermaid
+flowchart TD
+  Secrets["API Keys / Secrets"] --> BackendEnv["backend/.env only"]
+  BackendEnv --> Backend["Backend Provider Router"]
+  Backend --> Frontend["Frontend receives safe responses"]
+  Tracker["Private Tracker Data"] --> LocalStorage["Local Storage"]
+  LocalStorage --> Backup["Backup JSON"]
+  Backup --> Validation["Secret-like payload validation"]
+  Portfolio["Portfolio Mode"] --> SafeData["Synthetic / Sanitized Data"]
+```
+
+---
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
+
+---
+
+<<<<<<< HEAD
 ## Documentation
 
 | Guide | Link |
@@ -287,6 +1094,30 @@ For Windows, `cmd /c npm ...` is often the most reliable way to avoid PowerShell
 ---
 
 ## Roadmap After v2.2
+=======
+### PowerShell blocks npm
+
+Use `cmd /c`:
+
+```powershell
+cmd /c npm run build
+cmd /c npm test
+cmd /c npm run dev
+```
+
+### Docker not recognized
+
+Install Docker Desktop, restart Windows, open Docker Desktop, then check:
+
+```powershell
+docker --version
+docker compose version
+```
+
+### DATABASE_URL not found
+
+Create `backend/.env`:
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
 - Improve visual QA for mobile dashboards.
 - Add stronger backup diff previews before import.
@@ -294,6 +1125,7 @@ For Windows, `cmd /c npm ...` is often the most reliable way to avoid PowerShell
 - Continue tightening AI command preview/apply flows.
 - Add more focused tests around daily XP, streaks, and import migrations.
 
+<<<<<<< HEAD
 ---
 
 ## License
@@ -301,7 +1133,155 @@ For Windows, `cmd /c npm ...` is often the most reliable way to avoid PowerShell
 This project is released under the [MIT License](LICENSE).
 
 ---
+=======
+### Prisma generate fails on Windows
+
+Stop Node processes and regenerate:
+
+```powershell
+taskkill /F /IM node.exe
+cd backend
+npx prisma generate
+```
+
+### Backend port already in use
+
+Find and stop the process using port `5000`, or change `PORT` in `backend/.env`.
+
+### Frontend port already in use
+
+Vite may choose another port automatically. Check the terminal output for the final URL.
+
+### Groq or Shayla AI not working
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
 ## Credits
 
+<<<<<<< HEAD
 Built by **Sanjay** as a personal career operating system: practical, local-first, privacy-aware, and designed around real daily progress.
+=======
+```txt
+backend/.env has GROQ_API_KEY
+backend server is running
+http://localhost:5000/api/ai/status responds
+```
+
+Do not put keys in frontend files.
+
+### Imported backup shows XP as 0
+
+Use the latest restore flow. The backup import system now normalizes and rehydrates career state immediately. If a very old backup has no direct XP, XP is recalculated from daily logs where possible.
+
+---
+
+## GitHub Push Commands
+
+Use these when you are ready to push your current local code to GitHub.
+
+First inspect changes:
+
+```powershell
+git status
+git diff -- README.md
+```
+
+Stage everything:
+
+```powershell
+git add .
+```
+
+Commit:
+
+```powershell
+git commit -m "docs: upgrade project README and update tracker docs"
+```
+
+Push to the current branch:
+
+```powershell
+git push origin HEAD
+```
+
+If you specifically want to push to `main`:
+
+```powershell
+git branch
+git push origin HEAD:main
+```
+
+If Git asks you to set upstream for a new branch:
+
+```powershell
+git push -u origin HEAD
+```
+
+Recommended safer flow before pushing:
+
+```powershell
+git status
+npm run build
+cd frontend
+cmd /c npm test
+cd ..
+git add .
+git commit -m "docs: upgrade README and document architecture"
+git push origin HEAD
+```
+
+---
+
+## Roadmap Ideas
+
+Planned or natural next improvements:
+
+- Add real dashboard screenshots under `docs/assets/readme/`.
+- Add a demo GIF of Today Command Center.
+- Add a public portfolio walkthrough video.
+- Add import/export visual QA checklist.
+- Add release notes per version.
+- Add architecture decision records under `docs/adr/`.
+- Add contributor guide.
+- Add issue templates and PR templates.
+
+---
+
+## Important Notes
+
+- Keep local private env files private.
+- Preserve local-first mode as the default.
+- Do not expose real job applications or private tracker notes in public views.
+- Keep DSA active XP reset separate from global XP.
+- Use backup export before major migrations.
+- Verify build and focused tests before pushing.
+
+---
+
+## Quick Start Summary
+
+```powershell
+npm install
+npm run dev:frontend
+```
+
+Open:
+
+```txt
+http://localhost:5173
+```
+
+For full stack mode:
+
+```powershell
+npm run db:up
+npm run dev:all
+```
+
+For verification:
+
+```powershell
+npm run build
+cd frontend
+cmd /c npm test
+```
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)

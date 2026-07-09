@@ -4,6 +4,25 @@ import { Button } from '../ui/Button';
 import { useCareerStore } from '../../app/store/useCareerStore';
 import { getTodayDay } from '../../utils/dateUtils';
 
+const TIMER_STORAGE_KEY = 'sanzz_os_focus_timer_minutes_v1';
+const DEFAULT_DURATION_MINUTES = 25;
+const MIN_DURATION_MINUTES = 1;
+const MAX_DURATION_MINUTES = 180;
+const PRESET_MINUTES = [15, 25, 45, 60, 90];
+
+function clampDuration(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_DURATION_MINUTES;
+  return Math.min(Math.max(Math.round(value), MIN_DURATION_MINUTES), MAX_DURATION_MINUTES);
+}
+
+function loadSavedDuration(): number {
+  try {
+    return clampDuration(Number(localStorage.getItem(TIMER_STORAGE_KEY)) || DEFAULT_DURATION_MINUTES);
+  } catch {
+    return DEFAULT_DURATION_MINUTES;
+  }
+}
+
 export const FocusHistory: React.FC = () => {
   const userProfile = useCareerStore((s) => s.userProfile);
   const dailyLogs = useCareerStore((s) => s.dailyLogs);
@@ -13,9 +32,9 @@ export const FocusHistory: React.FC = () => {
   const currentLog = dailyLogs[currentDay] || { focusMinutes: 0 };
 
   // Timer specific settings
-  const [seconds, setSeconds] = useState(25 * 60);
+  const [duration, setDuration] = useState(loadSavedDuration);
+  const [seconds, setSeconds] = useState(() => duration * 60);
   const [isActive, setIsActive] = useState(false);
-  const [duration, setDuration] = useState(25); // Target in minutes
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const toggleTimer = () => {
@@ -23,9 +42,16 @@ export const FocusHistory: React.FC = () => {
   };
 
   const handleSelectDuration = (mins: number) => {
-    setIsActive(false);
-    setDuration(mins);
-    setSeconds(mins * 60);
+    const nextDuration = clampDuration(mins);
+    setDuration(nextDuration);
+    if (!isActive) {
+      setSeconds(nextDuration * 60);
+    }
+    try {
+      localStorage.setItem(TIMER_STORAGE_KEY, String(nextDuration));
+    } catch {
+      // Timer remains usable even if localStorage is unavailable.
+    }
   };
 
   const resetTimer = () => {
@@ -78,14 +104,29 @@ export const FocusHistory: React.FC = () => {
       <Card className="flex flex-col items-center justify-center p-6 text-center border-border-accent/15">
         <span className="text-[10px] font-semibold text-textSecondary uppercase tracking-wider mb-2">Focus Mode Study Workspace</span>
         
+        <label className="mb-3 block w-full text-left text-[10px] font-semibold uppercase tracking-wider text-textMuted">
+          Minutes
+          <input
+            type="number"
+            min={MIN_DURATION_MINUTES}
+            max={MAX_DURATION_MINUTES}
+            value={duration}
+            disabled={isActive}
+            onChange={(event) => handleSelectDuration(Number(event.target.value))}
+            className="mt-1 w-full rounded-xl border border-border-subtle bg-bgSurface/60 px-3 py-2 text-center text-sm font-semibold text-textPrimary outline-none focus:border-accentBlue disabled:opacity-60"
+          />
+        </label>
+
         {/* Toggle choices */}
-        <div className="flex gap-2 w-full mb-4">
-          {[25, 50, 90].map((mins) => (
+        <div className="grid grid-cols-5 gap-2 w-full mb-4">
+          {PRESET_MINUTES.map((mins) => (
             <button
               key={mins}
+              type="button"
+              disabled={isActive}
               onClick={() => handleSelectDuration(mins)}
-              className={`flex-1 py-1 rounded-lg border text-[10px] font-bold transition ${
-                duration === mins && !isActive
+              className={`py-1 rounded-lg border text-[10px] font-bold transition disabled:opacity-50 ${
+                duration === mins
                   ? 'bg-accentBlue/20 border-accentBlue text-textPrimary'
                   : 'bg-bgSurface border-border-subtle hover:bg-bg-glass-hover text-textSecondary'
               }`}
@@ -105,7 +146,7 @@ export const FocusHistory: React.FC = () => {
             variant={isActive ? "outline" : "primary"}
             className="flex-1 text-xs py-2 rounded-xl"
           >
-            {isActive ? "Pause Session" : "Start Session"}
+            {isActive ? "Pause Session" : `Start ${duration}m`}
           </Button>
           <Button
             onClick={resetTimer}

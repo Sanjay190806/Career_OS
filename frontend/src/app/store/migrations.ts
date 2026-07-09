@@ -1,4 +1,5 @@
 import { logMigration } from '../../utils/stateMigrationUtils';
+<<<<<<< HEAD
 import { normalizeDailyCodingState, toLocalDateKey } from '../../utils/dailyCodingUtils';
 import { getDateForDay } from '../../utils/dateUtils';
 
@@ -90,6 +91,9 @@ function migrateDailyCodingState(state: any) {
 
   return next;
 }
+=======
+import { migrateDailyCodingState } from '../../utils/dailyCodingTasks.mjs';
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
 export function runMigrationForStore(storeName: string, state: any, version: number | undefined): any {
   try {
@@ -165,9 +169,14 @@ export function runMigrationForStore(storeName: string, state: any, version: num
         dsaPatternMastery: {},
         ...migrated
       };
+<<<<<<< HEAD
       migrated = resetSeededCareerDefaults(migrated);
       migrated = migrateDailyCodingState(migrated);
       notes = 'Merged placement execution targets defaults, removed seeded demo career data, and normalized daily coding tasks';
+=======
+      migrated = migrateDailyCodingState(migrated);
+      notes = 'Merged placement execution targets defaults and reset active DSA tracking for Aug 1 restart';
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
     } else if (storeName === 'sanzz_os_calendar_events_v1') {
       migrated = {
         events: [],

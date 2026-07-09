@@ -7,15 +7,12 @@ import { pathToSection, sectionToPath } from '../utils/navigation';
 import { useAuthStore } from '../app/store/useAuthStore';
 
 // Public pages are statically imported for zero-latency initial loads
-import { LandingPage } from '../pages/LandingPage';
 import { PortfolioModePage } from '../pages/PortfolioModePage';
+import { PlacementDisciplinePage } from '../pages/PlacementDisciplinePage';
 
 // Workspace console sub-pages are lazy loaded
-const OverviewPage = lazy(() => import('../pages/OverviewPage').then(m => ({ default: m.OverviewPage })));
-const TodayPage = lazy(() => import('../pages/TodayPage').then(m => ({ default: m.TodayPage })));
 const AIBrainPage = lazy(() => import('../pages/AIBrainPage').then(m => ({ default: m.AIBrainPage })));
 const SmartPlannerPage = lazy(() => import('../pages/SmartPlannerPage').then(m => ({ default: m.SmartPlannerPage })));
-const PlacementOSPage = lazy(() => import('../pages/PlacementOSPage').then(m => ({ default: m.PlacementOSPage })));
 const LearningOSPage = lazy(() => import('../pages/LearningOSPage').then(m => ({ default: m.LearningOSPage })));
 const RoadmapPage = lazy(() => import('../pages/RoadmapPage').then(m => ({ default: m.RoadmapPage })));
 const ShaylaAIPage = lazy(() => import('../pages/ShaylaAIPage').then(m => ({ default: m.ShaylaAIPage })));
@@ -25,26 +22,15 @@ const AIPlaygroundPage = lazy(() => import('../pages/AIPlaygroundPage').then(m =
 const AIBenchmarkPage = lazy(() => import('../pages/AIBenchmarkPage').then(m => ({ default: m.AIBenchmarkPage })));
 const GermanPage = lazy(() => import('../pages/GermanPage').then(m => ({ default: m.GermanPage })));
 const AnalyticsPage = lazy(() => import('../pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
-const ReportsPage = lazy(() => import('../pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
-const DSATrackerPage = lazy(() => import('../pages/DSATrackerPage').then(m => ({ default: m.DSATrackerPage })));
-const SkillRackPage = lazy(() => import('../pages/SkillRackPage').then(m => ({ default: m.SkillRackPage })));
-const AptitudePage = lazy(() => import('../pages/AptitudePage').then(m => ({ default: m.AptitudePage })));
-const SQLPage = lazy(() => import('../pages/SQLPage').then(m => ({ default: m.SQLPage })));
-const CSCorePage = lazy(() => import('../pages/CSCorePage').then(m => ({ default: m.CSCorePage })));
 const ProjectsPage = lazy(() => import('../pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
 const CodingMentorPage = lazy(() => import('../pages/CodingMentorPage').then(m => ({ default: m.CodingMentorPage })));
 const CareerIntelligencePage = lazy(() => import('../pages/CareerIntelligencePage').then(m => ({ default: m.CareerIntelligencePage })));
 const IntegrationsPage = lazy(() => import('../pages/IntegrationsPage').then(m => ({ default: m.IntegrationsPage })));
-const ResumePage = lazy(() => import('../pages/ResumePage').then(m => ({ default: m.ResumePage })));
-const InterviewCoachPage = lazy(() => import('../pages/InterviewCoachPage').then(m => ({ default: m.InterviewCoachPage })));
 const ApplicationsPage = lazy(() => import('../pages/ApplicationsPage').then(m => ({ default: m.ApplicationsPage })));
 const CalendarFocusPage = lazy(() => import('../pages/CalendarFocusPage').then(m => ({ default: m.CalendarFocusPage })));
 const PlacementCalendarPage = lazy(() => import('../pages/PlacementCalendarPage').then(m => ({ default: m.PlacementCalendarPage })));
-const CompaniesPage = lazy(() => import('../pages/CompaniesPage').then(m => ({ default: m.CompaniesPage })));
 const SkillTreePage = lazy(() => import('../pages/SkillTreePage').then(m => ({ default: m.SkillTreePage })));
 const AchievementsPage = lazy(() => import('../pages/AchievementsPage').then(m => ({ default: m.AchievementsPage })));
-const HistoryPage = lazy(() => import('../pages/HistoryPage').then(m => ({ default: m.HistoryPage })));
-const SettingsPage = lazy(() => import('../pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const AdminPage = lazy(() => import('../pages/AdminPage').then(m => ({ default: m.AdminPage })));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 const OfflinePage = lazy(() => import('../pages/OfflinePage').then(m => ({ default: m.OfflinePage })));
@@ -67,7 +53,7 @@ export const AppRouter: React.FC = () => {
   const [hasSyncedUrl, setHasSyncedUrl] = React.useState(false);
   const initializeAuth = useAuthStore((s) => s.initialize);
 
-  const isLanding = pathname === '/' || pathname === '/landing' || pathname.endsWith('index.html') || pathname === '';
+  const isLaunch = pathname === '/' || pathname === '/landing' || pathname.endsWith('index.html') || pathname === '';
   const isPortfolio = pathname === '/portfolio';
   const isOffline = pathname === '/offline';
   const isAuthRoute = ['/auth', '/login', '/signup', '/auth/callback', '/onboarding'].includes(pathname);
@@ -82,7 +68,7 @@ export const AppRouter: React.FC = () => {
       const nextPath = window.location.pathname;
       setPathname(nextPath);
       if (nextPath === '/' || nextPath === '/landing' || nextPath.endsWith('index.html') || nextPath === '') {
-        // public landing - do not force shell section
+        setActiveSection('overview');
       } else if (nextPath === '/portfolio' || ['/auth', '/login', '/signup', '/auth/callback', '/onboarding'].includes(nextPath)) {
         // public/special routes
       } else {
@@ -104,7 +90,7 @@ export const AppRouter: React.FC = () => {
   // 2. Sync section changes -> URL only after the current URL has initialized the store.
   useEffect(() => {
     if (!hasSyncedUrl) return;
-    if (isLanding || isPortfolio || isAuthRoute) return;
+    if (isLaunch || isPortfolio || isAuthRoute) return;
     const currentSection = pathToSection[pathname] || 'overview';
     if (activeSection === currentSection) return;
     const targetPath = sectionToPath[activeSection];
@@ -112,12 +98,14 @@ export const AppRouter: React.FC = () => {
       window.history.pushState({}, '', targetPath);
       setPathname(targetPath);
     }
-  }, [activeSection, hasSyncedUrl, isLanding, isPortfolio, pathname]);
+  }, [activeSection, hasSyncedUrl, isLaunch, isPortfolio, pathname]);
 
-  if (isLanding) {
+  if (isLaunch) {
     return (
       <ErrorBoundary>
-        <LandingPage />
+        <AppShell>
+          <PlacementDisciplinePage />
+        </AppShell>
       </ErrorBoundary>
     );
   }
@@ -156,18 +144,18 @@ export const AppRouter: React.FC = () => {
   }
 
   const renderSection = () => {
-    const currentActive = isLanding ? 'landing' : isPortfolio ? 'portfolio' : activeSection;
+    const currentActive = isLaunch ? 'overview' : isPortfolio ? 'portfolio' : activeSection;
     switch (currentActive) {
       case 'overview':
-        return <OverviewPage />;
+        return <PlacementDisciplinePage />;
       case 'today':
-        return <TodayPage />;
+        return <PlacementDisciplinePage />;
       case 'ai_brain':
         return <AIBrainPage />;
       case 'smart_planner':
         return <SmartPlannerPage />;
       case 'placement_os':
-        return <PlacementOSPage />;
+        return <PlacementDisciplinePage />;
       case 'learning_os':
         return <LearningOSPage />;
       case 'roadmap':
@@ -187,19 +175,21 @@ export const AppRouter: React.FC = () => {
       case 'analytics':
         return <AnalyticsPage />;
       case 'reports':
-        return <ReportsPage />;
+        return <PlacementDisciplinePage />;
       case 'portfolio':
         return <PortfolioModePage />;
       case 'dsa_tracker':
-        return <DSATrackerPage />;
+        return <PlacementDisciplinePage />;
       case 'skillrack':
-        return <SkillRackPage />;
+        return <PlacementDisciplinePage />;
+      case 'leetcode':
+        return <PlacementDisciplinePage />;
       case 'aptitude':
-        return <AptitudePage />;
+        return <PlacementDisciplinePage />;
       case 'sql':
-        return <SQLPage />;
+        return <PlacementDisciplinePage />;
       case 'cscore':
-        return <CSCorePage />;
+        return <PlacementDisciplinePage />;
       case 'projects':
         return <ProjectsPage />;
       case 'coding_mentor':
@@ -209,9 +199,11 @@ export const AppRouter: React.FC = () => {
       case 'integrations':
         return <IntegrationsPage />;
       case 'resume':
-        return <ResumePage />;
+        return <PlacementDisciplinePage />;
       case 'interview_coach':
-        return <InterviewCoachPage />;
+        return <PlacementDisciplinePage />;
+      case 'mistakes':
+        return <PlacementDisciplinePage />;
       case 'applications':
         return <ApplicationsPage />;
       case 'calendar':
@@ -219,15 +211,15 @@ export const AppRouter: React.FC = () => {
       case 'placement_calendar':
         return <PlacementCalendarPage />;
       case 'companies':
-        return <CompaniesPage />;
+        return <PlacementDisciplinePage />;
       case 'skill_tree':
         return <SkillTreePage />;
       case 'achievements':
         return <AchievementsPage />;
       case 'history':
-        return <HistoryPage />;
+        return <PlacementDisciplinePage />;
       case 'settings':
-        return <SettingsPage />;
+        return <PlacementDisciplinePage />;
       case 'admin':
         return <AdminPage />;
       case 'mock_interview_os':

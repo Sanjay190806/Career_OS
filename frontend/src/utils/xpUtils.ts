@@ -39,7 +39,9 @@ export function getXPProgress(xp: number) {
 
 export function getStreak(s: Partial<CareerState>): number {
   if (!s.dailyLogs || !s.userProfile?.startDate) return 0;
-  return calculateStreakWithFreezes(s.dailyLogs, s.userProfile.startDate).currentStreak;
+  const derivedStreak = calculateStreakWithFreezes(s.dailyLogs, s.userProfile.startDate).currentStreak;
+  const restoredStreak = (s as any).restoredStreakState?.currentStreak || 0;
+  return derivedStreak > 0 ? derivedStreak : restoredStreak;
 }
 
 export function getTotalLCSolved(s: Partial<CareerState>): number {

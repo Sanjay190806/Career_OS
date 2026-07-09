@@ -7,17 +7,30 @@ export const QuickActionDock: React.FC = () => {
   const currentDay = useUIStore((s) => s.currentDay);
   const careerState = useCareerStore((s) => s);
   const updateDailyLog = useCareerStore((s) => s.updateDailyLog);
+<<<<<<< HEAD
   const updateDailyCodingTask = useCareerStore((s) => s.updateDailyCodingTask);
+=======
+  const updateDailyCodingTaskForDay = useCareerStore((s) => s.updateDailyCodingTaskForDay);
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
   const todayLog = careerState.dailyLogs[currentDay] || {
     counts: { leetcode: 0, skillrack: 0, aptitude: 0, sql: 0, cscore: 0, german: 0, project: 0, resume: 0 }
   };
 
   const handleIncrement = (key: string) => {
+<<<<<<< HEAD
     if (key === 'codechef_java_daily') {
       updateDailyCodingTask(currentDay, 'codechef_java_daily', {
         count: ((todayLog.counts as any).codechefJava || 0) + 1
       });
+=======
+    if (key === 'codechef_java_daily' || key === 'skillrack_daily') {
+      const dateKey = new Date(careerState.userProfile.startDate);
+      dateKey.setDate(dateKey.getDate() + currentDay - 1);
+      const codingDate = dateKey.toISOString().slice(0, 10);
+      const task = careerState.dailyCodingByDate?.[codingDate]?.tasks?.[key];
+      updateDailyCodingTaskForDay(currentDay, key, { count: (task?.count || 0) + 1 });
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
       return;
     }
 
@@ -32,6 +45,10 @@ export const QuickActionDock: React.FC = () => {
 
   const actions = [
     { key: 'codechef_java_daily', label: 'CodeChef Java', icon: Target, color: 'hover:text-accentOrange hover:bg-accentOrange/5' },
+<<<<<<< HEAD
+=======
+    { key: 'skillrack_daily', label: 'SkillRack', icon: Target, color: 'hover:text-accentBlue hover:bg-accentBlue/5' },
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
     { key: 'sql', label: 'SQL query', icon: Zap, color: 'hover:text-accentYellow hover:bg-accentYellow/5' },
     { key: 'german', label: 'German Vocab', icon: Languages, color: 'hover:text-cyan-400 hover:bg-cyan-400/5' },
     { key: 'cscore', label: 'CS Revise', icon: GraduationCap, color: 'hover:text-accentPurple hover:bg-accentPurple/5' },

@@ -58,7 +58,11 @@ export const BackupRestorePanel: React.FC = () => {
         if (res.success) {
           const warningText = res.warnings?.length ? ` Warnings: ${res.warnings.join(' ')}` : '';
           setSuccess(
+<<<<<<< HEAD
             `Backup restored. ${res.restoredKeys.length} keys restored.${res.rehydrated ? ' Dashboard updated immediately.' : ''}${res.preRestoreSaved ? ' Pre-restore snapshot saved locally.' : ''}${warningText}`
+=======
+            `Backup restored. ${res.restoredKeys.length} keys restored.${res.rehydrated ? ' Dashboard state refreshed immediately.' : ''}${res.preRestoreSaved ? ' Pre-restore snapshot saved locally.' : ''}${warningText}`
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
           );
           setError(null);
         } else {

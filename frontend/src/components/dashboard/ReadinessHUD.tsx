@@ -42,14 +42,14 @@ export const ReadinessHUD: React.FC = () => {
       {/* 3. DSA Coding Mastery */}
       <div className="rounded-2xl border border-white/5 bg-white/[0.01] p-4 flex flex-col gap-2 relative overflow-hidden">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-textSecondary font-bold uppercase tracking-wider">LeetCode Solved</span>
+          <span className="text-[10px] text-textSecondary font-bold uppercase tracking-wider">Active DSA XP</span>
           <CheckCircle2 className="h-4 w-4 text-accentEmerald" />
         </div>
-        <span className="text-2xl font-black text-textPrimary">{totalDsa} Solved</span>
+        <span className="text-2xl font-black text-textPrimary">{careerState.activeDsaXp || 0} XP</span>
         <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden mt-1">
-          <div className="h-full bg-accentEmerald rounded-full" style={{ width: `${Math.min(100, (totalDsa / 150) * 100)}%` }} />
+          <div className="h-full bg-accentEmerald rounded-full" style={{ width: `${Math.min(100, ((careerState.activeDsaXp || 0) / 150) * 100)}%` }} />
         </div>
-        <p className="text-[9px] text-textMuted mt-1 leading-normal">Questions solved towards the 180-day roadmap target.</p>
+        <p className="text-[9px] text-textMuted mt-1 leading-normal">Reset for the Aug 1, 2026 official DSA restart. LeetCode solved history stays preserved: {totalDsa}.</p>
       </div>
     </div>
   );

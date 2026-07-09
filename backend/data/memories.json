@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "category": "mood",
+    "content": "Logged mood: 3/5, Energy: 3/5, Distractions: 10/5. Note: \"None\"",
+    "id": "mem-1782909241114-j4p4tnp",
+    "pinned": false,
+    "ignored": false,
+    "createdAt": "2026-07-01T12:34:01.114Z",
+    "updatedAt": "2026-07-01T12:34:01.114Z"
+  },
+  {
+    "category": "study",
+    "content": "Reached a German study streak of 1 days! (Longest streak: 1 days)",
+    "id": "mem-1782909241111-gxb9mny",
+    "pinned": false,
+    "ignored": false,
+    "createdAt": "2026-07-01T12:34:01.111Z",
+    "updatedAt": "2026-07-01T12:34:01.111Z"
+  }
+]

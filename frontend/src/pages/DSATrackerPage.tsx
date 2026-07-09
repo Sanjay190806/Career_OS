@@ -187,6 +187,7 @@ export const DSATrackerPage: React.FC = () => {
           subtitle="Visualize pattern mastery, confidence indices, and active revision counts across the 23 primary DSA templates."
         />
 
+<<<<<<< HEAD
         {/* Global Stats Summary Banner */}
         <Card className="grid gap-4 border-white/5 bg-black/60 p-5 md:grid-cols-4"
           style={{ border: '1px solid rgba(220,38,38,0.18)', background: 'rgba(20,0,5,0.85)' }}>
@@ -216,6 +217,38 @@ export const DSATrackerPage: React.FC = () => {
             </p>
           </div>
         </Card>
+=======
+      <Card className="grid gap-4 border-border-accent/20 bg-gradient-to-r from-accentBlue/10 via-bgCard to-bgCard p-4 md:grid-cols-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">LeetCode</p>
+          <p className="mt-1 text-2xl font-semibold text-textPrimary">Starts Aug 1</p>
+          <p className="mt-1 text-[10px] text-textMuted">Preserved history: {lcSolved} solved</p>
+        </div>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Core DSA Patterns</p>
+          <p className="mt-1 text-2xl font-semibold text-textPrimary">{patternStats.length}</p>
+        </div>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Revision Queue</p>
+          <p className="mt-1 text-2xl font-semibold text-textPrimary">
+            {patternStats.reduce((sum, entry) => sum + entry.revisionQueueCount, 0)}
+          </p>
+        </div>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-textMuted">Average Confidence</p>
+          <p className="mt-1 text-2xl font-semibold text-textPrimary">
+            {patternStats.length
+              ? (patternStats.reduce((sum, entry) => {
+                  const mastery = dsaPatternMastery[entry.pattern];
+                  const avg = mastery?.confidenceCount ? mastery.confidenceSum / mastery.confidenceCount : 0;
+                  return sum + (avg || 0);
+                }, 0) / patternStats.length).toFixed(1)
+              : '0.0'}
+            /5
+          </p>
+        </div>
+      </Card>
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
         <DSAProblemIntelligencePanel patterns={patternStats} onRedoSoon={handleRedoSoon} />
 

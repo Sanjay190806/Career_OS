@@ -7,7 +7,11 @@ import { DailyLog } from '../../types';
 import { getDateForDay } from '../../utils/dateUtils';
 import { canUseFreeze, getFreezesLeftForWeek } from '../../utils/streakFreezeUtils';
 import { awardXPForLog, getLevel, getStreak } from '../../utils/xpUtils';
+<<<<<<< HEAD
 import { getDailyCodingCompletion, normalizeDailyCodingState, toLocalDateKey } from '../../utils/dailyCodingUtils';
+=======
+import { createDailyCodingState, isDailyCodingComplete, isLeetCodeActive, type DailyCodingTaskId } from '../../utils/dailyCodingTasks.mjs';
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -31,7 +35,12 @@ export const TodayCommandCenter: React.FC = () => {
   const selectedDay = useDailyLogStore((s) => s.selectedDay);
   const dailyLogs = useCareerStore((s) => s.dailyLogs);
   const updateDailyLog = useCareerStore((s) => s.updateDailyLog);
+<<<<<<< HEAD
   const updateDailyCodingTask = useCareerStore((s) => s.updateDailyCodingTask);
+=======
+  const dailyCodingByDate = useCareerStore((s) => s.dailyCodingByDate || {});
+  const updateDailyCodingTaskForDay = useCareerStore((s) => s.updateDailyCodingTaskForDay);
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
   const useStreakFreeze = useCareerStore((s) => s.useStreakFreeze);
   const weeklyFreezeUsage = useCareerStore((s) => s.weeklyFreezeUsage || {});
   const xp = useCareerStore((s) => s.xp);
@@ -85,6 +94,16 @@ export const TodayCommandCenter: React.FC = () => {
     return toLocalDateKey(d);
   }, [selectedDay, userProfile.startDate]);
   const dailyCoding = useMemo(() => normalizeDailyCodingState(currentLog, todayDateStr), [currentLog, todayDateStr]);
+
+  const dailyCodingState = dailyCodingByDate[todayDateStr] || createDailyCodingState(todayDateStr);
+  const leetcodeActive = isLeetCodeActive(todayDateStr);
+  const dailyCodingComplete = isDailyCodingComplete(dailyCodingState, todayDateStr);
+
+  const updateCodingTaskCount = (taskId: DailyCodingTaskId, direction: 'inc' | 'dec') => {
+    const task = dailyCodingState.tasks[taskId];
+    const delta = direction === 'inc' ? 1 : -1;
+    updateDailyCodingTaskForDay(selectedDay, taskId, { count: Math.max(0, task.count + delta) });
+  };
 
   const todayEvents = useMemo(() => {
     return calendarEvents.filter((evt) => evt.start.substring(0, 10) === todayDateStr);
@@ -199,20 +218,33 @@ export const TodayCommandCenter: React.FC = () => {
     const sql = currentCounts.sql || 0;
     const cs = currentCounts.cscore || 0;
 
+<<<<<<< HEAD
     const hasCoding = getDailyCodingCompletion(dailyCoding);
+=======
+    const hasCoding = dailyCodingComplete;
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
     const hasApt = aptitude >= 20;
     const hasSqlOrCs = sql >= 1 || cs >= 1;
 
     return hasCoding && hasApt && hasSqlOrCs;
+<<<<<<< HEAD
   }, [dailyCoding, currentCounts]);
+=======
+  }, [currentLog, currentCounts, dailyCodingComplete]);
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
   const perfectDayQualified = useMemo(() => {
     const aptitude = currentCounts.aptitude || 0;
     const sql = currentCounts.sql || 0;
     const cs = currentCounts.cscore || 0;
 
+<<<<<<< HEAD
     return getDailyCodingCompletion(dailyCoding) && aptitude >= 30 && sql >= 5 && cs >= 1;
   }, [dailyCoding, currentCounts]);
+=======
+    return dailyCodingComplete && aptitude >= 30 && sql >= 5 && cs >= 1;
+  }, [currentCounts, dailyCodingComplete]);
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
   // XP goal tracking
   const currentXPProgress = currentLog.xpEarned || 0;
@@ -233,6 +265,7 @@ export const TodayCommandCenter: React.FC = () => {
       savedAt: new Date().toISOString(),
     });
 
+<<<<<<< HEAD
     if (xpDelta !== 0) {
       setCareerState((state) => {
         const newCumulativeXP = Math.max(0, (state.xp || 0) + xpDelta);
@@ -242,6 +275,14 @@ export const TodayCommandCenter: React.FC = () => {
         };
       });
     }
+=======
+    const xpDelta = Math.max(calculatedXP - (currentLog.xpEarned || 0), 0);
+    const newCumulativeXP = xp + xpDelta;
+    setCareerState({
+      xp: newCumulativeXP,
+      level: getLevel(newCumulativeXP).level,
+    });
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
     notificationStore.addNotification({
       type: 'success',
@@ -298,17 +339,22 @@ export const TodayCommandCenter: React.FC = () => {
 
     const testLog: DailyLog = { ...currentLog, completionType: type, status: newStatus };
     const calculatedXP = awardXPForLog(selectedDay, testLog);
+<<<<<<< HEAD
     const previousXPForDay = currentLog.xpEarned || 0;
     const xpDelta = calculatedXP - previousXPForDay;
+=======
+    const xpDelta = Math.max(calculatedXP - (currentLog.xpEarned || 0), 0);
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
     updateDailyLog(selectedDay, {
       status: newStatus,
       completionType: type,
-      xpEarned: calculatedXP,
+      xpEarned: (currentLog.xpEarned || 0) + xpDelta,
       note: reflectionText,
       savedAt: new Date().toISOString(),
     });
 
+<<<<<<< HEAD
     if (xpDelta !== 0) {
       setCareerState((state) => {
         const newCumulativeXP = Math.max(0, (state.xp || 0) + xpDelta);
@@ -331,6 +377,15 @@ export const TodayCommandCenter: React.FC = () => {
     // Set celebration details and show modal
     setCelebrationDetails({ type, xp: Math.max(0, xpDelta) });
     setShowCelebrationModal(true);
+=======
+    const newCumulativeXP = xp + xpDelta;
+    setCareerState({
+      xp: newCumulativeXP,
+      level: getLevel(newCumulativeXP).level,
+    });
+
+    alert(`Day quest compiled! Type: ${type.toUpperCase()}. Earned +${xpDelta} new XP.`);
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
   };
 
   const streakVal = getStreak(useCareerStore.getState());
@@ -550,6 +605,45 @@ export const TodayCommandCenter: React.FC = () => {
 
           <Card className="p-4 border-white/5 bg-[#0a0a1a] flex flex-col gap-3">
             <h4 className="text-xs font-black text-textPrimary uppercase tracking-wider border-b border-white/5 pb-2">Daily Quests Status</h4>
+            <div className="rounded-xl border border-accentBlue/20 bg-accentBlue/5 p-3">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-textMuted">Daily Coding Target</p>
+                  <p className="mt-1 text-xs text-textSecondary">LeetCode {leetcodeActive ? 'active' : 'starts Aug 1, 2026'}</p>
+                </div>
+                <Badge variant={dailyCodingComplete ? 'success' : 'neutral'}>
+                  {dailyCodingComplete ? 'Complete' : 'Pending'}
+                </Badge>
+              </div>
+              <div className="grid gap-2">
+                {(['codechef_java_daily', 'skillrack_daily'] as DailyCodingTaskId[]).map((taskId) => {
+                  const task = dailyCodingState.tasks[taskId];
+                  return (
+                    <div key={task.id} className="rounded-lg border border-white/5 bg-black/25 p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="flex items-center gap-2 text-[10px] font-bold text-textPrimary">
+                          <input
+                            type="checkbox"
+                            checked={task.completed}
+                            onChange={(event) => updateDailyCodingTaskForDay(selectedDay, task.id, { completed: event.target.checked })}
+                            className="rounded border-white/10 bg-black/45 text-accentBlue focus:ring-0"
+                          />
+                          {task.label} Daily
+                        </label>
+                        <span className="font-mono text-[11px] font-black text-textPrimary">{task.count}/{task.target}</span>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-textMuted">
+                        <span>Target: {task.target} {taskId === 'codechef_java_daily' ? 'Java problems' : 'problems'}</span>
+                        <div className="flex items-center gap-1">
+                          <Button size="sm" variant="outline" onClick={() => updateCodingTaskCount(task.id, 'dec')} className="h-6 w-6 p-0 text-[10px]">-</Button>
+                          <Button size="sm" variant="outline" onClick={() => updateCodingTaskCount(task.id, 'inc')} className="h-6 w-6 p-0 text-[10px]">+</Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             <div className="flex flex-col gap-1.5 border-b border-white/5 pb-2 mb-1">
               <div className="flex justify-between items-center text-[10px] font-bold text-textSecondary uppercase">
                 <span>XP Goal Progress</span>

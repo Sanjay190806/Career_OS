@@ -22,6 +22,14 @@ Do not run Prisma every day. Prisma commands are only needed when changing the d
 
 Export a backup weekly from the app settings. Backup export is local-first and skips secret-like data such as tokens, passwords, API keys, and `.env` content.
 
+## Focus Timer
+
+Set the timer minutes in Today or Calendar & Focus. The chosen duration is saved locally and can be changed whenever your schedule changes.
+
+## Shayla Without Keys
+
+Cloud AI providers need API keys. Without keys, use local-only tracker features, local fallback cards, or run Ollama/LM Studio for free local AI.
+
 ## Stop
 
 Use `Stop-Sanzz-OS.bat` when done. It targets the local app ports and Sanzz OS terminal windows.

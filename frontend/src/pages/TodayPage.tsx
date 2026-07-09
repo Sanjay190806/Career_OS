@@ -25,15 +25,21 @@ import { MobileShaylaDock } from '../components/mobile/MobileShaylaDock';
 import { MobileApplicationDock } from '../components/mobile/MobileApplicationDock';
 import { MiniStreakStrip } from '../components/ui/MiniStreakStrip';
 import { TodayCommandCenter } from '../components/today/TodayCommandCenter';
+<<<<<<< HEAD
 import { getNextAction } from '../utils/applicationCrmUtils';
 import { getStreak } from '../utils/xpUtils';
 import { getDateForDay } from '../utils/dateUtils';
 import { normalizeDailyCodingState, toLocalDateKey } from '../utils/dailyCodingUtils';
 import { launchConfetti } from '../utils/confetti';
 import { playAchievementFanfare, playXPDing } from '../utils/timerSounds';
+=======
+import { createDailyCodingState, isLeetCodeActive, type DailyCodingTaskId } from '../utils/dailyCodingTasks.mjs';
+import { getDateForDay } from '../utils/dateUtils';
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
 const DEFAULT_COUNTS: ActivityCounts = {
   leetcode: 0,
+  codechefJava: 0,
   skillrack: 0,
   aptitude: 0,
   sql: 0,
@@ -106,7 +112,12 @@ export const TodayPage: React.FC = () => {
   const userProfile = useCareerStore((s) => s.userProfile);
   const csCoreProgress = useCareerStore((s) => s.csCoreProgress || {});
   const updateDailyLog = useCareerStore((s) => s.updateDailyLog);
+<<<<<<< HEAD
   const updateDailyCodingTask = useCareerStore((s) => s.updateDailyCodingTask);
+=======
+  const dailyCodingByDate = useCareerStore((s) => s.dailyCodingByDate || {});
+  const updateDailyCodingTaskForDay = useCareerStore((s) => s.updateDailyCodingTaskForDay);
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
   const updateProblemLog = useCareerStore((s) => s.updateProblemLog);
   const updateCSCoreTopic = useCareerStore((s) => s.updateCSCoreTopic);
   const queuePrompt = useAIStore((s) => s.queuePrompt);
@@ -135,12 +146,18 @@ export const TodayPage: React.FC = () => {
   const dailyCoding = normalizeDailyCodingState(currentLog, selectedDateKey);
   const leetcodeActive = dailyCoding.tasks.leetcode_daily.active;
   const currentProblems = ROADMAP[String(selectedDay)] || [];
+<<<<<<< HEAD
   const applicationAction = applications
     .map((app) => ({ app, action: getNextAction(app) }))
     .sort((a, b) => {
       const rank = { high: 0, medium: 1, low: 2 };
       return rank[a.action.urgency] - rank[b.action.urgency];
     })[0];
+=======
+  const selectedDateKey = getDateForDay(selectedDay, useCareerStore.getState().userProfile.startDate).toISOString().slice(0, 10);
+  const dailyCodingState = dailyCodingByDate[selectedDateKey] || createDailyCodingState(selectedDateKey);
+  const leetcodeActive = isLeetCodeActive(selectedDateKey);
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
   const [activeTab, setActiveTab] = useState<'command' | 'activities'>('command');
   const [germanTrackOpen, setGermanTrackOpen] = useState(false);
@@ -221,6 +238,12 @@ export const TodayPage: React.FC = () => {
         [key]: newVal
       }
     });
+  };
+
+  const updateCodingTaskCount = (taskId: DailyCodingTaskId, direction: 'inc' | 'dec') => {
+    const task = dailyCodingState.tasks[taskId];
+    const delta = direction === 'inc' ? 1 : -1;
+    updateDailyCodingTaskForDay(selectedDay, taskId, { count: Math.max(0, task.count + delta) });
   };
 
   const askShayla = (prompt: string) => {
@@ -396,8 +419,9 @@ export const TodayPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
-          {/* LeetCode task checklist */}
+          {/* Daily coding task checklist */}
           <div className="lg:col-span-2 flex flex-col gap-4">
+<<<<<<< HEAD
             <DailyCodingTargetPanel />
 
             <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1 mt-4">LeetCode Challenges</h3>
@@ -411,6 +435,51 @@ export const TodayPage: React.FC = () => {
                   <Badge variant="neutral">Inactive Today</Badge>
                 </div>
               </Card>
+=======
+            <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1">Daily Coding</h3>
+            <Card className="grid gap-3 border-accentBlue/20 bg-accentBlue/5 p-4 md:grid-cols-3">
+              {(['codechef_java_daily', 'skillrack_daily'] as DailyCodingTaskId[]).map((taskId) => {
+                const task = dailyCodingState.tasks[taskId];
+                return (
+                  <div key={task.id} className="rounded-xl border border-white/5 bg-black/25 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-textMuted">{task.label} Daily</p>
+                        <p className="mt-1 text-xs text-textSecondary">Target: {task.target} {taskId === 'codechef_java_daily' ? 'Java problems' : 'problems'}</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={task.completed}
+                        onChange={(event) => updateDailyCodingTaskForDay(selectedDay, task.id, { completed: event.target.checked })}
+                        className="mt-0.5 rounded border-white/10 bg-black/45 text-accentBlue focus:ring-0"
+                      />
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="font-mono text-lg font-black text-textPrimary">{task.count}/{task.target}</span>
+                      <div className="flex items-center gap-1">
+                        <Button size="sm" variant="outline" onClick={() => updateCodingTaskCount(task.id, 'dec')} className="h-7 w-7 p-0">-</Button>
+                        <Button size="sm" variant="outline" onClick={() => updateCodingTaskCount(task.id, 'inc')} className="h-7 w-7 p-0">+</Button>
+                      </div>
+                    </div>
+                    <Badge variant={task.completed ? 'success' : 'neutral'}>{task.completed ? 'Complete' : 'Pending'}</Badge>
+                  </div>
+                );
+              })}
+              <div className="rounded-xl border border-white/5 bg-black/25 p-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-textMuted">LeetCode</p>
+                <p className="mt-1 text-xs text-textSecondary">
+                  {leetcodeActive ? 'Active from official DSA start' : 'Starts on Aug 1, 2026'}
+                </p>
+                <Badge variant={leetcodeActive ? 'primary' : 'neutral'}>{leetcodeActive ? 'Active' : 'Scheduled'}</Badge>
+              </div>
+            </Card>
+
+            <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1 mt-4">LeetCode Challenges</h3>
+            {!leetcodeActive ? (
+              <div className="glass-card p-6 text-center text-textSecondary text-xs">
+                LeetCode starts on Aug 1, 2026. It is not required for today's coding completion before the official DSA restart.
+              </div>
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
             ) : currentProblems.length === 0 ? (
               <div className="glass-card p-6 text-center text-textSecondary text-xs">
                 No specific LeetCode problems scheduled for Day {selectedDay}. Rest/recovery focus study day.
@@ -531,6 +600,29 @@ export const TodayPage: React.FC = () => {
             <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1 mt-4">Placement Prep Schedules</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
               <DailyActivityCounter
+<<<<<<< HEAD
+=======
+                label="CodeChef Java"
+                emoji="CJ"
+                value={dailyCodingState.tasks.codechef_java_daily.count}
+                target={5}
+                unit="problems"
+                color="#F97316"
+                onIncrement={() => updateCodingTaskCount('codechef_java_daily', 'inc')}
+                onDecrement={() => updateCodingTaskCount('codechef_java_daily', 'dec')}
+              />
+              <DailyActivityCounter
+                label="SkillRack"
+                emoji="⚡"
+                value={dailyCodingState.tasks.skillrack_daily.count}
+                target={5}
+                unit="problems"
+                color="#3B82F6"
+                onIncrement={() => updateCodingTaskCount('skillrack_daily', 'inc')}
+                onDecrement={() => updateCodingTaskCount('skillrack_daily', 'dec')}
+              />
+              <DailyActivityCounter
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
                 label="Aptitude"
                 emoji="🧮"
                 value={currentCounts.aptitude || 0}

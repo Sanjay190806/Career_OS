@@ -1,8 +1,16 @@
 import { storagePerformance } from '../../utils/storagePerformance';
 import { useCareerStore } from '../../app/store/useCareerStore';
+<<<<<<< HEAD
 import { getLevel } from '../../utils/xpUtils';
 import { awardXPForLog } from '../../utils/xpUtils';
 import { getStreak } from '../../utils/xpUtils';
+=======
+import {
+  CAREER_STORAGE_KEY,
+  createLegacyCareerStorageValue,
+  normalizeCareerPersistedValue
+} from '../../utils/backupRehydration.mjs';
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
 export const APP_NAME = 'Sanju Career OS';
 export const BACKUP_VERSION = '1.7.2';
@@ -92,6 +100,7 @@ export interface BackupSnapshotV2 {
   data: Record<string, string>;
   userProfile?: unknown;
   settings?: unknown;
+<<<<<<< HEAD
   xpState?: {
     totalXp: number;
     level: number;
@@ -99,6 +108,10 @@ export interface BackupSnapshotV2 {
   streakState?: {
     currentStreak: number;
   };
+=======
+  xpState?: unknown;
+  streakState?: unknown;
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
   dailyTaskState?: unknown;
   activityLogs?: unknown;
   completedTasks?: unknown;
@@ -281,7 +294,11 @@ export function collectBackupData(): BackupSnapshotV2 {
     }
   }
 
+<<<<<<< HEAD
   const summary = buildSnapshotSummary(data);
+=======
+  const careerSnapshot = data[CAREER_STORAGE_KEY] ? JSON.parse(data[CAREER_STORAGE_KEY])?.state || {} : {};
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
   return {
     appName: APP_NAME,
@@ -292,7 +309,48 @@ export function collectBackupData(): BackupSnapshotV2 {
     keysIncluded,
     keysMissing,
     data,
+<<<<<<< HEAD
     ...summary,
+=======
+    userProfile: careerSnapshot.userProfile,
+    settings: {
+      uiPreferences: data.sanzz_os_ui_preferences_v1 ? JSON.parse(data.sanzz_os_ui_preferences_v1) : undefined,
+      themeSettings: data.sanzz_os_theme_settings_v1 ? JSON.parse(data.sanzz_os_theme_settings_v1) : undefined,
+    },
+    xpState: {
+      totalXp: careerSnapshot.xp || 0,
+      level: careerSnapshot.level || 1,
+      activeDsaXp: 0,
+      germanXp: careerSnapshot.germanXP || 0,
+    },
+    streakState: {
+      currentStreak: careerSnapshot.restoredStreakState?.currentStreak,
+      longestStreak: careerSnapshot.restoredStreakState?.longestStreak,
+      germanStreak: careerSnapshot.germanStreak || 0,
+    },
+    dailyTaskState: careerSnapshot.dailyCodingByDate,
+    activityLogs: careerSnapshot.dailyLogs,
+    completedTasks: careerSnapshot.problemLogs,
+    dailyLogs: careerSnapshot.dailyLogs,
+    careerProgress: {
+      applications: careerSnapshot.applications,
+      projects: careerSnapshot.projects,
+      resume: careerSnapshot.resume,
+    },
+    skillProgress: {
+      sqlProgress: careerSnapshot.sqlProgress,
+      aptitudeProgress: careerSnapshot.aptitudeProgress,
+      csCoreProgress: careerSnapshot.csCoreProgress,
+      skillRackStats: careerSnapshot.skillRackStats,
+      dsaPatternMastery: careerSnapshot.dsaPatternMastery,
+    },
+    projectProgress: careerSnapshot.projects,
+    dashboardStats: {
+      xp: careerSnapshot.xp || 0,
+      level: careerSnapshot.level || 1,
+      restoredStreakState: careerSnapshot.restoredStreakState,
+    },
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
   };
 }
 
@@ -336,6 +394,7 @@ function normalizeIncomingBackup(raw: unknown): BackupSnapshotV2 | null {
   if (!raw || typeof raw !== 'object') return null;
   const input = raw as Record<string, unknown>;
 
+<<<<<<< HEAD
   if (input.appName !== APP_NAME && ('userProfile' in input || 'dailyLogs' in input || 'totalXP' in input || 'totalXp' in input)) {
     const legacyState = normalizeCareerStateForRestore({
       ...input,
@@ -354,6 +413,24 @@ function normalizeIncomingBackup(raw: unknown): BackupSnapshotV2 | null {
       keysMissing: [],
       data,
       ...buildSnapshotSummary(data),
+=======
+  if (input.appName !== APP_NAME && !input.data) {
+    const legacyCareer = createLegacyCareerStorageValue(input);
+    return {
+      appName: APP_NAME,
+      version: typeof input.version === 'string' ? input.version : 'legacy',
+      schemaVersion: typeof input.schemaVersion === 'number' ? input.schemaVersion : 1,
+      createdAt: typeof input.createdAt === 'string' ? input.createdAt : new Date().toISOString(),
+      mode: 'local_backup',
+      keysIncluded: [CAREER_STORAGE_KEY],
+      keysMissing: [],
+      data: { [CAREER_STORAGE_KEY]: legacyCareer },
+      userProfile: input.userProfile,
+      xpState: input.xpState,
+      streakState: input.streakState,
+      activityLogs: input.activityLogs || input.activities,
+      dailyLogs: input.dailyLogs,
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
     };
   }
 
@@ -371,7 +448,17 @@ function normalizeIncomingBackup(raw: unknown): BackupSnapshotV2 | null {
     }
   }
 
+<<<<<<< HEAD
   const summary = buildSnapshotSummary(normalized);
+=======
+  if (!normalized[CAREER_STORAGE_KEY] && (input.dailyLogs || input.activityLogs || input.xpState || input.streakState || input.totalXP || input.totalXp)) {
+    normalized[CAREER_STORAGE_KEY] = createLegacyCareerStorageValue(input);
+  }
+
+  if (normalized[CAREER_STORAGE_KEY]) {
+    normalized[CAREER_STORAGE_KEY] = normalizeCareerPersistedValue(normalized[CAREER_STORAGE_KEY], input);
+  }
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
   return {
     appName: APP_NAME,
@@ -382,6 +469,7 @@ function normalizeIncomingBackup(raw: unknown): BackupSnapshotV2 | null {
     keysIncluded: Object.keys(normalized),
     keysMissing: [],
     data: normalized,
+<<<<<<< HEAD
     ...summary,
   };
 }
@@ -421,6 +509,36 @@ export function rehydrateAppStateFromStorage(): boolean {
     return Boolean(careerState);
   } catch (error) {
     console.warn('Failed to rehydrate app state after restore:', error);
+=======
+    userProfile: input.userProfile,
+    settings: input.settings,
+    xpState: input.xpState,
+    streakState: input.streakState,
+    dailyTaskState: input.dailyTaskState,
+    activityLogs: input.activityLogs,
+    completedTasks: input.completedTasks,
+    dailyLogs: input.dailyLogs,
+    careerProgress: input.careerProgress,
+    skillProgress: input.skillProgress,
+    projectProgress: input.projectProgress,
+    dashboardStats: input.dashboardStats,
+  };
+}
+
+function rehydrateAppStateFromStorage(): boolean {
+  try {
+    const rawCareer = localStorage.getItem(CAREER_STORAGE_KEY);
+    if (!rawCareer) return false;
+    const normalized = normalizeCareerPersistedValue(rawCareer);
+    localStorage.setItem(CAREER_STORAGE_KEY, normalized);
+    const parsed = JSON.parse(normalized);
+    const restoredState = parsed?.state;
+    if (!restoredState || typeof restoredState !== 'object') return false;
+    useCareerStore.setState(restoredState as any, false);
+    return true;
+  } catch (error) {
+    console.warn('Failed to rehydrate app state after backup restore:', error);
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
     return false;
   }
 }
@@ -591,12 +709,15 @@ export function restoreBackupData(raw: unknown): RestoreResultV2 {
       if (entry?.isJson) {
         JSON.parse(value);
       }
-      localStorage.setItem(key, value);
+      const normalizedValue = key === CAREER_STORAGE_KEY ? normalizeCareerPersistedValue(value, snapshot) : value;
+      localStorage.setItem(key, normalizedValue);
       restoredKeys.push(key);
     } catch {
       skippedKeys.push(key);
     }
   }
+
+  const rehydrated = rehydrateAppStateFromStorage();
 
   window.dispatchEvent(new Event('local_sync_restored'));
   window.dispatchEvent(new Event('personalization_changed'));

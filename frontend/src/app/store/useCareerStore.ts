@@ -17,6 +17,16 @@ import {
 } from '../../utils/dailyCodingUtils';
 import { TARGET_COMPANIES_DATA } from '../../data/companies';
 import { SKILL_TREE_DATA } from '../../data/skillTree';
+import {
+  OFFICIAL_DSA_START_DATE,
+  applyDailyCodingAwards,
+  createDailyCodingState,
+  migrateDailyCodingState,
+  updateDailyCodingTask,
+  type DailyCodingState,
+  type DailyCodingTask,
+  type DailyCodingTaskId
+} from '../../utils/dailyCodingTasks.mjs';
 
 export interface CareerState {
   userProfile: {
@@ -55,6 +65,13 @@ export interface CareerState {
   germanSpeakingMinutes: number;
   germanListeningMinutes: number;
   germanVocabularyReviewedToday: number;
+  officialDsaStartDate: string;
+  activeDsaXp: number;
+  activeDsaStreak: number;
+  dailyCodingByDate: Record<string, DailyCodingState>;
+  dailyCodingXpAwards: Record<string, boolean>;
+  dsaResetMigrationApplied: boolean;
+  restoredStreakState?: { currentStreak: number; longestStreak: number; completedDays?: number };
   
   updateDailyLog: (day: number, log: Partial<DailyLog>) => void;
   updateDailyCodingTask: (day: number, taskId: DailyCodingTaskId, updates: { count?: number; completed?: boolean }) => void;
@@ -83,6 +100,7 @@ export interface CareerState {
   logGermanSpeakingSession: (minutes?: number) => void;
   logGermanListeningSession: (minutes?: number) => void;
   logGermanVocabularyReview: (count?: number) => void;
+  updateDailyCodingTaskForDay: (day: number, taskId: DailyCodingTaskId, patch: Partial<DailyCodingTask>) => void;
 
   // Placement Pro v1.3 & v1.4 additions
   companyTargets: CompanyTarget[];
@@ -153,6 +171,28 @@ function getWeekKey(date: Date): string {
 
 function getGermanTodayKey(state: CareerState): string {
   return String(getTodayDay(state.userProfile.startDate));
+}
+
+function getDateKeyForDay(day: number, startDate: string): string {
+  return getDateForDay(day, startDate).toISOString().slice(0, 10);
+}
+
+function getBaseDailyLog(): DailyLog {
+  return {
+    counts: { leetcode: 0, codechefJava: 0, skillrack: 0, aptitude: 0, sql: 0, cscore: 0, german: 0, project: 0, resume: 0 },
+    lcStatus: [],
+    note: '',
+    mood: 3,
+    energy: 3,
+    distractions: 0,
+    focusMinutes: 0,
+    status: 'not_started',
+    savedAt: '',
+    xpEarned: 0,
+    freezeUsed: false,
+    freezeReason: '',
+    completionType: 'missed',
+  };
 }
 
 function getGermanBaseLessonProgress(locked: boolean): GermanLessonProgress {
@@ -293,6 +333,13 @@ export const useCareerStore = create<CareerState>()(
       germanSpeakingMinutes: 0,
       germanListeningMinutes: 0,
       germanVocabularyReviewedToday: 0,
+      officialDsaStartDate: OFFICIAL_DSA_START_DATE,
+      activeDsaXp: 0,
+      activeDsaStreak: 0,
+      dailyCodingByDate: {},
+      dailyCodingXpAwards: {},
+      dsaResetMigrationApplied: true,
+      restoredStreakState: { currentStreak: 0, longestStreak: 0, completedDays: 0 },
       
       updateDailyLog: (day, log) => set((state) => {
         const existingLog = state.dailyLogs[day] || {
@@ -867,6 +914,53 @@ export const useCareerStore = create<CareerState>()(
           germanXP: nextXP
         };
       }),
+      updateDailyCodingTaskForDay: (day, taskId, patch) => set((state) => {
+        const dateKey = getDateKeyForDay(day, state.userProfile.startDate);
+        const existingCoding = state.dailyCodingByDate?.[dateKey] || createDailyCodingState(dateKey);
+        const updatedCoding = updateDailyCodingTask(existingCoding, taskId, patch);
+        const awarded = applyDailyCodingAwards(updatedCoding, state.dailyCodingXpAwards || {});
+        const nextCoding = awarded.state;
+        const existingLog = state.dailyLogs[day] || getBaseDailyLog();
+        const nextCounts = {
+          ...existingLog.counts,
+          codechefJava: nextCoding.tasks.codechef_java_daily.count,
+          skillrack: nextCoding.tasks.skillrack_daily.count,
+          leetcode: nextCoding.tasks.leetcode_daily.active ? nextCoding.tasks.leetcode_daily.count : existingLog.counts?.leetcode || 0,
+        };
+        const nextLog: DailyLog = {
+          ...existingLog,
+          counts: nextCounts,
+          xpEarned: (existingLog.xpEarned || 0) + awarded.xpDelta,
+          savedAt: new Date().toISOString(),
+          status: Object.values(nextCounts).some((value) => Number(value) > 0) ? 'in_progress' : existingLog.status,
+          completionType: evaluateCompletion({ ...existingLog, counts: nextCounts }),
+        };
+        const nextLogs = { ...state.dailyLogs, [day]: nextLog };
+        const nextXp = state.xp + awarded.xpDelta;
+        const nextState = {
+          ...state,
+          dailyLogs: nextLogs,
+          dailyCodingByDate: {
+            ...(state.dailyCodingByDate || {}),
+            [dateKey]: nextCoding,
+          },
+          dailyCodingXpAwards: awarded.awards,
+          activeDsaXp: 0,
+          activeDsaStreak: 0,
+          xp: nextXp,
+          level: Math.floor(nextXp / 500) + 1,
+        };
+        runAchievementEngine(nextState, set, (badge) => useUIStore.getState().setActiveBadge(badge));
+        return {
+          dailyLogs: nextLogs,
+          dailyCodingByDate: nextState.dailyCodingByDate,
+          dailyCodingXpAwards: awarded.awards,
+          activeDsaXp: 0,
+          activeDsaStreak: 0,
+          xp: nextXp,
+          level: Math.floor(nextXp / 500) + 1,
+        };
+      }),
       updateCompanyTarget: (id, updates) => set((state) => {
         const nextCompanies = (state.companyTargets || TARGET_COMPANIES_DATA).map((c) =>
           c.id === id ? { ...c, ...updates } : c
@@ -934,12 +1028,26 @@ export const useCareerStore = create<CareerState>()(
       merge: (persisted, current) => {
         const saved = persisted as any;
         const normalizedGerman = normalizeGermanState(saved);
+<<<<<<< HEAD
         const savedXp = typeof saved?.xp === 'number' ? saved.xp : current.xp;
+=======
+        const migratedDsa = migrateDailyCodingState({
+          ...saved,
+          ...normalizedGerman
+        });
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
         return {
           ...current,
           ...saved,
           ...normalizedGerman,
+<<<<<<< HEAD
           level: getLevel(savedXp).level
+=======
+          ...migratedDsa,
+          officialDsaStartDate: OFFICIAL_DSA_START_DATE,
+          activeDsaXp: 0,
+          activeDsaStreak: 0
+>>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
         };
       }
     }
