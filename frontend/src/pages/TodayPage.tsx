@@ -25,17 +25,13 @@ import { MobileShaylaDock } from '../components/mobile/MobileShaylaDock';
 import { MobileApplicationDock } from '../components/mobile/MobileApplicationDock';
 import { MiniStreakStrip } from '../components/ui/MiniStreakStrip';
 import { TodayCommandCenter } from '../components/today/TodayCommandCenter';
-<<<<<<< HEAD
 import { getNextAction } from '../utils/applicationCrmUtils';
 import { getStreak } from '../utils/xpUtils';
 import { getDateForDay } from '../utils/dateUtils';
 import { normalizeDailyCodingState, toLocalDateKey } from '../utils/dailyCodingUtils';
 import { launchConfetti } from '../utils/confetti';
 import { playAchievementFanfare, playXPDing } from '../utils/timerSounds';
-=======
-import { createDailyCodingState, isLeetCodeActive, type DailyCodingTaskId } from '../utils/dailyCodingTasks.mjs';
-import { getDateForDay } from '../utils/dateUtils';
->>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
+import { createDailyCodingState, type DailyCodingTaskId } from '../utils/dailyCodingTasks.mjs';
 
 const DEFAULT_COUNTS: ActivityCounts = {
   leetcode: 0,
@@ -112,12 +108,9 @@ export const TodayPage: React.FC = () => {
   const userProfile = useCareerStore((s) => s.userProfile);
   const csCoreProgress = useCareerStore((s) => s.csCoreProgress || {});
   const updateDailyLog = useCareerStore((s) => s.updateDailyLog);
-<<<<<<< HEAD
   const updateDailyCodingTask = useCareerStore((s) => s.updateDailyCodingTask);
-=======
   const dailyCodingByDate = useCareerStore((s) => s.dailyCodingByDate || {});
   const updateDailyCodingTaskForDay = useCareerStore((s) => s.updateDailyCodingTaskForDay);
->>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
   const updateProblemLog = useCareerStore((s) => s.updateProblemLog);
   const updateCSCoreTopic = useCareerStore((s) => s.updateCSCoreTopic);
   const queuePrompt = useAIStore((s) => s.queuePrompt);
@@ -146,18 +139,13 @@ export const TodayPage: React.FC = () => {
   const dailyCoding = normalizeDailyCodingState(currentLog, selectedDateKey);
   const leetcodeActive = dailyCoding.tasks.leetcode_daily.active;
   const currentProblems = ROADMAP[String(selectedDay)] || [];
-<<<<<<< HEAD
   const applicationAction = applications
     .map((app) => ({ app, action: getNextAction(app) }))
     .sort((a, b) => {
       const rank = { high: 0, medium: 1, low: 2 };
       return rank[a.action.urgency] - rank[b.action.urgency];
     })[0];
-=======
-  const selectedDateKey = getDateForDay(selectedDay, useCareerStore.getState().userProfile.startDate).toISOString().slice(0, 10);
   const dailyCodingState = dailyCodingByDate[selectedDateKey] || createDailyCodingState(selectedDateKey);
-  const leetcodeActive = isLeetCodeActive(selectedDateKey);
->>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
 
   const [activeTab, setActiveTab] = useState<'command' | 'activities'>('command');
   const [germanTrackOpen, setGermanTrackOpen] = useState(false);
@@ -421,21 +409,8 @@ export const TodayPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
           {/* Daily coding task checklist */}
           <div className="lg:col-span-2 flex flex-col gap-4">
-<<<<<<< HEAD
             <DailyCodingTargetPanel />
 
-            <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1 mt-4">LeetCode Challenges</h3>
-            {!leetcodeActive ? (
-              <Card className="border-white/5 bg-white/[0.01] p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-wider text-textMuted">Scheduled from Aug 1, 2026</p>
-                    <h4 className="mt-1 text-sm font-semibold text-textPrimary">LeetCode starts Aug 1</h4>
-                  </div>
-                  <Badge variant="neutral">Inactive Today</Badge>
-                </div>
-              </Card>
-=======
             <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1">Daily Coding</h3>
             <Card className="grid gap-3 border-accentBlue/20 bg-accentBlue/5 p-4 md:grid-cols-3">
               {(['codechef_java_daily', 'skillrack_daily'] as DailyCodingTaskId[]).map((taskId) => {
@@ -474,34 +449,61 @@ export const TodayPage: React.FC = () => {
               </div>
             </Card>
 
-            <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1 mt-4">LeetCode Challenges</h3>
-            {!leetcodeActive ? (
-              <div className="glass-card p-6 text-center text-textSecondary text-xs">
-                LeetCode starts on Aug 1, 2026. It is not required for today's coding completion before the official DSA restart.
+            <Card className="border-white/5 bg-black/45 p-4 md:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/5 pb-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-2 text-amber-300">
+                    <span className="text-sm font-black">LC</span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-textMuted">LeetCode Challenges</p>
+                    <h3 className="mt-1 text-base font-semibold text-textPrimary">Problem board</h3>
+                    <p className="mt-1 text-xs text-textSecondary">
+                      {leetcodeActive
+                        ? 'Official DSA mode is live and counts toward the daily streak.'
+                        : 'Scheduled for Aug 1, 2026. Visible now, counted later.'}
+                    </p>
+                  </div>
+                </div>
+                <Badge variant={leetcodeActive ? 'success' : 'neutral'}>
+                  {leetcodeActive ? 'Official DSA active' : 'Scheduled from Aug 1, 2026'}
+                </Badge>
               </div>
->>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
-            ) : currentProblems.length === 0 ? (
-              <div className="glass-card p-6 text-center text-textSecondary text-xs">
-                No specific LeetCode problems scheduled for Day {selectedDay}. Rest/recovery focus study day.
+
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-textMuted">
+                <span className="rounded-full border border-white/5 bg-white/[0.03] px-3 py-1">
+                  {currentProblems.length} problems
+                </span>
+                <span className="rounded-full border border-white/5 bg-white/[0.03] px-3 py-1">
+                  {leetcodeActive ? 'Counts for official DSA' : 'Preview only'}
+                </span>
               </div>
-            ) : (
-              currentProblems.map((prob, index) => {
-                const probLog = getProblemLog(index);
-                return (
-                  <LeetCodeTaskCard
-                    key={index}
-                    problem={prob}
-                    problemIndex={index}
-                    solved={probLog.solved}
-                    confidence={probLog.confidence}
-                    notes={probLog.notes}
-                    onSolvedChange={(val) => handleSolvedChange(index, val)}
-                    onConfidenceChange={(val) => handleConfidenceChange(index, val)}
-                    onNotesChange={(val) => handleNotesChange(index, val)}
-                  />
-                );
-              })
-            )}
+
+              <div className="mt-4 flex flex-col gap-3">
+                {currentProblems.length === 0 ? (
+                  <div className="rounded-2xl border border-white/5 bg-black/25 p-5 text-center text-xs text-textSecondary">
+                    No specific LeetCode problems scheduled for Day {selectedDay}. Rest and recovery day.
+                  </div>
+                ) : (
+                  currentProblems.map((prob, index) => {
+                    const probLog = getProblemLog(index);
+                    return (
+                      <LeetCodeTaskCard
+                        key={index}
+                        problem={prob}
+                        problemIndex={index}
+                        solved={probLog.solved}
+                        confidence={probLog.confidence}
+                        notes={probLog.notes}
+                        onSolvedChange={(val) => handleSolvedChange(index, val)}
+                        onConfidenceChange={(val) => handleConfidenceChange(index, val)}
+                        onNotesChange={(val) => handleNotesChange(index, val)}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </Card>
 
             {/* CS Core Daily Target Card */}
             <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1 mt-4">CS Core Mission</h3>
@@ -600,8 +602,6 @@ export const TodayPage: React.FC = () => {
             <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider pl-1 mt-4">Placement Prep Schedules</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
               <DailyActivityCounter
-<<<<<<< HEAD
-=======
                 label="CodeChef Java"
                 emoji="CJ"
                 value={dailyCodingState.tasks.codechef_java_daily.count}
@@ -622,7 +622,6 @@ export const TodayPage: React.FC = () => {
                 onDecrement={() => updateCodingTaskCount('skillrack_daily', 'dec')}
               />
               <DailyActivityCounter
->>>>>>> da90b03 (docs: upgrade README with architecture and setup guide)
                 label="Aptitude"
                 emoji="🧮"
                 value={currentCounts.aptitude || 0}
